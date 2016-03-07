@@ -1,0 +1,308 @@
+#!/bin/bash
+
+# Script that compresses and encrypts directories or files with openssl and zip
+# also handles the reverse process to restore the files. Works on files and
+# directories, don't have to be in the current working directory
+#
+# requires openssl, md5sum, zip or tar
+
+# globals
+tar=0
+
+# compress and then aes256 encrypt
+# =============================
+function encrypt() {
+
+  # try to catch encrypting files/ directories outside of current working directory. this
+  # is a problem because unzip recreates the directory structure instead of merging output
+  if test $(dirname $file) != "." ; then
+    echo "!!! qcrypt encryption should not be run on files outside of the current working
+    directory. Please move to the directory containing the file and run again."
+    exit
+  fi
+
+  # try to catch attempted re-encryption
+  if test "${file: -8}" == ".zaes256" || test "${file: -8}" == ".taes256" ; then
+    echo "??? $file appears to already be encrypted by qcrypt."
+    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r
+    echo
+
+    if test "$REPLY" != "y" ; then
+      exit
+    fi
+  fi
+
+  # create an md5sum of the directory or file and creation date file
+  sum=$(find $file -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32)
+  echo $sum > md5sum.qcrypt
+  echo $(date) > date.qcrypt
+
+  # compress the directory with tar
+  if test "$tar" == 1 ; then
+    in_extension=".tar"
+    out_extension=".taes256"
+    tar -zcf "$file."tar *.qcrypt "$file" >/dev/null
+
+  # compress the directory with zip, default
+  else
+    in_extension=".zip"
+    out_extension=".zaes256"
+    zip -r "$file".zip *.qcrypt "$file" >/dev/null
+  fi
+  
+  # check for compression failure
+  if test "$?" != 0 ; then
+    echo "!!! Compression failed, not continuing."
+    rm *.qcrypt
+    exit
+  fi
+
+  # warn if output file will overwrite existing file
+  if [[ -e "$file""$out_extension" ]] ; then
+    read -p "??? \"$file$out_extension\" already exists. Overwrite? (y/n) " -n 1 -r
+    echo
+
+    # no overwrite, clean up and exit
+    if test "$REPLY" != 'y' && test "$REPLY" != 'Y' ; then 
+      rm -f "$file""$in_extension" *.qcrypt
+      exit
+    fi
+
+    # overwrite, remove previous version
+    rm -f "$file""$out_extension"
+  fi
+
+  # encrypt with openssl and aes256
+  openssl aes256 -in "$file""$in_extension" -out "$file""$out_extension" -salt 2>/dev/null
+
+  # check for encryption failure
+  if test "$?" != 0 ; then
+    echo "!!! Encryption failed, not continuing."
+    rm -rf "$file""$in_extension" *.qcrypt 
+    exit
+  fi
+
+  # set output to read only and cleanup working files
+  chmod 400 "$file""$out_extension"
+  rm -rf "$file" "$file""$in_extension" *.qcrypt
+
+  if test "$?" != 0 ; then
+    echo "!!! Cleanup failed, please check the directory for extra files."
+    exit
+  fi
+
+  echo "+++ Encryption completed. Output file is $file$out_extension"
+}
+
+# aes256 decrypt and decompress
+# =============================
+function decrypt() {
+
+  # try to catch attempted re-encryption
+  if (test "${file: -8}" != ".zaes256") && (test "${file: -8}" != ".taes256") ; then
+    echo "??? $file doesn't appear to be encrypted by qcrypt."
+    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r
+    echo
+
+    if test "$REPLY" != "y" ; then
+      exit
+    fi
+  fi
+
+  # check for tar usage
+  if test "${file: -8}" == ".taes256" ; then
+    in_extension=".tar"
+    out_extension=".taes256"
+
+  # check for zip usage
+  elif test "${file: -8}" == ".zaes256" ; then
+    in_extension=".zip"
+    out_extension=".zaes256"
+
+  # default is zip, use this if we don't know the extension
+  else
+    echo "??? Unable to determine compression program for archive, defaulting to unzip"
+    in_extension=".zip"
+    out_extension=".zaes256"
+  fi
+
+  # decrypt with openssl
+  openssl aes256 -d -in "$file" -out "$file""$in_extension" -salt 2>/dev/null
+
+  # check for decryption failure
+  if test "$?" != 0 ; then
+    echo "!!! Decryption failed, not continuing."
+    rm -f "$file""$in_extension"
+    exit
+  fi
+
+  # check if file with output name already exists
+  if [[ -e "${file::-8}" ]] ; then
+    read -p "??? File or directory \"${file::-8}\" already exists. Overwrite? (y/n) " -n 1 -r
+    echo
+
+    # no overwrite, cleanup and exit
+    if test "$REPLY" != 'y' && test "$REPLY" != 'Y' ; then 
+      rm -f "$file""$in_extension"
+      exit
+    fi
+
+    # overwrite, remove previous version
+    rm -rf ${file::-8}
+  fi
+
+  # decompress the output, with appropriate command
+  if test "$in_extension" == ".zip" ; then
+
+    if test "$(which unzip)" == "" ; then
+      echo "!!! Decompression failed, can't find compression program used with this archive."
+      rm -f "$file""$in_extension"
+      exit
+
+    else
+      unzip "$file".zip >/dev/null 2>/dev/null
+    fi
+
+  else
+    if test "$(which tar)" == "" ; then
+      echo "!!! Decompression failed, can't find compression program used with this archive."
+      rm -f "$file""$in_extension"
+      exit
+
+    else
+      tar -xf "$file".tar >/dev/null 2>/dev/null
+    fi
+  fi
+
+  # check for decompression failure
+  if test "$?" != 0 ; then
+    echo "!!! Decompression failed, not continuing."
+    rm -f "$file""$in_extension"
+    exit
+  fi
+
+  # attempt to grab date of encryption
+  date="date information not found"
+
+  if [[ -e "date.qcrypt" ]] ; then
+    date=$(cat date.qcrypt)
+  fi
+
+  # verify that md5sum has not changed
+  sum=$(find ${file::-8} -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32) 
+
+  if [[ -e "md5sum.qcrypt" ]] ; then
+    if test "$(cat md5sum.qcrypt)" != $sum ; then
+      echo "!!! File integrity checks failed."
+      rm -f "$file""$in_extension" *.qcrypt
+      exit
+    fi
+
+  else
+    echo "??? Cannot find file integrity check, unable to verify integrity."
+  fi
+
+  # clean up the working files
+  rm -rf "$file" "$file""$in_extension" *.qcrypt
+
+  if test "$?" != 0 ; then
+    echo "!!! Cleanup failed, please check the directory for extra files."
+    exit
+  fi
+
+  echo "+++ Decryption completed. Archive was created on: $date"
+}
+
+
+# check for dependencies
+#==============================
+# check for openssl
+if test "$(which openssl)" == "" ; then
+  echo "!!! Could not find required program: openssl" ; echo
+  exit
+fi
+
+# check for md5sum
+if test "$(which md5sum)" == "" ; then
+  echo "!!! Could not find required program: md5sum" ; echo
+  exit
+fi
+
+# check for compression program, prefer zip
+if test "$(which zip)" == "" ; then
+
+  # check for tar if can't find zip
+  if test "$(which tar)" == "" ; then
+    echo "!!! Could not find suitable compression program." ; echo
+    exit
+
+  else
+    tar=1
+  fi
+fi
+
+
+# run
+#============================
+if test "$1" == "" || test "$1" == "-h" || test "$1" == "--help" ; then
+  echo "usage: qcrypt [-e|-d] directory_name"
+  exit
+fi
+
+# quick mode
+if test "$1" == "-e" || test "$1" == "-d" ; then
+
+  # warn that only one directory or file is handled per run
+  if test "$3" != "" ; then
+    echo "!!! qcrypt only handles one file or directory at a time"
+    exit
+  fi
+
+  # check if file exists
+  if test "$2" == "" ; then
+    echo "usage: qcrypt [-e|-d] directory_name"
+    exit
+  fi
+  
+  if ! [[ -e "$2" ]] ; then
+    echo "!!! File provided does not exist, not continuing."
+    exit
+  fi
+
+  file=${2%/}
+
+  # run
+  if test "$1" == "-e" ; then
+    encrypt
+
+  else
+    decrypt
+  fi
+
+# interactive mode, check if file exists
+else
+
+  # check if file exists
+  if ! [[ -e "$1" ]] ; then
+    echo "!!! File provided does not exist, not continuing."
+    exit
+  fi
+
+  file=${1%/}
+
+  # choose action
+  read -p "??? encrypt or decrypt \"$file\" ? (e/d) " -n 1 -r
+  echo
+
+  # run
+  if test "$REPLY" == 'e' ; then 
+    encrypt
+
+  elif test "$REPLY" == 'd' ; then 
+    decrypt
+
+  else
+    echo "!!! Must specify e or d"
+    exit
+  fi
+fi
