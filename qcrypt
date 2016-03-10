@@ -18,18 +18,15 @@ function encrypt() {
   if test $(dirname $file) != "." ; then
     echo "!!! qcrypt encryption should not be run on files outside of the current working
     directory. Please move to the directory containing the file and run again."
-    exit
+    exit 1
   fi
 
   # try to catch attempted re-encryption
   if test "${file: -8}" == ".zaes256" || test "${file: -8}" == ".taes256" ; then
     echo "??? $file appears to already be encrypted by qcrypt."
-    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r
-    echo
+    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r ; echo
 
-    if test "$REPLY" != "y" ; then
-      exit
-    fi
+    if test "$REPLY" != "y" ; then exit ; fi
   fi
 
   # create an md5sum of the directory or file and creation date file
@@ -54,13 +51,12 @@ function encrypt() {
   if test "$?" != 0 ; then
     echo "!!! Compression failed, not continuing."
     rm *.qcrypt
-    exit
+    exit 1
   fi
 
   # warn if output file will overwrite existing file
   if [[ -e "$file""$out_extension" ]] ; then
-    read -p "??? \"$file$out_extension\" already exists. Overwrite? (y/n) " -n 1 -r
-    echo
+    read -p "??? \"$file$out_extension\" already exists. Overwrite? (y/n) " -n 1 -r ; echo
 
     # no overwrite, clean up and exit
     if test "$REPLY" != 'y' && test "$REPLY" != 'Y' ; then 
@@ -79,7 +75,7 @@ function encrypt() {
   if test "$?" != 0 ; then
     echo "!!! Encryption failed, not continuing."
     rm -rf "$file""$in_extension" *.qcrypt 
-    exit
+    exit 1
   fi
 
   # set output to read only and cleanup working files
@@ -88,7 +84,7 @@ function encrypt() {
 
   if test "$?" != 0 ; then
     echo "!!! Cleanup failed, please check the directory for extra files."
-    exit
+    exit 1
   fi
 
   echo "+++ Encryption completed. Output file is $file$out_extension"
@@ -101,29 +97,23 @@ function decrypt() {
   # try to catch attempted re-encryption
   if (test "${file: -8}" != ".zaes256") && (test "${file: -8}" != ".taes256") ; then
     echo "??? $file doesn't appear to be encrypted by qcrypt."
-    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r
-    echo
+    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r ; echo
 
-    if test "$REPLY" != "y" ; then
-      exit
-    fi
+    if test "$REPLY" != "y" ; then exit ; fi
   fi
 
   # check for tar usage
   if test "${file: -8}" == ".taes256" ; then
-    in_extension=".tar"
-    out_extension=".taes256"
+    in_extension=".tar" ; out_extension=".taes256"
 
   # check for zip usage
   elif test "${file: -8}" == ".zaes256" ; then
-    in_extension=".zip"
-    out_extension=".zaes256"
+    in_extension=".zip" ; out_extension=".zaes256"
 
   # default is zip, use this if we don't know the extension
   else
     echo "??? Unable to determine compression program for archive, defaulting to unzip"
-    in_extension=".zip"
-    out_extension=".zaes256"
+    in_extension=".zip" ; out_extension=".zaes256"
   fi
 
   # decrypt with openssl
@@ -133,7 +123,7 @@ function decrypt() {
   if test "$?" != 0 ; then
     echo "!!! Decryption failed, not continuing."
     rm -f "$file""$in_extension"
-    exit
+    exit 1
   fi
 
   # check if file with output name already exists
@@ -157,7 +147,7 @@ function decrypt() {
     if test "$(which unzip)" == "" ; then
       echo "!!! Decompression failed, can't find compression program used with this archive."
       rm -f "$file""$in_extension"
-      exit
+      exit 1
 
     else
       unzip "$file".zip >/dev/null 2>/dev/null
@@ -167,7 +157,7 @@ function decrypt() {
     if test "$(which tar)" == "" ; then
       echo "!!! Decompression failed, can't find compression program used with this archive."
       rm -f "$file""$in_extension"
-      exit
+      exit 1
 
     else
       tar -xf "$file".tar >/dev/null 2>/dev/null
@@ -178,15 +168,12 @@ function decrypt() {
   if test "$?" != 0 ; then
     echo "!!! Decompression failed, not continuing."
     rm -f "$file""$in_extension"
-    exit
+    exit 1
   fi
 
   # attempt to grab date of encryption
   date="date information not found"
-
-  if [[ -e "date.qcrypt" ]] ; then
-    date=$(cat date.qcrypt)
-  fi
+  if [[ -e "date.qcrypt" ]] ; then date=$(cat date.qcrypt) ; fi
 
   # verify that md5sum has not changed
   sum=$(find ${file::-8} -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32) 
@@ -195,7 +182,7 @@ function decrypt() {
     if test "$(cat md5sum.qcrypt)" != $sum ; then
       echo "!!! File integrity checks failed."
       rm -f "$file""$in_extension" *.qcrypt
-      exit
+      exit 1
     fi
 
   else
@@ -207,7 +194,7 @@ function decrypt() {
 
   if test "$?" != 0 ; then
     echo "!!! Cleanup failed, please check the directory for extra files."
-    exit
+    exit 1
   fi
 
   echo "+++ Decryption completed. Archive was created on: $date"
@@ -219,13 +206,13 @@ function decrypt() {
 # check for openssl
 if test "$(which openssl)" == "" ; then
   echo "!!! Could not find required program: openssl" ; echo
-  exit
+  exit 1
 fi
 
 # check for md5sum
 if test "$(which md5sum)" == "" ; then
   echo "!!! Could not find required program: md5sum" ; echo
-  exit
+  exit 1
 fi
 
 # check for compression program, prefer zip
@@ -234,7 +221,7 @@ if test "$(which zip)" == "" ; then
   # check for tar if can't find zip
   if test "$(which tar)" == "" ; then
     echo "!!! Could not find suitable compression program." ; echo
-    exit
+    exit 1
 
   else
     tar=1
@@ -255,7 +242,7 @@ if test "$1" == "-e" || test "$1" == "-d" ; then
   # warn that only one directory or file is handled per run
   if test "$3" != "" ; then
     echo "!!! qcrypt only handles one file or directory at a time"
-    exit
+    exit 1
   fi
 
   # check if file exists
@@ -266,7 +253,7 @@ if test "$1" == "-e" || test "$1" == "-d" ; then
   
   if ! [[ -e "$2" ]] ; then
     echo "!!! File provided does not exist, not continuing."
-    exit
+    exit 1
   fi
 
   file=${2%/}
@@ -274,7 +261,6 @@ if test "$1" == "-e" || test "$1" == "-d" ; then
   # run
   if test "$1" == "-e" ; then
     encrypt
-
   else
     decrypt
   fi
@@ -285,24 +271,21 @@ else
   # check if file exists
   if ! [[ -e "$1" ]] ; then
     echo "!!! File provided does not exist, not continuing."
-    exit
+    exit 1
   fi
 
   file=${1%/}
 
   # choose action
-  read -p "??? encrypt or decrypt \"$file\" ? (e/d) " -n 1 -r
-  echo
+  read -p "??? encrypt or decrypt \"$file\" ? (e/d) " -n 1 -r ; echo
 
   # run
   if test "$REPLY" == 'e' ; then 
     encrypt
-
   elif test "$REPLY" == 'd' ; then 
     decrypt
-
   else
     echo "!!! Must specify e or d"
-    exit
+    exit 1
   fi
 fi
