@@ -30,7 +30,7 @@ function encrypt() {
   # try to catch attempted re-encryption
   if test "${file: -8}" == ".zaes256" || test "${file: -8}" == ".taes256" ; then
     echo "??? $file appears to already be encrypted by qcrypt."
-    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r ; echo
+    read -p "    Are you sure you want to continue? (y/n) " -n 2 -r ; echo
 
     if test "$REPLY" != "y" ; then exit ; fi
   fi
@@ -60,7 +60,7 @@ function encrypt() {
 
   # warn if output file will overwrite existing file
   if [[ -e "$file""$out_extension" ]] ; then
-    read -p "??? \"$file$out_extension\" already exists. Overwrite? (y/n) " -n 1 -r ; echo
+    read -p "??? \"$file$out_extension\" already exists. Overwrite? (y/n) " -n 2 -r ; echo
 
     # no overwrite, clean up and exit
     if test "$REPLY" != 'y' && test "$REPLY" != 'Y' ; then 
@@ -97,22 +97,36 @@ function encrypt() {
 # aes256 decrypt and decompress
 # =============================
 function decrypt() {
+  output_file=${file::-8}
+  nonstandard=0
 
-  # try to catch attempted re-encryption
-  if (test "${file: -8}" != ".zaes256") && (test "${file: -8}" != ".taes256") ; then
-    echo "??? $file doesn't appear to be encrypted by qcrypt."
-    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r ; echo
-
-    if test "$REPLY" != "y" ; then exit ; fi
-  fi
-
-  # check for tar usage or user forcing tar usage
-  if test "${file: -8}" == ".taes256" || test "$tar" == 1 ; then
+  # check for tar usage 
+  if test "${file: -8}" == ".taes256" ; then
     in_extension=".tar" ; out_extension=".taes256"
 
-  # zip is the default, same action if extension matches .zaes256 or not
-  else
+  # check for zip usage
+  elif test "${file: -8}" == ".zaes256" ; then
     in_extension=".zip" ; out_extension=".zaes256"
+
+  # target has non standard extension, determine compression 
+  else
+    # try to catch attempted re-encryption
+    echo "??? $file doesn't appear to be encrypted by qcrypt."
+    read -p "    Are you sure you want to continue? (y/n) " -n 2 -r ; echo
+
+    if test "$REPLY" != "y" ; then exit ; fi
+
+    # user says they know what they're doing, use input file name as output
+    output_file="$file".out
+    nonstandard=1
+
+    if test "$tar" == 1 ; then
+      in_extension=".tar" ; out_extension=".taes256"
+
+    # zip is the default
+    else
+      in_extension=".zip" ; out_extension=".zaes256"
+    fi
   fi
 
   # decrypt with openssl
@@ -126,8 +140,8 @@ function decrypt() {
   fi
 
   # check if file with output name already exists
-  if [[ -e "${file::-8}" ]] ; then
-    read -p "??? File or directory \"${file::-8}\" already exists. Overwrite? (y/n) " -n 1 -r
+  if [[ -e "$output_file" ]] ; then
+    read -p "??? File or directory \"$output_file\" already exists. Overwrite? (y/n) " -n 2 -r
     echo
 
     # no overwrite, cleanup and exit
@@ -137,7 +151,7 @@ function decrypt() {
     fi
 
     # overwrite, remove previous version
-    rm -rf ${file::-8}
+    rm -rf $output_file
   fi
 
   # decompress the output, with appropriate command
@@ -175,17 +189,21 @@ function decrypt() {
   if [[ -e "date.qcrypt" ]] ; then date=$(cat date.qcrypt) ; fi
 
   # verify that md5sum has not changed
-  sum=$(find ${file::-8} -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32) 
+  if test "$nonstandard" != 1 ; then
+    sum=$(find $output_file -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32) 
 
-  if [[ -e "md5sum.qcrypt" ]] ; then
-    if test "$(cat md5sum.qcrypt)" != $sum ; then
-      echo "!!! File integrity checks failed."
-      rm -f "$file""$in_extension" *.qcrypt
-      exit 1
+    if [[ -e "md5sum.qcrypt" ]] ; then
+      if test "$(cat md5sum.qcrypt)" != $sum ; then
+        echo "!!! File integrity checks failed."
+        rm -f "$file""$in_extension" *.qcrypt
+        exit 1
+      fi
+
+    else
+      echo "??? Cannot find file integrity check, unable to verify integrity."
     fi
-
   else
-    echo "??? Cannot find file integrity check, unable to verify integrity."
+    echo "??? Cannot preform file integrity checks on archive without qcrypt extension."
   fi
 
   # clean up the working files
@@ -230,24 +248,19 @@ fi
 
 # run
 #============================
-arg1=${1:-}
-arg2=${2:-}
-arg3=${3:-}
-arg4=${4:-}
+arg1=${1:-} ; arg2=${2:-} ; arg3=${3:-} ; arg4=${4:-}
 
 # usage
 if test "$arg1" != "-a" && test "$arg1" != "-e" && test "$arg1" != "-d" ; then
-  echo "usage: qcrypt [-a|-e|-d] [-z|-t] directory_name"
+  echo "usage: qcrypt (-a|-e|-d) [-z|-t] target_name"
   exit
 fi
 
 # compression program specified
 if test "$arg2" == "-z" || test "$arg2" == "-t" ; then
 
-  if test "$arg2" == "-z" ; then
-    tar=0
-  else
-    tar=1
+  if test "$arg2" == "-z" ; then tar=0
+  else tar=1
   fi
 
   filearg=$arg3
