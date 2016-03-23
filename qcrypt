@@ -106,17 +106,12 @@ function decrypt() {
     if test "$REPLY" != "y" ; then exit ; fi
   fi
 
-  # check for tar usage
-  if test "${file: -8}" == ".taes256" ; then
+  # check for tar usage or user forcing tar usage
+  if test "${file: -8}" == ".taes256" || test "$tar" == 1 ; then
     in_extension=".tar" ; out_extension=".taes256"
 
-  # check for zip usage
-  elif test "${file: -8}" == ".zaes256" ; then
-    in_extension=".zip" ; out_extension=".zaes256"
-
-  # default is zip, use this if we don't know the extension
+  # zip is the default, same action if extension matches .zaes256 or not
   else
-    echo "??? Unable to determine compression program for archive, defaulting to unzip"
     in_extension=".zip" ; out_extension=".zaes256"
   fi
 
@@ -238,63 +233,71 @@ fi
 arg1=${1:-}
 arg2=${2:-}
 arg3=${3:-}
+arg4=${4:-}
 
 # usage
-if test "$arg1" == "" || test "$arg1" == "-h" || test "$arg1" == "--help" ; then
-  echo "usage: qcrypt [-e|-d] directory_name"
+if test "$arg1" != "-a" && test "$arg1" != "-e" && test "$arg1" != "-d" ; then
+  echo "usage: qcrypt [-a|-e|-d] [-z|-t] directory_name"
   exit
 fi
 
-# quick mode
-if test "$arg1" == "-e" || test "$arg1" == "-d" ; then
+# compression program specified
+if test "$arg2" == "-z" || test "$arg2" == "-t" ; then
+
+  if test "$arg2" == "-z" ; then
+    tar=0
+  else
+    tar=1
+  fi
+
+  filearg=$arg3
 
   # warn that only one directory or file is handled per run
-  if test "${3:-}" != "" ; then
+  if test "$arg4" != "" ; then
     echo "!!! qcrypt only handles one file or directory at a time"
     exit 1
   fi
 
-  # check if file exists
-  if test "$arg2" == "" ; then
-    echo "usage: qcrypt [-e|-d] directory_name"
-    exit
-  fi
-  
-  if ! [[ -e "$arg2" ]] ; then
-    echo "!!! File provided does not exist, not continuing."
-    exit 1
-  fi
-
-  file=${arg2%/}
-
-  # run
-  if test "$arg1" == "-e" ; then
-    encrypt
-  else
-    decrypt
-  fi
-
-# interactive mode, check if file exists
+# compression program not specified
 else
+  filearg=$arg2
 
-  # check if file exists
-  if ! [[ -e "$arg1" ]] ; then
-    echo "!!! File provided does not exist, not continuing."
+  # warn that only one directory or file is handled per run
+  if test "$arg3" != "" ; then
+    echo "!!! qcrypt only handles one file or directory at a time"
     exit 1
   fi
+fi
 
-  file=${arg1%/}
+# check if target file exists
+if test "$filearg" == "" ; then
+  echo "usage: qcrypt [-a|-e|-d] [-z|-t] directory_name"
+  exit
+fi
 
-  # choose action
-  read -p "??? encrypt or decrypt \"$file\" ? (e/d) " -n 1 -r ; echo
+if ! [[ -e "$filearg" ]] ; then
+  echo "!!! File provided does not exist, not continuing."
+  exit 1
+fi
 
-  # run
-  if test "$REPLY" == 'e' ; then 
-    encrypt
-  elif test "$REPLY" == 'd' ; then 
+file=${filearg%/}
+
+# encrypt
+if test "$arg1" == "-e" ; then
+  encrypt
+
+# decrypt
+elif test "$arg1" == "-d" ; then
+  decrypt
+
+# auto detect
+else
+  if test "${file: -8}" == ".zaes256" || test "${file: -8}" == ".taes256" ; then
+    echo "Attempting decryption"
     decrypt
+
   else
-    echo "!!! Must specify e or d"
-    exit 1
+    echo "Attempting encryption"
+    encrypt
   fi
 fi
