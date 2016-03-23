@@ -6,6 +6,11 @@
 #
 # requires openssl, md5sum, zip or tar
 
+# catch undefined variables
+set -u
+# pass errors up through pipelines so they aren't ignored
+set -o pipefail
+
 # globals
 tar=0
 
@@ -14,7 +19,8 @@ tar=0
 function encrypt() {
 
   # try to catch encrypting files/ directories outside of current working directory. this
-  # is a problem because unzip recreates the directory structure instead of merging output
+  # is a problem because unzip recreates the directory structure instead of merging  output
+ 
   if test $(dirname $file) != "." ; then
     echo "!!! qcrypt encryption should not be run on files outside of the current working
     directory. Please move to the directory containing the file and run again."
@@ -36,14 +42,12 @@ function encrypt() {
 
   # compress the directory with tar
   if test "$tar" == 1 ; then
-    in_extension=".tar"
-    out_extension=".taes256"
+    in_extension=".tar" ; out_extension=".taes256"
     tar -zcf "$file."tar *.qcrypt "$file" >/dev/null
 
   # compress the directory with zip, default
   else
-    in_extension=".zip"
-    out_extension=".zaes256"
+    in_extension=".zip" ; out_extension=".zaes256"
     zip -r "$file".zip *.qcrypt "$file" >/dev/null
   fi
   
@@ -231,35 +235,40 @@ fi
 
 # run
 #============================
-if test "$1" == "" || test "$1" == "-h" || test "$1" == "--help" ; then
+arg1=${1:-}
+arg2=${2:-}
+arg3=${3:-}
+
+# usage
+if test "$arg1" == "" || test "$arg1" == "-h" || test "$arg1" == "--help" ; then
   echo "usage: qcrypt [-e|-d] directory_name"
   exit
 fi
 
 # quick mode
-if test "$1" == "-e" || test "$1" == "-d" ; then
+if test "$arg1" == "-e" || test "$arg1" == "-d" ; then
 
   # warn that only one directory or file is handled per run
-  if test "$3" != "" ; then
+  if test "${3:-}" != "" ; then
     echo "!!! qcrypt only handles one file or directory at a time"
     exit 1
   fi
 
   # check if file exists
-  if test "$2" == "" ; then
+  if test "$arg2" == "" ; then
     echo "usage: qcrypt [-e|-d] directory_name"
     exit
   fi
   
-  if ! [[ -e "$2" ]] ; then
+  if ! [[ -e "$arg2" ]] ; then
     echo "!!! File provided does not exist, not continuing."
     exit 1
   fi
 
-  file=${2%/}
+  file=${arg2%/}
 
   # run
-  if test "$1" == "-e" ; then
+  if test "$arg1" == "-e" ; then
     encrypt
   else
     decrypt
@@ -269,12 +278,12 @@ if test "$1" == "-e" || test "$1" == "-d" ; then
 else
 
   # check if file exists
-  if ! [[ -e "$1" ]] ; then
+  if ! [[ -e "$arg1" ]] ; then
     echo "!!! File provided does not exist, not continuing."
     exit 1
   fi
 
-  file=${1%/}
+  file=${arg1%/}
 
   # choose action
   read -p "??? encrypt or decrypt \"$file\" ? (e/d) " -n 1 -r ; echo
