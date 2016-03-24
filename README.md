@@ -2,9 +2,9 @@
 Full featured command line encryption with OpenSSL
 
 `usage: qcrypt (-a|-e|-d) [-z|-t] target_name`
-- The `-a` switch signals *auto* mode, in which **qcrypt** detects whether to encrypt or decrypt the file based on the targets file extension. **qcrypt** defaults to encryption.
+- The `-a` switch signals *auto* mode, in which qcrypt detects whether to encrypt or decrypt the file based on the targets file extension. qcrypt defaults to encryption.
 - The `-e` or `-d` switches to signal encryption or decryption.
-- The `-z` and `-t` flags allow you to require **qcrypt** to use `zip` or `tar` respectively for compression. By default **qcrypt** uses which ever is available on the users system, preferring `zip` if both are present. During decryption and if present, the file extension overrides these flags.
+- The `-z` and `-t` flags allow you to require qcrypt to use `zip` or `tar` respectively for compression. By default qcrypt uses which ever is available on the users system, preferring `zip` if both are present. During decryption and if present, the file extension overrides these flags.
 
 Requires
 - `openssl`
@@ -19,4 +19,4 @@ Requires
 
 **qcrypt** has extensive error checking. It alerts the user if any part of the encryption or decryption process fails or is interrupted and attempts to clean up its working files. The original target or archive is preserved during encryption and decryption failure respectively so that another attempt can be made once the problem is remedied.
 
-A warning is supplied if **qcrypt** detects re-encryption of an archive, however this action is not disallowed. Likewise, attempted decryption of an archive without a **qcrypt** file extension will produce a warning but is allowed. This allows the user to rename archives and remove the **qcrypt** file extension if so desired. Without the `-z` or `-t` flags to denote the compression program required, **qcrypt** will default to using `zip` on the archive when it is unable to detect the compression through the file extension.
+**qcrypt** supplies a warning if it detects re-encryption of an archive, however this action is not disallowed. Likewise, attempted decryption of an archive without a qcrypt file extension will produce a warning but is allowed. This allows the user to rename archives and remove the qcrypt file extension if so desired. Without the `-z` or `-t` flags to denote the compression program required, qcrypt will default to using `zip` on the archive when it is unable to detect the compression through the file extension.
