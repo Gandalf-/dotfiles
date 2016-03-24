@@ -72,7 +72,13 @@ function encrypt() {
   fi
 
   # encrypt with openssl and aes256
-  openssl aes256 -in "$file""$in_extension" -out "$file""$out_extension" -salt 2>/dev/null
+  if test "${QCRYPT_MODE:-}" == "TEST" ; then
+    echo "!!! qcrypt test mode"
+    openssl aes256 -in "$file""$in_extension" -out "$file""$out_extension" -salt -k "default"
+
+  else
+    openssl aes256 -in "$file""$in_extension" -out "$file""$out_extension" -salt 2>/dev/null
+  fi
 
   # check for encryption failure
   if test "$?" != 0 ; then
@@ -135,7 +141,13 @@ function decrypt() {
   fi
 
   # decrypt with openssl
-  openssl aes256 -d -in "$file" -out "$file""$in_extension" -salt 2>/dev/null
+  if test "${QCRYPT_MODE:-}" == "TEST" ; then
+    echo "!!! qcrypt test mode"
+    openssl aes256 -d -in "$file" -out "$file""$in_extension" -salt -k "default"
+
+  else
+    openssl aes256 -d -in "$file" -out "$file""$in_extension" -salt 2>/dev/null
+  fi
 
   # check for decryption failure
   if test "$?" != 0 ; then
@@ -145,7 +157,7 @@ function decrypt() {
   fi
 
   # non standard skips overwrite checks
-  if test "$nonstandard" != 1 ; then
+  if test "$nonstandard" == 1 ; then
     echo "??? Cannot verify file integrity of files or that output will not overwrite an existing file"
 
   # check if file with output name already exists
@@ -271,7 +283,11 @@ fi
 # compression program specified
 if test "$arg2" == "-z" || test "$arg2" == "-t" ; then
 
-  if test "$arg2" == "-z" ; then tar=0 ; else tar=1 fi
+  if test "$arg2" == "-z" ; then 
+    tar=0
+  else
+    tar=1
+  fi
   filearg=$arg3
 
   # warn that only one directory or file is handled per run

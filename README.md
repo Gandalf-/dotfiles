@@ -1,8 +1,9 @@
 # qcrypt
 Full featured command line encryption with OpenSSL
-- `usage: qcrypt [-a|-e|-d] target_name`
+
+`usage: qcrypt (-a|-e|-d) [-z|-t] target_name`
+- The `-a` switch signals *auto* mode, in which qcrypt detects whether to encrypt or decrypt the file based on the targets file extension. qcrypt defaults to encryption.
 - The `-e` or `-d` switches to signal encryption or decryption.
-- The `-a` switch signals *auto* mode, in which qcrypt detects whether to encrypt or decrypt the file based on the targets file extension. Without any flags, it runs in interactive mode where it prompts the user to specify encryption or decryption.
 - The `-z` and `-t` flags allow you to require qcrypt to use `zip` or `tar` respectively for compression. By default qcrypt uses which ever is available on the users system, preferring `zip` if both are present.
 
 Requires
@@ -10,10 +11,9 @@ Requires
 - `zip` *or* `tar`
 - `md5sum`
 
-
 qcrypt compresses the target directory or file and uses AES256 salted password encryption provided through `openssl`.
 
-qcrypt uses the `.zaes256` and `.taes256` file extensions to denote its own archives.
+qcrypt uses the `.zaes256` and `.taes256` file extensions to denote its own archives. The existence of lack there of is how qcrypt determines whether the argument is a target or archive, and which compression program to use.
 
 qcrypt computes a checksum of the the target before compression and encryption to ensure that the archive has not been tampered with at rest. This checksum is then verified after successful decryption. It also maintains the date the archive was created to alert the user when last the archive was opened upon successful decryption. This information is kept inside the qcrypt archive itself and is removed upon decryption and presentation to the user. 
 
