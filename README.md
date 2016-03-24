@@ -4,7 +4,7 @@ Full featured command line encryption with OpenSSL
 `usage: qcrypt (-a|-e|-d) [-z|-t] target_name`
 - The `-a` switch signals *auto* mode, in which qcrypt detects whether to encrypt or decrypt the file based on the targets file extension. qcrypt defaults to encryption.
 - The `-e` or `-d` switches to signal encryption or decryption.
-- The `-z` and `-t` flags allow you to require qcrypt to use `zip` or `tar` respectively for compression. By default qcrypt uses which ever is available on the users system, preferring `zip` if both are present.
+- The `-z` and `-t` flags allow you to require qcrypt to use `zip` or `tar` respectively for compression. By default qcrypt uses which ever is available on the users system, preferring `zip` if both are present. During decryption and if present, the file extension overrides these flags.
 
 Requires
 - `openssl`
