@@ -47,17 +47,17 @@ export QCRYPT_MODE="TEST"
 
 
 # test1
-# encrypt file outside working directory
 echo fail on encrypt while not in working directory
+# encrypt file outside working directory
 mkdir dir \
   && touch dir/file \
   && ./qcrypt -e dir/file | qout
 tresult $FAIL
 
 # test2
+echo warn when re-encrypt but allow
 # encrypt file
 # encrypt archive
-echo warn when re-encrypt but allow
 touch test2 \
   && ./qcrypt -e test2 | qout \
   && [[ -e test2.zaes256 ]] \
@@ -67,9 +67,9 @@ touch test2 \
 tresult $PASS
 
 # test3
+echo encrypt with tar, decrypt with tar
 # encrypt with tar
 # decrypt with tar
-echo encrypt with tar, decrypt with tar
 touch test3 \
   && ./qcrypt -e -t test3 | qout \
   && [[ -e test3.taes256 ]] \
@@ -79,9 +79,9 @@ touch test3 \
 tresult $PASS
 
 # test4
+echo encrypt with tar, decrypt with zip when file extension is provided
 # encrypt with tar
 # decrypt with zip
-echo encrypt with tar, decrypt with zip when file extension is provided
 touch test4 \
   && ./qcrypt -e -t test4 | qout \
   && [[ -e test4.taes256 ]] \
@@ -154,10 +154,10 @@ touch test9 \
 tresult $PASS
 
 # test10
+echo rename archive after encryption with tar
 # encrypt file with tar
 # rename to non qcrypt extension
 # decrypt file with tar
-echo rename archive after encryption with tar
 touch test10 \
   && ./qcrypt -e -t test10 | qout \
   && [[ -e test10.taes256 ]] \
@@ -168,10 +168,10 @@ touch test10 \
 tresult $PASS
 
 # test11
+echo rename archive after encryption but use the wrong decompression program
 # encrypt file with zip
 # rename to non qcrypt extension
 # decrypt file with tar
-echo rename archive after encryption but use the wrong decompression program
 touch test11 \
   && ./qcrypt -e -t test11 | qout \
   && [[ -e test11.taes256 ]] \
