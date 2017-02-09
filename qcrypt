@@ -20,7 +20,7 @@ function encrypt() {
   # try to catch encrypting files/ directories outside of current working directory. this
   # is a problem because unzip recreates the directory structure instead of merging  output
  
-  if test $(dirname $file) != "." ; then
+  if test "$(dirname "$file")" != "." ; then
     echo "!!! qcrypt encryption should not be run on files outside of the current working
     directory. Please move to the directory containing the file and run again."
     exit 1
@@ -35,25 +35,25 @@ function encrypt() {
   fi
 
   # create an md5sum of the directory or file and creation date file
-  sum=$(find $file -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32)
-  echo $sum > md5sum.qcrypt
-  echo $(date) > date.qcrypt
+  sum="$(find "$file" -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32)"
+  echo "$sum" > md5sum.qcrypt
+  date > date.qcrypt
 
   # compress the directory with tar
   if test "$tar" == 1 ; then
     in_extension=".tar" ; out_extension=".taes256"
-    tar -zcf "$file."tar *.qcrypt "$file" >/dev/null
+    tar -zcf "$file."tar ./*.qcrypt "$file" >/dev/null
 
   # compress the directory with zip, default
   else
     in_extension=".zip" ; out_extension=".zaes256"
-    zip -r "$file".zip *.qcrypt "$file" >/dev/null
+    zip -r "$file".zip ./*.qcrypt "$file" >/dev/null
   fi
   
   # check for compression failure
   if test "$?" != 0 ; then
     echo "!!! Compression failed, not continuing."
-    rm *.qcrypt
+    rm ./*.qcrypt
     exit 1
   fi
 
@@ -63,7 +63,7 @@ function encrypt() {
 
     # no overwrite, clean up and exit
     if test "$REPLY" != 'y' && test "$REPLY" != 'Y' ; then 
-      rm -f "$file""$in_extension" *.qcrypt
+      rm -f "$file""$in_extension" ./*.qcrypt
       exit
     fi
 
@@ -83,13 +83,13 @@ function encrypt() {
   # check for encryption failure
   if test "$?" != 0 ; then
     echo "!!! Encryption failed, not continuing."
-    rm -rf "$file""$in_extension" *.qcrypt 
+    rm -rf "$file""$in_extension" ./*.qcrypt 
     exit 1
   fi
 
   # set output to read only and cleanup working files
   chmod 400 "$file""$out_extension"
-  rm -rf "$file" "$file""$in_extension" *.qcrypt
+  rm -rf "$file" "$file""$in_extension" ./*.qcrypt
 
   if test "$?" != 0 ; then
     echo "!!! Cleanup failed, please check the directory for extra files."
@@ -173,7 +173,7 @@ function decrypt() {
       fi
 
       # overwrite, remove previous version
-      rm -rf $output_file
+      rm -rf "$output_file"
     fi
   fi
 
@@ -214,13 +214,13 @@ function decrypt() {
 
   # verify that md5sum has not changed, this is skipped for non standard files
   if test "$nonstandard" != 1 ; then
-    sum=$(find $output_file -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32) 
+    sum=$(find "$output_file" -type f -exec md5sum {} \; | sort -k 34 | md5sum | cut -c 1-32) 
 
     if [[ -e "md5sum.qcrypt" ]] ; then
 
-      if test "$(cat md5sum.qcrypt)" != $sum ; then
+      if test "$(cat md5sum.qcrypt)" != "$sum" ; then
         echo "!!! File integrity checks failed."
-        rm -f "$file""$in_extension" *.qcrypt
+        rm -f "$file""$in_extension" ./*.qcrypt
         exit 1
       fi
 
@@ -230,7 +230,7 @@ function decrypt() {
   fi
 
   # clean up the working files
-  rm -rf "$file" "$file""$in_extension" *.qcrypt
+  rm -rf "$file" "$file""$in_extension" ./*.qcrypt
 
   if test "$?" != 0 ; then
     echo "!!! Cleanup failed, please check the directory for extra files."
