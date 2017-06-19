@@ -1,13 +1,24 @@
 #vi:syntax=bash
 
+# where are we?
+test (hostname) = 'wkstn-avoecks'; and set at_work yes
+
 # Fish git prompt
-set __fish_git_prompt_showdirtystate 'yes'
-set __fish_git_prompt_showstashstate 'yes'
-set __fish_git_prompt_showuntrackedfiles 'no'
 set __fish_git_prompt_showupstream 'yes'
 set __fish_git_prompt_color_branch yellow
-set __fish_git_prompt_color_upstream_ahead green
-set __fish_git_prompt_color_upstream_behind red
+
+if test $at_work
+  set -gx DISPLAY ':0'
+
+else
+  set __fish_git_prompt_showdirtystate 'yes'
+  set __fish_git_prompt_showstashstate 'yes'
+  set __fish_git_prompt_showuntrackedfiles 'no'
+  set __fish_git_prompt_color_upstream_ahead green
+  set __fish_git_prompt_color_upstream_behind red
+  set __fish_git_prompt_color_upstream_ahead green
+  set __fish_git_prompt_color_upstream_behind red
+end
 
 # Status Chars
 set __fish_git_prompt_char_dirtystate '⚡'
@@ -28,7 +39,8 @@ set -x LESS_TERMCAP_us (printf "\033[01;32m")
 
 # Fish Global Settings
 # ====================
-set -gx __HOST__ (hostname | sed 's/localhost/home/')
+set -gx __HOST__ (hostname       | sed 's/localhost/home/')
+set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
 #setxkbmap -option caps:swapescape ^/dev/null
 
 function fish_prompt
@@ -66,7 +78,6 @@ if status --is-interactive
     abbr --add echo e
     abbr --add head h
     abbr --add ls   l
-    abbr --add sudo s
     abbr --add vim  v
 end
 
@@ -173,9 +184,15 @@ al cleanup   'rm (find -regex ".*\.\(pyc\|class\|o\|bak\)")'
 al cleanup!  'rm -f (find -regex ".*\.\(pyc\|class\|o\|bak\)")'
 al startsshd 'sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd'
 
-al vw      'v ~/google_drive/index.md'
 al vfish   'v ~/.config/fish/config.fish'
 al srcfish '. ~/.config/fish/config.fish'
+
+if test $at_work
+  al vw 'v ~/vimwiki/index.md'
+
+else
+  al vw 'v ~/google_drive/index.md'
+end
 
 # quick progs
 #-------------------
@@ -199,14 +216,20 @@ al .... 'cd ../../../;ls'
 # Fish Functions
 #===================
 
-function vws ; vim ~/google_drive/index.md +"VimwikiSearch $argv" ; end
+if test $at_work
+  function vws ; vim ~/vimwiki/index.md +"VimwikiSearch $argv" ; end
+  set scripts /mnt/vc/home/avoecks/DotFiles/scripts.sh
+
+else
+  function vws ; vim ~/google_drive/index.md +"VimwikiSearch $argv" ; end
+  set scripts /home/leaf/google_drive/personal/share/Public/DotFiles/scripts.sh
+end
 
 function c     ; test -z "$argv"; and cd; or cd "$argv"; ls       ; end
 function pin   ; test ! -z "$argv"; and ln -s "$argv" ~/          ; end
 function mkc   ; mkdir "$argv[1]"; and c "$argv[1]"               ; end
 function vlo   ; command vim -p (loc -A "$argv")                  ; end
 
-set scripts /home/leaf/google_drive/personal/share/Public/DotFiles/scripts.sh
 
 for function in (grep '()' $scripts | cut -f 1 -d ' ')
   eval "function $function ; bash $scripts $function \$argv ; end"

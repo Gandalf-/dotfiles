@@ -1,5 +1,17 @@
 #~/.bashrc: executed by bash(1) for non-login shells.
 
+# where are we?
+at_work=0
+[[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
+
+if (( at_work )); then
+	export QA=/usr/local/qa
+	export TOOLS=/usr/local/tools
+	export QALIB=$QA/lib
+	export PERL5LIB=$QA/lib
+	export PATH=$QA/bin:$QA/tests:$QA/linux/bin:$TOOLS:$PATH
+fi
+
 # vim is great
   #set -o vi
 

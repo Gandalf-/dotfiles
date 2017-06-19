@@ -22,6 +22,8 @@
   set hidden nobackup nowritebackup noswapfile
   set ttimeout ttimeoutlen=20
 
+  let hostname = substitute(system('hostname'), '\n', '', '') " where are we?
+
   let g:tex_conceal = ""  " Don't hide LaTeX symbols
   nnoremap <SPACE> <Nop>
   let g:mapleader = " "
@@ -51,16 +53,24 @@
     let g:vimwiki_table_mappings = 0
     let g:vimwiki_global_ext     = 0
     let g:vimwiki_folding        = 'custom'
-    let g:vimwiki_root = '~/google_drive'
-    "let g:vimwiki_list = [{'path': '~/google_drive/', 'syntax' : 'markdown', 'ext' : '.md', 'auto_tags': 1}]
-    "
-    let g:vimwiki_list = [{
-          \ "path": '~/google_drive/', 
-          \ "path_html": '/tmp/html/', 
-          \ "syntax": 'markdown', 
-          \ "ext": '.md', 
-          \ "css_file": '~/.vim/bundle/vimwiki/autoload/vimwiki/style.css', 
-          \ "custom_wiki2html": '~/google_drive/code/shell/wiki2html.sh', }]
+
+    if hostname == "wkstn-avoecks"
+      let g:vimwiki_root = '~/vimwiki'
+      let g:vimwiki_list = [{
+            \ 'path': '~/vimwiki/', 
+            \ 'syntax': 'markdown',
+            \ 'ext': '.md'}]
+
+    else
+      let g:vimwiki_root = '~/google_drive'
+      let g:vimwiki_list = [{
+            \ "path": '~/google_drive/', 
+            \ "path_html": '/tmp/html/', 
+            \ "syntax": 'markdown', 
+            \ "ext": '.md', 
+            \ "css_file": '~/.vim/bundle/vimwiki/autoload/vimwiki/style.css', 
+            \ "custom_wiki2html": '~/google_drive/code/shell/wiki2html.sh', }]
+    endif
     nmap <Leader>wn <Plug>VimwikiNextLink
     nmap <Leader>wp <Plug>VimwikiPrevLink
 
