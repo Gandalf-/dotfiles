@@ -11,8 +11,6 @@
   set langmenu=en_US      " Sets languages
   set sh=bash             " So vim plays nice with fish
   set ff=unix             " No crazy DOS line endings please
-  set laststatus=2
-  set cmdheight=2         " Avoids 'press <Enter> to continue' ?
   set history=300         " Sets how many lines of history VIM has to remember
   set autoread            " Pick up changes from outside this vim session
   set fileformat=unix     " Use Unix line endings
@@ -48,6 +46,7 @@
     filetype plugin indent on
 
   " vimwiki
+    autocmd TextChanged,TextChangedI *.md silent write
     let g:vimwiki_table_mappings = 0
     let g:vimwiki_global_ext     = 0
     let g:vimwiki_folding        = 'custom'
@@ -141,9 +140,6 @@
     endif
 
   " syntastic
-    "set statusline+=%#warningmsg#
-    "set statusline+=%{SyntasticStatuslineFlag()}
-    "set statusline+=%*
     "let g:syntastic_cpp_compiler = 'clang++'
     "let g:syntastic_cpp_compiler_options = ' -std=c++11 -stdlib=libc++'
     let g:syntastic_error_symbol = '✘'
@@ -161,17 +157,14 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => UI
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  colorscheme desert
-  set t_Co=256                " Set color scheme
-  set showtabline=2           " Always show the tab line
-  set tabpagemax=30           " Set the maximum number of tabs
-  set scrolloff=4             " Avoid edge of the screen
-  set guicursor=a:blinkon0    " Set no blinking cursor
-  set number                  " Show line numbers
-  set wrap                    " No word wrap
-  set tw=79                   " 88 works better for Pixel
+  " General
+    colorscheme desert
+    set t_Co=256
+    set number wrap tw=79 showcmd
+    set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
-  set showcmd
+  " Resize vim windows when overall window size changes
+    autocmd VimResized * wincmd =
 
   " Be as wild as possible
     set wildmode=full wildmenu
@@ -182,28 +175,30 @@
     set lazyredraw ttyfast
 
   " Syntax, Column and cursor lines
-    syntax on
-    syntax sync minlines=256
+    syntax on sync minlines=256
 
     set colorcolumn=80          " Handy bar so we know when lines are too long
     set synmaxcol=200           " Limit column highlights to 200 columns
     highlight ColorColumn ctermbg=234
 
+  " Cursor line
     set cursorline              " Handy line so we know where we are
     highlight CursorLine cterm=NONE ctermbg=234 ctermfg=NONE
     autocmd InsertEnter,InsertLeave * set cul!
 
+  " Window split
+    set fillchars+=vert:│
+    highlight VertSplit cterm=NONE ctermbg=0 ctermfg=NONE
+
   " Status line
+    highlight StatusLine ctermfg=245 cterm=none
     set statusline=%f    " Path.
     set statusline+=%m   " Modified flag.
     set statusline+=%r   " Readonly flag.
     set statusline+=%w   " Preview window flag.
     set statusline+=\    " Space.
     set statusline+=%=   " Right align.
-
-  " Line and column position and counts.
     set statusline+=\ %l:%03c\ %p%%
-    highlight StatusLine ctermfg=245 cterm=none
 
   " Colors
     highlight Pmenu      ctermbg=240
@@ -318,16 +313,12 @@
     noremap :! :!clear;
     noremap :make :!clear; make
     noremap <silent> <c-l> :nohlsearch<cr>
-
-  " Crazy fast `grep`ing
-    if executable('ag')
-      set grepprg=ag\ --nogroup\ --nocolor
-    endif
   
   " Make pylint happy
     autocmd BufNewFile,BufRead *.py setlocal tabstop=4
 
   " External tools
+    call system('type ag')
 		if v:shell_error == 0
 			if exists('+grepprg')    | set grepprg=ag\ --vimgrep\ $* | endif
 			if exists('+grepformat') | set grepformat=%f:%l:%c:%m    | endif
