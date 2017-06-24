@@ -7,9 +7,11 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  set title
   set langmenu=en_US      " Sets languages
   set sh=bash             " So vim plays nice with fish
   set ff=unix             " No crazy DOS line endings please
+  set laststatus=2
   set cmdheight=2         " Avoids 'press <Enter> to continue' ?
   set history=300         " Sets how many lines of history VIM has to remember
   set autoread            " Pick up changes from outside this vim session
@@ -27,10 +29,6 @@
   let g:tex_conceal = ""  " Don't hide LaTeX symbols
   nnoremap <SPACE> <Nop>
   let g:mapleader = " "
-
-  if ! exists("syntax_on")
-    syntax on
-  endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Plugins
@@ -95,33 +93,37 @@
     endfunction
 
   " neocomplete 
-    "let g:acp_enableAtStartup = 0
-    let g:neocomplete#enable_at_startup = 1
-    let g:neocomplete#enable_smart_case = 1
-    let g:neocomplete#sources#syntax#min_keyword_length = 3
+    if v:version >= 704 && has("lua")
+      "let g:acp_enableAtStartup = 0
+      let g:neocomplete#enable_at_startup = 1
+      let g:neocomplete#enable_smart_case = 1
+      let g:neocomplete#sources#syntax#min_keyword_length = 3
 
-    if !exists('g:neocomplete#keyword_patterns')
-        let g:neocomplete#keyword_patterns = {}
+      if !exists('g:neocomplete#keyword_patterns')
+          let g:neocomplete#keyword_patterns = {}
+      endif
+
+      let g:neocomplete#auto_completion_start_length = 2
+      let g:neocomplete#keyword_patterns['default']  = '\h\w*'
+      let g:neocomplete#max_list = 5
+
+      inoremap <expr><C-g> neocomplete#undo_completion()
+      inoremap <expr><C-l> neocomplete#complete_common_string()
+
+      " <CR>: close popup and save indent.
+        inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
+        function! s:my_cr_function()
+          return (pumvisible() ? "\<C-y>" : "" ) . "\<CR>"
+        endfunction
+
+      " <TAB>: completion.
+        inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+
+      " <BS>: close popup and delete backword char.
+        inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
+
+      autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     endif
-
-    let g:neocomplete#auto_completion_start_length = 2
-    let g:neocomplete#keyword_patterns['default']  = '\h\w*'
-    let g:neocomplete#max_list = 5
-
-    inoremap <expr><C-g> neocomplete#undo_completion()
-    inoremap <expr><C-l> neocomplete#complete_common_string()
-
-    " <CR>: close popup and save indent.
-      inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
-      function! s:my_cr_function()
-        return (pumvisible() ? "\<C-y>" : "" ) . "\<CR>"
-      endfunction
-
-    " <TAB>: completion.
-      inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-
-    " <BS>: close popup and delete backword char.
-      inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
 
   " neosnippet 
     imap <C-j> <Plug>(neosnippet_expand_or_jump)
@@ -139,11 +141,13 @@
     endif
 
   " syntastic
-    set statusline+=%#warningmsg#
-    set statusline+=%{SyntasticStatuslineFlag()}
-    set statusline+=%*
+    "set statusline+=%#warningmsg#
+    "set statusline+=%{SyntasticStatuslineFlag()}
+    "set statusline+=%*
     "let g:syntastic_cpp_compiler = 'clang++'
     "let g:syntastic_cpp_compiler_options = ' -std=c++11 -stdlib=libc++'
+    let g:syntastic_error_symbol = '✘'
+    let g:syntastic_warning_symbol = "▲"
 
     let g:syntastic_mode_map = { 'mode': 'active', 'active_filetypes': [], 'passive_filetypes': [] }
     nnoremap <leader>c :w <CR> :SyntasticCheck<CR>
@@ -170,31 +174,46 @@
   set showcmd
 
   " Be as wild as possible
-  set wildmode=full wildmenu
-  set wildignore=*.o,*~,*.pyc,/usr/include/*,*.class,*.bak,
-  set wildignore+=.git\*,.svn\* 
+    set wildmode=full wildmenu
+    set wildignore=*.o,*~,*.pyc,/usr/include/*,*.class,*.bak,
+    set wildignore+=.git\*,.svn\* 
 
   " Performance!?
-  set lazyredraw ttyfast
+    set lazyredraw ttyfast
 
-  " Column and cursor lines
-  set colorcolumn=80          " Handy bar so we know when lines are too long
-  set synmaxcol=200           " Limit column highlights to 200 columns
-  highlight ColorColumn ctermbg=234
+  " Syntax, Column and cursor lines
+    syntax on
+    syntax sync minlines=256
 
-  set cursorline              " Handy line so we know where we are
-  highlight CursorLine cterm=NONE ctermbg=234 ctermfg=NONE
-  autocmd InsertEnter,InsertLeave * set cul!
+    set colorcolumn=80          " Handy bar so we know when lines are too long
+    set synmaxcol=200           " Limit column highlights to 200 columns
+    highlight ColorColumn ctermbg=234
+
+    set cursorline              " Handy line so we know where we are
+    highlight CursorLine cterm=NONE ctermbg=234 ctermfg=NONE
+    autocmd InsertEnter,InsertLeave * set cul!
+
+  " Status line
+    set statusline=%f    " Path.
+    set statusline+=%m   " Modified flag.
+    set statusline+=%r   " Readonly flag.
+    set statusline+=%w   " Preview window flag.
+    set statusline+=\    " Space.
+    set statusline+=%=   " Right align.
+
+  " Line and column position and counts.
+    set statusline+=\ %l:%03c\ %p%%
+    highlight StatusLine ctermfg=245 cterm=none
 
   " Colors
-  highlight Pmenu      ctermbg=240
-  highlight PmenuSel   ctermbg=234
-  highlight PmenuSBar  ctermbg=238
-  highlight PmenuThumb ctermbg=234
+    highlight Pmenu      ctermbg=240
+    highlight PmenuSel   ctermbg=234
+    highlight PmenuSBar  ctermbg=238
+    highlight PmenuThumb ctermbg=234
 
   " Be less obnoxious about 'Pattern not found' warnings
-  highlight Error    None
-  highlight ErrorMsg None
+    highlight Error    None
+    highlight ErrorMsg None
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Miscellaneous
@@ -207,12 +226,14 @@
         call cursor(l, c)
     endfun
     autocmd FileType sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+  " File specific 
+    autocmd FileType make setlocal noexpandtab
 
   " Avoid dumb markdown extension
     autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
 
   " Searching
-    set hlsearch incsearch showmatch ignorecase ruler
+    set hlsearch incsearch showmatch ignorecase smartcase infercase ruler
 
   " Search for visually selected text, forwards or backwards!
     vnoremap <silent> * :<C-U>
@@ -305,6 +326,12 @@
   
   " Make pylint happy
     autocmd BufNewFile,BufRead *.py setlocal tabstop=4
+
+  " External tools
+		if v:shell_error == 0
+			if exists('+grepprg')    | set grepprg=ag\ --vimgrep\ $* | endif
+			if exists('+grepformat') | set grepformat=%f:%l:%c:%m    | endif
+		endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
@@ -415,7 +442,11 @@
     command! Q :qall
     nnoremap <silent> <leader>n <C-w><C-w>
 
-  " shell commands
+  " stay in visual mode while changing indentation
+    vnoremap < <gv
+    vnoremap > >gv
+
+  " shell + tmux pane commands
     function! Run_Command(command)
       execute "silent !tmux send-keys -t right '" . a:command . "' C-m"
       execute "redraw!"

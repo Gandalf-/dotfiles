@@ -1,6 +1,9 @@
 #!/bin/bash
 
-startsshd () { sudo mkdir -p /var/run/sshd && sudo /usr/sbin/sshd; }
+
+shttp ()     { python -m SimpleHTTPServer; }
+sandman ()   { kill -9 "$(jobs -p)"; }
+startsshd () { sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd; }
 
 tmr () { tmux send-keys -t right "$@" C-m; }
 tml () { tmux send-keys -t left  "$@" C-m; }
@@ -11,6 +14,35 @@ grap () { ps aux | grep "$1" | grep -v "grep $1"; }
 grip () { ps -fC "$1"; }
 calc () { bc -l <<< "$@"; }
 freq () { sort | uniq -c | sort -nr | head -n "$1"; }
+
+cleanup () {
+  # cleanup [-i]
+  # smart remove duplicate file names and intermediary file types
+
+  counter=0
+  while read -r file; do
+    fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
+
+    if [[ -f "$fixed" ]]; then
+      echo "remove dup: $file"
+      rm "$file"
+
+    else
+      echo "rename dup: $file"
+      mv "$file" "$fixed"
+    fi
+
+    let counter++
+  done < <(find -regex '.*([0-9]+).*')
+
+  while read -r file; do
+    echo "remove    : $file"
+    rm "$file"
+    let counter++
+  done < <(find -regex '.*\.\(pyc\|class\|o\|bak\)')
+
+  echo "Cleaned up $counter files"
+}
 
 ratio (){
   freq "$1" |
