@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # =============================================================================
+# script.sh
+# =============================================================================
+
+# =============================================================================
 # aliases
 # =============================================================================
 alias dos2unix='recode dos/CR-LF..l1'
@@ -23,6 +27,7 @@ alias l='ls'
 alias p='python'
 alias t='task'
 alias w='which'
+alias v='vim'
 
 alias p3='python3'
 
@@ -135,22 +140,22 @@ gin (){
 
   case "$1" in
     "s")   insync-headless start             ;;
-    "p")   insync-headless pause_syncing     ;;
-    "r")   insync-headless resume_syncing    ;;
-    "ras") insync-headless reject_all_new_shares austin.voecks@gmail.com ;;
+    "ps")  insync-headless pause_syncing     ;;
+    "rs")  insync-headless resume_syncing    ;;
     "re")  insync-headless retry_errors      ;;
     "gs")  insync-headless get_status        ;;
-    "sp")  insync-headless get_sync_progress ;;
+    "ge")  insync-headless get_errors        ;;
+    "gsp") insync-headless get_sync_progress ;;
     *)
       echo "
 insync-headless wrapper
-  s   : start
-  p   : pause_syncing
-  r   : resume_syncing
-  ras : reject_all_new_shares
-  re  : retry_errors
-  gs  : get_status
-  sp  : get_sync_progress
+   s : start
+  ps : pause syncing
+  rs : resume syncing
+  re : retry errors
+  gs : get status
+  ge : get errors
+ gsp : get sync progress
        "
       ;;
   esac
@@ -166,6 +171,10 @@ confirm (){
     shift
     printf "%b%s%b " "$green" "$@" "$normal"
     read -r reply; [[ "$reply" =~ [Nn] ]] && exit
+
+  else
+    shift
+    printf "%b%s%b " "$green" "$@" "$normal"
   fi
 }
 
@@ -177,30 +186,30 @@ g (){
     return
   fi
 
-  do_confirm=1
+  cnfrm=1
   fmt="\
 %Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
 
   while [[ ! -z "$1" ]]; do
     case "$1" in
-      "!")  do_confirm=$(( ! do_confirm ))                          ;;
+      "!")  cnfrm=$(( ! cnfrm ))                          ;;
 
-      "a")  confirm "$do_confirm" "[g] git add -A :/"
+      "a")  confirm "$cnfrm" "git add -A :/"
             git add -A :/                                           ;;
 
-      "bv") confirm "$do_confirm" "[g] git branch -vv"
+      "bv") confirm "$cnfrm" "git branch -vv"
             git branch -vv                                          ;;
 
-      "rv") confirm "$do_confirm" "[g] git remote -vv"
+      "rv") confirm "$cnfrm" "git remote -vv"
             git remote -vv                                          ;;
 
-      "ca") confirm "$do_confirm" "[g] git commit --amend"
+      "ca") confirm "$cnfrm" "git commit --amend"
             git commit --amend                                      ;;
 
-      "co") confirm "$do_confirm" "[g] git checkout $2"
+      "co") confirm "$cnfrm" "git checkout $2"
             git checkout "$2"   ; shift                             ;;
 
-      "cb") confirm "$do_confirm" "[g] git checkout -b $2"
+      "cb") confirm "$cnfrm" "git checkout -b $2"
             git checkout -b "$2"; shift                             ;;
 
       "cg") bug_dir='/home/avoecks/cribshome/wiki/bugs/'
@@ -208,25 +217,25 @@ g (){
                                  grep "$2"         |
                                  grep -o '[0-9]\+' |
                                  head -n 1)"
-            confirm "do_confirm" "[g] git checkout $bug_branch"
+            confirm "cnfrm" "git checkout $bug_branch"
             git checkout "$bug_branch"; shift                       ;;
 
-      "f")  confirm "$do_confirm" "[g] git fetch"
+      "f")  confirm "$cnfrm" "git fetch"
             git fetch                                               ;;
 
-      "l")  confirm "$do_confirm" "[g] git log"
+      "l")  confirm "$cnfrm" "git log"
             git log --color=always | head -n 20                     ;;
 
-      "lo") confirm "$do_confirm" "[g] git log --oneline"
+      "lo") confirm "$cnfrm" "git log --oneline"
             git log --oneline --color=always | head -n 10           ;;
 
-      "ll") confirm "$do_confirm" "[g] git log --graph"
+      "ll") confirm "$cnfrm" "git log --graph"
             git log --graph --pretty=format:"$fmt" --abbrev-commit  ;;
 
-      "s")  confirm "$do_confirm" "[g] git status"
+      "s")  confirm "$cnfrm" "git status"
             git status                                              ;;
 
-      "ri") confirm "$do_confirm" "[g] git rebase -i $2"
+      "ri") confirm "$cnfrm" "git rebase -i $2"
             if [[ ! -z "$2" ]]; then
               git rebase -i "$2"; shift
             else
@@ -235,12 +244,12 @@ g (){
         ;;
 
       "d")  if [[ -f "$2" ]]; then
-              confirm "$do_confirm" "[g] git diff --full-index > $2"
+              confirm "$cnfrm" "git diff --full-index > $2"
               git diff --full-index > "$2"
               shift
 
             else
-              confirm "$do_confirm" "[g] git diff --full-index"
+              confirm "$cnfrm" "git diff --full-index"
               git diff --full-index
             fi
         ;;
@@ -252,12 +261,12 @@ g (){
             fi
 
             if [[ -f "$3" ]]; then
-              confirm "$do_confirm" "[g] git diff --full-index HEAD~$commits > $3"
+              confirm "$cnfrm" "git diff --full-index HEAD~$commits > $3"
               git diff --full-index HEAD~"$commits" > "$3"
               shift
 
             else
-              confirm "$do_confirm" "[g] git diff --full-index HEAD~$commits"
+              confirm "$cnfrm" "git diff --full-index HEAD~$commits"
               git diff --full-index HEAD~"$commits"
             fi
             shift
@@ -266,44 +275,44 @@ g (){
       "ds") branch="$(git rev-parse --abbrev-ref HEAD)"
             diff="/home/avoecks/cribshome/diffs/${branch}.diff"
             if [ "$2" -eq "$2" ] 2>/dev/null ; then
-              confirm "$do_confirm" "[g] git diff --full-index HEAD~$2 > $diff"
+              confirm "$cnfrm" "git diff --full-index HEAD~$2 > $diff"
               git diff --full-index HEAD~"$2" > "$diff"
               shift
 
             else
-              confirm "$do_confirm" "[g] git diff --full-index HEAD~1 > $diff"
+              confirm "$cnfrm" "git diff --full-index HEAD~1 > $diff"
               git diff --full-index HEAD~1 > "$diff"
               shift
             fi
         ;;
 
-      "bn") confirm "$do_confirm" "[g]git checkout $remote_branch -b $new_branch_name"
+      "bn") confirm "$cnfrm" "git checkout $remote_branch -b $new_branch_name"
             remote_branch="$2"
             new_branch_name="$3"
             git checkout "$remote_branch" -b "$new_branch_name"
             shift
             shift
         ;;
-      "cm") confirm "$do_confirm" "[g] git commit -m $2"
+      "cm") confirm "$cnfrm" "git commit -m $2"
             if [[ ! -z "$2" ]]; then
               git commit -m "$2"; shift
             fi
         ;;
-      "pl") confirm "$do_confirm" "[g] git pull $2"
+      "pl") confirm "$cnfrm" "git pull $2"
             if [[ ! -z "$2" ]]; then
               git pull "$2"; shift
             else
               git pull
             fi
         ;;
-      "ph") confirm "$do_confirm" "[g] git push $2"
+      "ph") confirm "$cnfrm" "git push $2"
             if [[ ! -z "$2" ]]; then
               git push "$2"; shift
             else
               git push
             fi
         ;;
-      "pf") confirm "$do_confirm" "[g] git push --force $2"
+      "pf") confirm "$cnfrm" "git push --force $2"
             if [[ ! -z "$2" ]]; then
               git push --force "$2"; shift
             else
@@ -315,7 +324,7 @@ g (){
   g
     !  : toggle confirmation
     a  : add everything
-    b? : branch -vv
+    bv : branch -vv
     bn : checkout (remote branch) -b (local branch)
     ca : commit amend
     cb : checkout -b (branch)
@@ -329,7 +338,7 @@ g (){
     l  : log
     ll : log graph
     s  : status
-    r? : remote -vv
+    rv : remote -vv
     ri : interactive rebase
     p  : pause
     pl : pull [branch]
@@ -341,7 +350,7 @@ g (){
     esac
 
     if (( $? )); then
-      echo "[g] Detected failure, not continuing"
+      confirm 0 "Detected failure, not continuing"
       return
     fi
 

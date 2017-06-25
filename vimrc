@@ -533,9 +533,6 @@
     nnoremap / /\v
     vnoremap / /\v
 
-    inoremap <C-l> <Esc>
-    vnoremap <C-l> <Esc>
-
   " Search across all open buffers
     function! BuffersList()
       let all = range(0, bufnr('$'))

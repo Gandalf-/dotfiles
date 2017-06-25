@@ -3,40 +3,6 @@
 # where are we?
 test (hostname) = 'wkstn-avoecks'; and set at_work yes
 
-# Fish git prompt
-set __fish_git_prompt_showupstream 'yes'
-set __fish_git_prompt_color_branch yellow
-
-if test $at_work
-  set -gx DISPLAY ':0'
-
-else
-  set __fish_git_prompt_showdirtystate 'yes'
-  set __fish_git_prompt_showstashstate 'yes'
-  set __fish_git_prompt_showuntrackedfiles 'no'
-  set __fish_git_prompt_color_upstream_ahead green
-  set __fish_git_prompt_color_upstream_behind red
-  set __fish_git_prompt_color_upstream_ahead green
-  set __fish_git_prompt_color_upstream_behind red
-end
-
-# Status Chars
-set __fish_git_prompt_char_dirtystate '⚡'
-set __fish_git_prompt_char_stagedstate '→'
-set __fish_git_prompt_char_untrackedfiles '☡'
-set __fish_git_prompt_char_stashstate '↩'
-set __fish_git_prompt_char_upstream_ahead '+'
-set __fish_git_prompt_char_upstream_behind '-'
-
-# colorful man pages
-set -x LESS_TERMCAP_mb (printf "\033[01;31m")  
-set -x LESS_TERMCAP_md (printf "\033[01;31m")  
-set -x LESS_TERMCAP_me (printf "\033[0m")  
-set -x LESS_TERMCAP_se (printf "\033[0m")  
-set -x LESS_TERMCAP_so (printf "\033[01;44;33m")  
-set -x LESS_TERMCAP_ue (printf "\033[0m")  
-set -x LESS_TERMCAP_us (printf "\033[01;32m") 
-
 # Fish Global Settings
 # ====================
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
@@ -145,6 +111,7 @@ function pin   ; test ! -z "$argv"; and ln -s "$argv" ~/          ; end
 function mkc   ; mkdir "$argv[1]"; and c "$argv[1]"               ; end
 function vlo   ; command vim -p (loc -A "$argv")                  ; end
 
+# get script file based on location
 if test $at_work
   function vws ; vim ~/vimwiki/index.md +"VimwikiSearch $argv" ; end
   set scripts /mnt/vc/home/avoecks/DotFiles/scripts.sh
@@ -155,13 +122,13 @@ else
 end
 
 # external functions
-for function in (grep '()' $scripts | cut -f 1 -d ' ')
-  eval "function $function ; bash $scripts $function \$argv ; end"
+for ex_function in (grep '()' $scripts | cut -f 1 -d ' ')
+  eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
 end
 
 # external aliases
-for function in (grep 'alias ' $scripts)
-  eval "$function"
+for ex_alias in (grep 'alias ' $scripts)
+  eval "$ex_alias"
 end
 
 function repeat
@@ -172,22 +139,6 @@ function repeat
     end
   end
 end
-
-function a
-  if test -z "$argv"
-
-    if test -d "$argv[1]"
-      cd "$argv"
-
-    else if test -f "$argv[1]"
-
-    end
-
-  else
-    cd
-  end
-end
-
 
 # autojump
 #===================
@@ -207,3 +158,38 @@ function j
         false
     end
 end
+
+# Fish git prompt
+set __fish_git_prompt_showupstream 'yes'
+set __fish_git_prompt_color_branch yellow
+
+if test $at_work
+  set -gx DISPLAY ':0'
+
+else
+  set __fish_git_prompt_showdirtystate 'yes'
+  set __fish_git_prompt_showstashstate 'yes'
+  set __fish_git_prompt_showuntrackedfiles 'no'
+  set __fish_git_prompt_color_upstream_ahead green
+  set __fish_git_prompt_color_upstream_behind red
+  set __fish_git_prompt_color_upstream_ahead green
+  set __fish_git_prompt_color_upstream_behind red
+end
+
+# Status Chars
+set __fish_git_prompt_char_dirtystate '⚡'
+set __fish_git_prompt_char_stagedstate '→'
+set __fish_git_prompt_char_untrackedfiles '☡'
+set __fish_git_prompt_char_stashstate '↩'
+set __fish_git_prompt_char_upstream_ahead '+'
+set __fish_git_prompt_char_upstream_behind '-'
+
+# colorful man pages
+set -x LESS_TERMCAP_mb (printf "\033[01;31m")  
+set -x LESS_TERMCAP_md (printf "\033[01;31m")  
+set -x LESS_TERMCAP_me (printf "\033[0m")  
+set -x LESS_TERMCAP_se (printf "\033[0m")  
+set -x LESS_TERMCAP_so (printf "\033[01;44;33m")  
+set -x LESS_TERMCAP_ue (printf "\033[0m")  
+set -x LESS_TERMCAP_us (printf "\033[01;32m") 
+
