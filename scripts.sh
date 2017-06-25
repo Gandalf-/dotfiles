@@ -17,7 +17,6 @@ alias     dfh='df -h'
 alias     lsn='ls -al --time-style=+%D | grep `date +%D` '
 alias     how='howdoi -c'
 alias   xklip='head -c -1 | xclip -selection c'
-alias weather='curl http://wttr.in/'
 
 alias b='bash'
 alias e='echo'
@@ -60,10 +59,12 @@ alias sai='sudo apt install'
 alias kut='cut -d " " -f'
 alias aup='sudo apt update; sudo apt upgrade; sudo apt-get autoremove'
 
-alias   vfish='v ~/.config/fish/config.fish'
-alias   vbash='v ~/.bashrc'
-alias srcfish='. ~/.config/fish/config.fish'
-alias srcbash='. ~/.bashrc'
+alias  vvim='v ~/.vimrc'
+alias vtmux='v ~/.tmux.conf'
+alias vfish='v ~/.config/fish/config.fish'
+alias vbash='v ~/.bashrc'
+alias sfish='. ~/.config/fish/config.fish'
+alias sbash='. ~/.bashrc'
 
 # =============================================================================
 # functions
@@ -83,8 +84,9 @@ grip () { ps -fC "$1"; }
 calc () { bc -l <<< "$@"; }
 freq () { sort | uniq -c | sort -nr | head -n "$1"; }
 
+weather () { curl http://wttr.in/~"$1"; }
+
 cleanup () {
-  # cleanup [-i]
   # smart remove duplicate file names and intermediary file types
 
   counter=0
@@ -202,6 +204,9 @@ g (){
 
       "rv") confirm "$cnfrm" "git remote -vv"
             git remote -vv                                          ;;
+
+      "c")  confirm "$cnfrm" "git commit"
+            git commit                                              ;;
 
       "ca") confirm "$cnfrm" "git commit --amend"
             git commit --amend                                      ;;
@@ -326,6 +331,7 @@ g (){
     a  : add everything
     bv : branch -vv
     bn : checkout (remote branch) -b (local branch)
+    c  : commit
     ca : commit amend
     cb : checkout -b (branch)
     cg : attempt to checkout branch by bug name
