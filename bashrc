@@ -55,34 +55,14 @@ fi
   bind '"\e[A": history-search-backward'
   bind '"\e[B": history-search-forward'
 
-# aliases
-  alias dos2unix='recode dos/CR-LF..l1'
-  alias silent='> /dev/null 2> /dev/null'
-  alias quiet='> /dev/null'
-  alias weather='curl http://wttr.in/'
-  alias unix2win='recode l1..windows-1250'
-  alias unix2dos='recode l1..dos/CR-LF'
-  alias lsnew="ls -al --time-style=+%D | grep \$\(date +%D\) "
-  alias dsh="du -sh"
-  alias tma="tmux a"
-
-  alias fgrep='fgrep --color=auto'
-  alias egrep='egrep --color=auto'
-
-  alias l='ls --color=auto'
-  alias h='head -n'
-  alias v='vim'
-
-  alias vp='vim -p'
-  alias cl='clear'
-  alias ll='ls -alF'
-  alias la='ls -A'
-
-  alias rm='rm -i'
-  alias cp='cp -i'
-  alias mv='mv -i'
-  alias sbash='source ~/.bashrc'
-  alias vbash='vim ~/.bashrc'
+# scripts.sh
+  if (( at_work )); then
+    #shellcheck disable=SC1091
+    source /mnt/vc/home/avoecks/DotFiles/scripts.sh
+  else
+    #shellcheck disable=SC1091
+    source /home/leaf/google_drive/personal/share/Public/DotFiles/scripts.sh
+  fi
 
 # functions
 _prompt() {
@@ -99,11 +79,7 @@ _prompt() {
   echo -n "${dir_abbr}${ps1}"
 }
 
-cl   () { cd "$@"      && ls --color;}
-..   () { cd ..        && ls --color;}
-...  () { cd ../../    && ls --color;}
-.... () { cd ../../../ && ls --color;}
-
+c() { cd "$@" && ls --color;}
 
 parse_git_branch() {
   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'

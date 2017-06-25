@@ -1,4 +1,4 @@
-#vi:syntax=bash
+# vim: set syntax=bash
 
 # where are we?
 test (hostname) = 'wkstn-avoecks'; and set at_work yes
@@ -126,58 +126,9 @@ end
 #===================
 alias al alias
 
-# conversions
-#-------------------
-al dos2unix 'recode dos/CR-LF..l1'
-al unix2win 'recode l1..windows-1250'
-al unix2dos 'recode l1..dos/CR-LF'
-
-# novelty
-#-------------------
-al ta      'tmux attach; or tmux'
-al dsh     'du -sh'
-al dfh     'df -h'
-al lsn     'ls -al --time-style=+%D | grep `date +%D` '
-al how     'howdoi -c'
-al xklip   'head -c -1 | xclip -selection c'
-al silent  'cat - >/dev/null ^/dev/null'
-al weather 'curl http://wttr.in/'
-
 # shortcuts
 #-------------------
-al b 'bash'
-al e 'echo'
-al F 'find . -name'
-al h 'head'
-al l 'ls'
-al p 'python'
-al r 'ranger'
-al s 'sudo'
-al t 'task'
-al v 'vim -w ~/.vimkeys.log'
-al w 'which'
-
-# misc
-#-------------------
-al p3 'python3'
-al hn 'head -n'
-al ss 'sudo service'
-al pi 'ipython'
-al vp 'vim -p'
-al vd 'vimdiff'
-al vs 'vim - ; fg'
-al sv 'sudo vim'
-al vv 'vim -p *.{h,c{,c,++,xx,pp},java,sh,py,md,html,css,js,php,pl,txt}'
-al cl 'clear;ls'
-al lo 'locate -A'
 al !! 'sudo $history[1]'
-
-al sai 'sudo apt install'
-al kut 'cut -d " " -f'
-al aup 'sudo apt update; sudo apt upgrade; sudo apt-get autoremove'
-
-al vfish   'v ~/.config/fish/config.fish'
-al srcfish '. ~/.config/fish/config.fish'
 
 if test $at_work
   al vw 'v ~/vimwiki/index.md'
@@ -186,27 +137,13 @@ else
   al vw 'v ~/google_drive/index.md'
 end
 
-# quick progs
-#-------------------
-al qc    'vim ~/*/code/c/quick/quick.c'
-al qpy   'vim ~/*/code/python/quick.py'
-al qjava 'vim ~/*/code/java/Quick/Quick.java'
-al qsh   'vim ~/*/code/shell/quick.sh'
-
-# coreutils
-#-------------------
-al ls  'ls --color=auto'
-al rm  'rm -i'
-al rmm 'rm -rf'
-al cp  'cp -i'
-al mv  'mv -i'
-
-al ..   'cd ../;ls'
-al ...  'cd ../../;ls'
-al .... 'cd ../../../;ls'
-
 # Fish Functions
 #===================
+#
+function c     ; test -z "$argv"; and cd; or cd "$argv"; ls       ; end
+function pin   ; test ! -z "$argv"; and ln -s "$argv" ~/          ; end
+function mkc   ; mkdir "$argv[1]"; and c "$argv[1]"               ; end
+function vlo   ; command vim -p (loc -A "$argv")                  ; end
 
 if test $at_work
   function vws ; vim ~/vimwiki/index.md +"VimwikiSearch $argv" ; end
@@ -217,14 +154,14 @@ else
   set scripts /home/leaf/google_drive/personal/share/Public/DotFiles/scripts.sh
 end
 
-function c     ; test -z "$argv"; and cd; or cd "$argv"; ls       ; end
-function pin   ; test ! -z "$argv"; and ln -s "$argv" ~/          ; end
-function mkc   ; mkdir "$argv[1]"; and c "$argv[1]"               ; end
-function vlo   ; command vim -p (loc -A "$argv")                  ; end
-
-
+# external functions
 for function in (grep '()' $scripts | cut -f 1 -d ' ')
   eval "function $function ; bash $scripts $function \$argv ; end"
+end
+
+# external aliases
+for function in (grep 'alias ' $scripts)
+  eval "$function"
 end
 
 function repeat

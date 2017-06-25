@@ -1,13 +1,76 @@
 #!/bin/bash
 
+# =============================================================================
+# aliases
+# =============================================================================
+alias dos2unix='recode dos/CR-LF..l1'
+alias unix2win='recode l1..windows-1250'
+alias unix2dos='recode l1..dos/CR-LF'
+
+alias      ta='tmux attach; or tmux'
+alias     dsh='du -sh'
+alias     dfh='df -h'
+alias     lsn='ls -al --time-style=+%D | grep `date +%D` '
+alias     how='howdoi -c'
+alias   xklip='head -c -1 | xclip -selection c'
+alias weather='curl http://wttr.in/'
+
+alias b='bash'
+alias e='echo'
+alias F='find . -name'
+alias h='head'
+alias l='ls'
+alias p='python'
+alias t='task'
+alias w='which'
+
+alias p3='python3'
+
+alias ls='ls --color=auto'
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+alias   ..='cd ../;ls'
+alias  ...='cd ../../;ls'
+alias ....='cd ../../../;ls'
+
+alias    qc='vim ~/*/code/c/quick/quick.c'
+alias   qpy='vim ~/*/code/python/quick.py'
+alias qjava='vim ~/*/code/java/Quick/Quick.java'
+alias   qsh='vim ~/*/code/shell/quick.sh'
+
+alias hn='head -n'
+alias ss='sudo service'
+alias pi='ipython'
+alias vp='vim -p'
+alias vd='vimdiff'
+alias vs='vim - ; fg'
+alias sv='sudo vim'
+alias vv='vim -p *.{h,c{,c,++,xx,pp},java,sh,py,md,html,css,js,php,pl,txt}'
+alias cl='clear;ls'
+alias lo='locate -A'
+
+alias sai='sudo apt install'
+alias kut='cut -d " " -f'
+alias aup='sudo apt update; sudo apt upgrade; sudo apt-get autoremove'
+
+alias   vfish='v ~/.config/fish/config.fish'
+alias   vbash='v ~/.bashrc'
+alias srcfish='. ~/.config/fish/config.fish'
+alias srcbash='. ~/.bashrc'
+
+# =============================================================================
+# functions
+# =============================================================================
 
 shttp ()     { python -m SimpleHTTPServer; }
+silent ()    { cat - >/dev/null 2>/dev/null; }
 sandman ()   { kill -9 "$(jobs -p)"; }
 startsshd () { sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd; }
 
 tmr () { tmux send-keys -t right "$@" C-m; }
 tml () { tmux send-keys -t left  "$@" C-m; }
-aup () { sudo apt update && sudo apt upgrade; sudo apt-get autoremove; }
 
 # shellcheck disable=SC2009
 grap () { ps aux | grep "$1" | grep -v "grep $1"; }
