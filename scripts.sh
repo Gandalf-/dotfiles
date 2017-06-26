@@ -76,6 +76,8 @@ confirm (){
 
 g (){
   # super git wrapper!
+  at_work=0
+  [[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
 
   if [[ -z "$1" ]]; then
     g --help
@@ -108,7 +110,12 @@ g (){
       "cb") confirm "$do_confirm" "[g] git checkout -b $2"
             git checkout -b "$2"; shift                             ;;
 
-      "cg") bug_dir='/home/avoecks/cribshome/wiki/bugs/'
+      "cs") if ! (( at_work )); then
+              echo "error: smart checkout not available"
+              return
+            fi
+
+            bug_dir='/home/avoecks/cribshome/wiki/bugs/'
             bug_branch="BR_BUG_$(find "$bug_dir"   |
                                  grep "$2"         |
                                  grep -o '[0-9]\+' |
@@ -168,7 +175,12 @@ g (){
             shift
         ;;
 
-      "ds") branch="$(git rev-parse --abbrev-ref HEAD)"
+      "ds") if ! (( at_work )); then
+              echo "error: smart diff not available"
+              return
+            fi
+
+            branch="$(git rev-parse --abbrev-ref HEAD)"
             diff="/home/avoecks/cribshome/diffs/${branch}.diff"
             if [ "$2" -eq "$2" ] 2>/dev/null ; then
               confirm "$do_confirm" "[g] git diff --full-index HEAD~$2 > $diff"
@@ -224,12 +236,12 @@ g (){
     bn : checkout (remote branch) -b (local branch)
     ca : commit amend
     cb : checkout -b (branch)
-    cg : attempt to checkout branch by bug name
+    cs : attempt to checkout branch by bug name [work only]
     cm : commit -m (message)
     co : checkout (file)
     d  : diff changes [output_file]
     dh : diff commits [number of commits] [output_file]
-    ds : diff commits [number of commits] - auto names diff
+    ds : diff commits [number of commits] - auto names diff [work only]
     f  : fetch
     l  : log
     ll : log graph
