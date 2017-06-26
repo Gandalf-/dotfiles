@@ -105,11 +105,7 @@ end
 
 # Fish Functions
 #===================
-#
 function c     ; test -z "$argv"; and cd; or cd "$argv"; ls       ; end
-function pin   ; test ! -z "$argv"; and ln -s "$argv" ~/          ; end
-function mkc   ; mkdir "$argv[1]"; and c "$argv[1]"               ; end
-function vlo   ; command vim -p (loc -A "$argv")                  ; end
 
 # get script file based on location
 if test $at_work

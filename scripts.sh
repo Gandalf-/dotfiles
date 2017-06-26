@@ -3,21 +3,29 @@
 # =============================================================================
 # script.sh
 # =============================================================================
+#
+# shell agnostic 'shell' functions and aliases
+#
+# using in fish shell
+#   set scripts ~/.config/fish/script.sh
+#
+#   # external functions
+#   for ex_function in (grep '()' $scripts | cut -f 1 -d ' ')
+#     eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
+#   end
+#
+#   # external aliases
+#   for ex_alias in (grep 'alias ' $scripts)
+#     eval "$ex_alias"
+#   end
+#
+# using in bash
+#   scripts='~/.config/fish/script.sh'
+#   source $scripts
 
 # =============================================================================
 # aliases
 # =============================================================================
-alias dos2unix='recode dos/CR-LF..l1'
-alias unix2win='recode l1..windows-1250'
-alias unix2dos='recode l1..dos/CR-LF'
-
-alias      ta='tmux attach; or tmux'
-alias     dsh='du -sh'
-alias     dfh='df -h'
-alias     lsn='ls -al --time-style=+%D | grep `date +%D` '
-alias     how='howdoi -c'
-alias   xklip='head -c -1 | xclip -selection c'
-
 alias b='bash'
 alias e='echo'
 alias F='find . -name'
@@ -29,21 +37,11 @@ alias w='which'
 alias v='vim'
 
 alias p3='python3'
-
 alias ls='ls --color=auto'
+alias ta='tmux attach; or tmux'
 alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
-
-alias   ..='cd ../;ls'
-alias  ...='cd ../../;ls'
-alias ....='cd ../../../;ls'
-
-alias    qc='vim ~/*/code/c/quick/quick.c'
-alias   qpy='vim ~/*/code/python/quick.py'
-alias qjava='vim ~/*/code/java/Quick/Quick.java'
-alias   qsh='vim ~/*/code/shell/quick.sh'
-
 alias hn='head -n'
 alias ss='sudo service'
 alias pi='ipython'
@@ -58,6 +56,10 @@ alias lo='locate -A'
 alias sai='sudo apt install'
 alias kut='cut -d " " -f'
 alias aup='sudo apt update; sudo apt upgrade; sudo apt-get autoremove'
+alias dsh='du -sh'
+alias dfh='df -h'
+alias lsn='ls -al --time-style=+%D | grep `date +%D` '
+alias how='howdoi -c'
 
 alias  vvim='v ~/.vimrc'
 alias vtmux='v ~/.tmux.conf'
@@ -65,6 +67,21 @@ alias vfish='v ~/.config/fish/config.fish'
 alias vbash='v ~/.bashrc'
 alias sfish='. ~/.config/fish/config.fish'
 alias sbash='. ~/.bashrc'
+
+alias   ..='cd ../;ls'
+alias  ...='cd ../../;ls'
+alias ....='cd ../../../;ls'
+
+alias    qc='vim ~/*/code/c/quick/quick.c'
+alias   qpy='vim ~/*/code/python/quick.py'
+alias qjava='vim ~/*/code/java/Quick/Quick.java'
+alias   qsh='vim ~/*/code/shell/quick.sh'
+
+alias dos2unix='recode dos/CR-LF..l1'
+alias unix2win='recode l1..windows-1250'
+alias unix2dos='recode l1..dos/CR-LF'
+
+alias xklip='head -c -1 | xclip -selection c'
 
 # =============================================================================
 # functions
@@ -74,6 +91,9 @@ shttp ()     { python -m SimpleHTTPServer; }
 silent ()    { cat - >/dev/null 2>/dev/null; }
 sandman ()   { kill -9 "$(jobs -p)"; }
 startsshd () { sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd; }
+
+pin () { [[ ! -z "$@" ]] && ln -s "$@" ~/; }
+mkc () { mkdir "$1" && cd "$1" || return; }
 
 tmr () { tmux send-keys -t right "$@" C-m; }
 tml () { tmux send-keys -t left  "$@" C-m; }
@@ -89,17 +109,20 @@ weather () { curl http://wttr.in/~"$1"; }
 cleanup () {
   # smart remove duplicate file names and intermediary file types
 
+  dry=1
+  [[ "$1" == '-i' ]] && dry=1
+
   counter=0
   while read -r file; do
     fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
 
     if [[ -f "$fixed" ]]; then
       echo "remove dup: $file"
-      rm "$file"
+      (( dry )) && rm "$file"
 
     else
       echo "rename dup: $file"
-      mv "$file" "$fixed"
+      (( dry )) && mv "$file" "$fixed"
     fi
 
     let counter++
@@ -107,7 +130,7 @@ cleanup () {
 
   while read -r file; do
     echo "remove    : $file"
-    rm "$file"
+    (( dry )) && rm "$file"
     let counter++
   done < <(find -regex '.*\.\(pyc\|class\|o\|bak\)')
 
