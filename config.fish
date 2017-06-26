@@ -1,47 +1,12 @@
-#vi:syntax=bash
+# vim: set syntax=bash
+
+# fish global settings
+#===========================
+set -gx __HOST__ (hostname       | sed 's/localhost/home/')
+set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
 
 # where are we?
 test (hostname) = 'wkstn-avoecks'; and set at_work yes
-
-# Fish git prompt
-set __fish_git_prompt_showupstream 'yes'
-set __fish_git_prompt_color_branch yellow
-
-if test $at_work
-  set -gx DISPLAY ':0'
-
-else
-  set __fish_git_prompt_showdirtystate 'yes'
-  set __fish_git_prompt_showstashstate 'yes'
-  set __fish_git_prompt_showuntrackedfiles 'no'
-  set __fish_git_prompt_color_upstream_ahead green
-  set __fish_git_prompt_color_upstream_behind red
-  set __fish_git_prompt_color_upstream_ahead green
-  set __fish_git_prompt_color_upstream_behind red
-end
-
-# Status Chars
-set __fish_git_prompt_char_dirtystate '⚡'
-set __fish_git_prompt_char_stagedstate '→'
-set __fish_git_prompt_char_untrackedfiles '☡'
-set __fish_git_prompt_char_stashstate '↩'
-set __fish_git_prompt_char_upstream_ahead '+'
-set __fish_git_prompt_char_upstream_behind '-'
-
-# colorful man pages
-set -x LESS_TERMCAP_mb (printf "\033[01;31m")  
-set -x LESS_TERMCAP_md (printf "\033[01;31m")  
-set -x LESS_TERMCAP_me (printf "\033[0m")  
-set -x LESS_TERMCAP_se (printf "\033[0m")  
-set -x LESS_TERMCAP_so (printf "\033[01;44;33m")  
-set -x LESS_TERMCAP_ue (printf "\033[0m")  
-set -x LESS_TERMCAP_us (printf "\033[01;32m") 
-
-# Fish Global Settings
-# ====================
-set -gx __HOST__ (hostname       | sed 's/localhost/home/')
-set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
-#setxkbmap -option caps:swapescape ^/dev/null
 
 function fish_prompt
   # add the current directory to the path
@@ -82,26 +47,17 @@ if status --is-interactive
 end
 
 # Vim mode
-#===================
+#===========================
 function fish_mode_prompt --description 'Displays the current mode'
-	# Do nothing if not in vi mode
+
 	if test "$fish_key_bindings" = "fish_vi_key_bindings"
 		switch $fish_bind_mode
-				case default
-						set_color --bold red
-						echo N
-				case insert
-						set_color --bold green
-						echo I
-				case replace-one
-						set_color --bold green
-						echo R
-				case visual
-						set_color --bold brmagenta
-						echo V
+      case default; set_color --bold red;   echo N
+      case insert;  set_color --bold green; echo I
+      case visual;  set_color --bold blue;  echo V
 		end
-		set_color normal
-		printf " "
+
+		set_color normal; printf " "
 	end
 end
 
@@ -122,120 +78,60 @@ function fish_user_key_bindings
   bind -M default B beginning-of-line
 end
 
-# Fish Aliases
-#===================
-alias al alias
+# Location
+#===========================
 
-# conversions
-#-------------------
-al dos2unix 'recode dos/CR-LF..l1'
-al unix2win 'recode l1..windows-1250'
-al unix2dos 'recode l1..dos/CR-LF'
-
-# novelty
-#-------------------
-al ta      'tmux attach; or tmux'
-al dsh     'du -sh'
-al dfh     'df -h'
-al lsn     'ls -al --time-style=+%D | grep `date +%D` '
-al how     'howdoi -c'
-al xklip   'head -c -1 | xclip -selection c'
-al silent  'cat - >/dev/null ^/dev/null'
-al weather 'curl http://wttr.in/'
-
-# shortcuts
-#-------------------
-al b 'bash'
-al e 'echo'
-al F 'find . -name'
-al h 'head'
-al l 'ls'
-al p 'python'
-al r 'ranger'
-al s 'sudo'
-al t 'task'
-al v 'vim -w ~/.vimkeys.log'
-al w 'which'
-
-# misc
-#-------------------
-al p3 'python3'
-al hn 'head -n'
-al ss 'sudo service'
-al pi 'ipython'
-al vp 'vim -p'
-al vd 'vimdiff'
-al vs 'vim - ; fg'
-al sv 'sudo vim'
-al vv 'vim -p *.{h,c{,c,++,xx,pp},java,sh,py,md,html,css,js,php,pl,txt}'
-al cl 'clear;ls'
-al lo 'locate -A'
-al !! 'sudo $history[1]'
-
-al sai 'sudo apt install'
-al kut 'cut -d " " -f'
-al aup 'sudo apt update; sudo apt upgrade; sudo apt-get autoremove'
-al loc 'locate --database=/home/leaf/.locatedb'
-
-al updb      'updatedb --localpaths=/home/leaf/ --output=/home/leaf/.locatedb'
-al shttp     'python -m SimpleHTTPServer'
-al sandman   'kill -9 (jobs -p)'
-al cleanup   'rm (find -regex ".*\.\(pyc\|class\|o\|bak\)")'
-al cleanup!  'rm -f (find -regex ".*\.\(pyc\|class\|o\|bak\)")'
-al startsshd 'sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd'
-
-al vfish   'v ~/.config/fish/config.fish'
-al srcfish '. ~/.config/fish/config.fish'
-
+# workstation
 if test $at_work
-  al vw 'v ~/vimwiki/index.md'
+  set wiki_loc ~/cribshome/wiki/index.md
+  set scripts  ~/cribshome/DotFiles/scripts.sh
 
-else
-  al vw 'v ~/google_drive/index.md'
+# personal
+else if test -d ~/google_drive
+  set wiki_loc ~/google_drive/index.md 
+  set scripts  ~/google_drive/personal/share/Public/DotFiles/scripts.sh
 end
-
-# quick progs
-#-------------------
-al qc    'vim ~/*/code/c/quick/quick.c'
-al qpy   'vim ~/*/code/python/quick.py'
-al qjava 'vim ~/*/code/java/Quick/Quick.java'
-al qsh   'vim ~/*/code/shell/quick.sh'
-
-# coreutils
-#-------------------
-al ls  'ls --color=auto'
-al rm  'rm -i'
-al rmm 'rm -rf'
-al cp  'cp -i'
-al mv  'mv -i'
-
-al ..   'cd ../;ls'
-al ...  'cd ../../;ls'
-al .... 'cd ../../../;ls'
 
 # Fish Functions
-#===================
+#===========================
 
-if test $at_work
-  function vws ; vim ~/vimwiki/index.md +"VimwikiSearch $argv" ; end
-  set scripts /mnt/vc/home/avoecks/DotFiles/scripts.sh
+if test "$scripts"
+  # external functions
+  for ex_function in (grep '()' "$scripts" | grep -v '#' | cut -f 1 -d ' ')
+    eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
+  end
 
-else
-  function vws ; vim ~/google_drive/index.md +"VimwikiSearch $argv" ; end
-  set scripts /home/leaf/google_drive/personal/share/Public/DotFiles/scripts.sh
+  # external aliases
+  for ex_alias in (grep '^alias ' "$scripts")
+    eval "$ex_alias"
+  end
 end
 
-function c     ; test -z "$argv"; and cd; or cd "$argv"; ls       ; end
-function pin   ; test ! -z "$argv"; and ln -s "$argv" ~/          ; end
-function mkc   ; mkdir "$argv[1]"; and c "$argv[1]"               ; end
-function vlo   ; command vim -p (loc -A "$argv")                  ; end
+# vimwiki
+if test "$wiki_loc"
+  function vws; vim "$wiki_loc" +"VimwikiSearch $argv"; end
+  alias vw="vim $wiki_loc"
+end
 
+function c 
+  # smart cd
+  
+  if test -z "$argv" 
+    cd 
 
-for function in (grep '()' $scripts | cut -f 1 -d ' ')
-  eval "function $function ; bash $scripts $function \$argv ; end"
+  else 
+    if test -d "$argv"
+      cd "$argv"; ls
+
+    else
+      j "$argv"
+    end
+  end
 end
 
 function repeat
+  # replay some number of commands from history (experiment)
+  #
   for cmd in (seq "$argv[1]" -1 1)
     if test (echo "$history[$cmd]" | head -c 6) != "repeat"
       show "[repeat] $history[$cmd]"
@@ -244,37 +140,57 @@ function repeat
   end
 end
 
-function a
-  if test -z "$argv"
-
-    if test -d "$argv[1]"
-      cd "$argv"
-
-    else if test -f "$argv[1]"
-
-    end
-
-  else
-    cd
-  end
-end
-
-
 # autojump
-#===================
+#===========================
 if test -f ~/.autojump/share/autojump/autojump.fish
   . ~/.autojump/share/autojump/autojump.fish
 end
 
 function j
-    set new_path (autojump $argv)
+  set new_path (autojump $argv)
 
-    if test -d "$new_path"
-        echo $new_path
-        cd "$new_path"
-        ls
-    else
-        echo "autojump: directory '$argv' not found"
-        false
-    end
+  if test -d "$new_path"
+    echo $new_path
+    cd "$new_path"
+    ls
+  else
+    echo "autojump: directory '$argv' not found"
+    false
+  end
 end
+
+# Fish git prompt and colors
+#===========================
+set __fish_git_prompt_showupstream 'yes'
+set __fish_git_prompt_color_branch yellow
+
+if test "$at_work"
+  set -gx DISPLAY ':0'
+
+else
+  set __fish_git_prompt_showdirtystate 'yes'
+  set __fish_git_prompt_showstashstate 'yes'
+  set __fish_git_prompt_showuntrackedfiles 'no'
+  set __fish_git_prompt_color_upstream_ahead green
+  set __fish_git_prompt_color_upstream_behind red
+  set __fish_git_prompt_color_upstream_ahead green
+  set __fish_git_prompt_color_upstream_behind red
+end
+
+# Status Chars
+set __fish_git_prompt_char_dirtystate '⚡'
+set __fish_git_prompt_char_stagedstate '→'
+set __fish_git_prompt_char_untrackedfiles '☡'
+set __fish_git_prompt_char_stashstate '↩'
+set __fish_git_prompt_char_upstream_ahead '+'
+set __fish_git_prompt_char_upstream_behind '-'
+
+# colorful man pages
+set -x LESS_TERMCAP_mb (printf "\033[01;31m")  
+set -x LESS_TERMCAP_md (printf "\033[01;31m")  
+set -x LESS_TERMCAP_me (printf "\033[0m")  
+set -x LESS_TERMCAP_se (printf "\033[0m")  
+set -x LESS_TERMCAP_so (printf "\033[01;44;33m")  
+set -x LESS_TERMCAP_ue (printf "\033[0m")  
+set -x LESS_TERMCAP_us (printf "\033[01;32m") 
+

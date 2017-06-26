@@ -12,12 +12,6 @@ if (( at_work )); then
 	export PATH=$QA/bin:$QA/tests:$QA/linux/bin:$TOOLS:$PATH
 fi
 
-# vim is great
-  #set -o vi
-
-# swap escape and capslock
-  #setxkbmap -option caps:swapescape 2>/dev/null
-
 # colored man pages!
   export LESS_TERMCAP_mb=$'\E[01;31m'
   export LESS_TERMCAP_md=$'\E[01;31m'
@@ -32,7 +26,6 @@ fi
   bind "set completion-map-case on"
   bind "set show-all-if-ambiguous on"
   bind 'TAB:menu-complete'
-  #bind 'set keymap vi-command'
   bind 'set show-mode-in-prompt on'
   bind -m vi-insert "\C-l":clear-screen
 
@@ -55,34 +48,14 @@ fi
   bind '"\e[A": history-search-backward'
   bind '"\e[B": history-search-forward'
 
-# aliases
-  alias dos2unix='recode dos/CR-LF..l1'
-  alias silent='> /dev/null 2> /dev/null'
-  alias quiet='> /dev/null'
-  alias weather='curl http://wttr.in/'
-  alias unix2win='recode l1..windows-1250'
-  alias unix2dos='recode l1..dos/CR-LF'
-  alias lsnew="ls -al --time-style=+%D | grep \$\(date +%D\) "
-  alias dsh="du -sh"
-  alias tma="tmux a"
-
-  alias fgrep='fgrep --color=auto'
-  alias egrep='egrep --color=auto'
-
-  alias l='ls --color=auto'
-  alias h='head -n'
-  alias v='vim'
-
-  alias vp='vim -p'
-  alias cl='clear'
-  alias ll='ls -alF'
-  alias la='ls -A'
-
-  alias rm='rm -i'
-  alias cp='cp -i'
-  alias mv='mv -i'
-  alias sbash='source ~/.bashrc'
-  alias vbash='vim ~/.bashrc'
+# scripts.sh
+  if (( at_work )); then
+    #shellcheck disable=SC1090
+    source ~/cribshome/avoecks/DotFiles/scripts.sh
+  else
+    #shellcheck disable=SC1090
+    source ~/google_drive/personal/share/Public/DotFiles/scripts.sh
+  fi
 
 # functions
 _prompt() {
@@ -99,11 +72,7 @@ _prompt() {
   echo -n "${dir_abbr}${ps1}"
 }
 
-cl   () { cd "$@"      && ls --color;}
-..   () { cd ..        && ls --color;}
-...  () { cd ../../    && ls --color;}
-.... () { cd ../../../ && ls --color;}
-
+c() { cd "$@" && ls --color;}
 
 parse_git_branch() {
   git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
