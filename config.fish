@@ -1,13 +1,12 @@
 # vim: set syntax=bash
 
-# where are we?
-test (hostname) = 'wkstn-avoecks'; and set at_work yes
-
-# Fish Global Settings
-# ====================
+# fish global settings
+#===========================
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
 set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
-#setxkbmap -option caps:swapescape ^/dev/null
+
+# where are we?
+test (hostname) = 'wkstn-avoecks'; and set at_work yes
 
 function fish_prompt
   # add the current directory to the path
@@ -48,26 +47,17 @@ if status --is-interactive
 end
 
 # Vim mode
-#===================
+#===========================
 function fish_mode_prompt --description 'Displays the current mode'
-	# Do nothing if not in vi mode
+
 	if test "$fish_key_bindings" = "fish_vi_key_bindings"
 		switch $fish_bind_mode
-				case default
-						set_color --bold red
-						echo N
-				case insert
-						set_color --bold green
-						echo I
-				case replace-one
-						set_color --bold green
-						echo R
-				case visual
-						set_color --bold brmagenta
-						echo V
+      case default; set_color --bold red;   echo N
+      case insert;  set_color --bold green; echo I
+      case visual;  set_color --bold blue;  echo V
 		end
-		set_color normal
-		printf " "
+
+		set_color normal; printf " "
 	end
 end
 
@@ -88,46 +78,60 @@ function fish_user_key_bindings
   bind -M default B beginning-of-line
 end
 
-# Fish Aliases
-#===================
-alias al alias
+# Location
+#===========================
 
-# shortcuts
-#-------------------
-al !! 'sudo $history[1]'
-
+# workstation
 if test $at_work
-  al vw 'v ~/vimwiki/index.md'
+  set wiki_loc ~/cribshome/wiki/index.md
+  set scripts  ~/cribshome/DotFiles/scripts.sh
 
-else
-  al vw 'v ~/google_drive/index.md'
+# personal
+else if test -d ~/google_drive
+  set wiki_loc ~/google_drive/index.md 
+  set scripts  ~/google_drive/personal/share/Public/DotFiles/scripts.sh
 end
 
 # Fish Functions
-#===================
-function c     ; test -z "$argv"; and cd; or cd "$argv"; ls       ; end
+#===========================
 
-# get script file based on location
-if test $at_work
-  function vws ; vim ~/vimwiki/index.md +"VimwikiSearch $argv" ; end
-  set scripts /mnt/vc/home/avoecks/DotFiles/scripts.sh
+if test "$scripts"
+  # external functions
+  for ex_function in (grep '()' "$scripts" | grep -v '#' | cut -f 1 -d ' ')
+    eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
+  end
 
-else
-  function vws ; vim ~/google_drive/index.md +"VimwikiSearch $argv" ; end
-  set scripts /home/leaf/google_drive/personal/share/Public/DotFiles/scripts.sh
+  # external aliases
+  for ex_alias in (grep '^alias ' "$scripts")
+    eval "$ex_alias"
+  end
 end
 
-# external functions
-for ex_function in (grep '()' $scripts | cut -f 1 -d ' ')
-  eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
+# vimwiki
+if test "$wiki_loc"
+  function vws; vim "$wiki_loc" +"VimwikiSearch $argv"; end
+  alias vw="vim $wiki_loc"
 end
 
-# external aliases
-for ex_alias in (grep 'alias ' $scripts)
-  eval "$ex_alias"
+function c 
+  # smart cd
+  
+  if test -z "$argv" 
+    cd 
+
+  else 
+    if test -d "$argv"
+      cd "$argv"; ls
+
+    else
+      j "$argv"
+    end
+  end
 end
 
 function repeat
+  # replay some number of commands from history (experiment)
+  #
   for cmd in (seq "$argv[1]" -1 1)
     if test (echo "$history[$cmd]" | head -c 6) != "repeat"
       show "[repeat] $history[$cmd]"
@@ -137,29 +141,30 @@ function repeat
 end
 
 # autojump
-#===================
+#===========================
 if test -f ~/.autojump/share/autojump/autojump.fish
   . ~/.autojump/share/autojump/autojump.fish
 end
 
 function j
-    set new_path (autojump $argv)
+  set new_path (autojump $argv)
 
-    if test -d "$new_path"
-        echo $new_path
-        cd "$new_path"
-        ls
-    else
-        echo "autojump: directory '$argv' not found"
-        false
-    end
+  if test -d "$new_path"
+    echo $new_path
+    cd "$new_path"
+    ls
+  else
+    echo "autojump: directory '$argv' not found"
+    false
+  end
 end
 
-# Fish git prompt
+# Fish git prompt and colors
+#===========================
 set __fish_git_prompt_showupstream 'yes'
 set __fish_git_prompt_color_branch yellow
 
-if test $at_work
+if test "$at_work"
   set -gx DISPLAY ':0'
 
 else

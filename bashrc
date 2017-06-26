@@ -12,12 +12,6 @@ if (( at_work )); then
 	export PATH=$QA/bin:$QA/tests:$QA/linux/bin:$TOOLS:$PATH
 fi
 
-# vim is great
-  #set -o vi
-
-# swap escape and capslock
-  #setxkbmap -option caps:swapescape 2>/dev/null
-
 # colored man pages!
   export LESS_TERMCAP_mb=$'\E[01;31m'
   export LESS_TERMCAP_md=$'\E[01;31m'
@@ -32,7 +26,6 @@ fi
   bind "set completion-map-case on"
   bind "set show-all-if-ambiguous on"
   bind 'TAB:menu-complete'
-  #bind 'set keymap vi-command'
   bind 'set show-mode-in-prompt on'
   bind -m vi-insert "\C-l":clear-screen
 
@@ -57,11 +50,11 @@ fi
 
 # scripts.sh
   if (( at_work )); then
-    #shellcheck disable=SC1091
-    source /mnt/vc/home/avoecks/DotFiles/scripts.sh
+    #shellcheck disable=SC1090
+    source ~/cribshome/avoecks/DotFiles/scripts.sh
   else
-    #shellcheck disable=SC1091
-    source /home/leaf/google_drive/personal/share/Public/DotFiles/scripts.sh
+    #shellcheck disable=SC1090
+    source ~/google_drive/personal/share/Public/DotFiles/scripts.sh
   fi
 
 # functions

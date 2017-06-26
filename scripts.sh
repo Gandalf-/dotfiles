@@ -10,12 +10,12 @@
 #   set scripts ~/.config/fish/script.sh
 #
 #   # external functions
-#   for ex_function in (grep '()' $scripts | cut -f 1 -d ' ')
+#   for ex_function in (grep '()' $scripts | grep -v '#' | cut -f 1 -d ' ')
 #     eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
 #   end
 #
 #   # external aliases
-#   for ex_alias in (grep 'alias ' $scripts)
+#   for ex_alias in (grep '^alias ' $scripts)
 #     eval "$ex_alias"
 #   end
 #
@@ -94,7 +94,6 @@ startsshd () { sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd; }
 
 pin () { [[ ! -z "$@" ]] && ln -s "$@" ~/; }
 mkc () { mkdir "$1" && cd "$1" || return; }
-
 tmr () { tmux send-keys -t right "$@" C-m; }
 tml () { tmux send-keys -t left  "$@" C-m; }
 
@@ -109,7 +108,7 @@ weather () { curl http://wttr.in/~"$1"; }
 cleanup () {
   # smart remove duplicate file names and intermediary file types
 
-  dry=1
+  local dry counter fixed; dry=0
   [[ "$1" == '-i' ]] && dry=1
 
   counter=0
@@ -189,8 +188,7 @@ insync-headless wrapper
 confirm (){
   # print arguments with green color
 
-  green="\033[01;32m"
-  normal="\033[00m"
+  local green normal; green="\033[01;32m"; normal="\033[00m"
 
   if [[ "$1" != 0 ]]; then
     shift
@@ -205,6 +203,9 @@ confirm (){
 
 g (){
   # super git wrapper!
+
+  local cnfrm fmt remote_branch bug_dir bug_branch
+  local new_branch_name commits branch diff
 
   if [[ -z "$1" ]]; then
     g --help
@@ -391,7 +392,7 @@ g (){
 
 sf (){
 
-  files=""
+  local files; files=""
 
   while [[ ! -z "$1" ]]; do
 
