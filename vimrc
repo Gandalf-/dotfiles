@@ -46,7 +46,7 @@
     filetype plugin indent on
 
   " vimwiki
-    autocmd TextChanged,TextChangedI *.md silent write
+    "autocmd TextChanged,TextChangedI *.md silent write
     let g:vimwiki_table_mappings = 0
     let g:vimwiki_global_ext     = 0
     let g:vimwiki_folding        = 'custom'

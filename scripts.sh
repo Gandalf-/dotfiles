@@ -402,30 +402,5 @@ g (){
   done
 }
 
-sf (){
-
-  local files; files=""
-
-  while [[ ! -z "$1" ]]; do
-
-    if [[ ! -f "$1" ]]; then
-      # shellcheck disable=SC2038
-      files="$files $(find . -name "$1" | xargs)"
-
-    else
-      files="$files $1"
-    fi
-    shift
-  done
-
-  if [[ ! -z "$files" ]]; then
-    # shellcheck disable=SC2086
-    vim -p $files
-
-  else
-    echo "error: no files found"
-  fi
-}
-
 # provide functions to callers
 "$@"
