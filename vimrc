@@ -201,8 +201,8 @@
     set statusline+=\ %l:%03c\ %p%%
 
   " Colors
-    highlight Pmenu      ctermbg=240
-    highlight PmenuSel   ctermbg=234
+    highlight Pmenu      ctermbg=245
+    highlight PmenuSel   ctermbg=240
     highlight PmenuSBar  ctermbg=238
     highlight PmenuThumb ctermbg=234
 
@@ -446,7 +446,17 @@
   " toggling
     nnoremap <silent> <leader>z :set spell!<CR>
     nnoremap <silent> <leader>R :set relativenumber!<CR>
-    nnoremap <leader>p          :setlocal paste!<cr>:set paste?<cr>
+    function! SmartPaste()
+      set nu!
+      if &paste
+        set nopaste
+        set foldcolumn=1
+      else
+        set paste
+        set foldcolumn=0
+      endif
+    endfunction
+    nnoremap <leader>p :call SmartPaste() <cr>
 
   " close, jump to last, make new buffer
     nnoremap <silent> <leader>x :bp<bar>sp<bar>bn<bar>bd<CR>

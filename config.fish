@@ -113,18 +113,21 @@ if test "$wiki_loc"
   alias vw="vim $wiki_loc"
 end
 
-function c 
+function f 
   # smart cd
   
   if test -z "$argv" 
     cd 
 
-  else 
-    if test -d "$argv"
-      cd "$argv"; ls
+  else if test -f "$argv[1]"
+    vim -p $argv
 
-    else
-      j "$argv"
+  else if test -d "$argv[1]"
+    cd "$argv[1]"; ls
+
+  else
+    if not j "$argv[1]" ^/dev/null
+      vim "$argv"
     end
   end
 end

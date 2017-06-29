@@ -203,6 +203,8 @@ confirm (){
 
 g (){
   # super git wrapper!
+  at_work=0
+  [[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
 
   local cnfrm fmt remote_branch bug_dir bug_branch
   local new_branch_name commits branch diff
@@ -241,7 +243,12 @@ g (){
       "cb") confirm "$cnfrm" "git checkout -b $2"
             git checkout -b "$2"; shift                             ;;
 
-      "cg") bug_dir='/home/avoecks/cribshome/wiki/bugs/'
+      "cs") if ! (( at_work )); then
+              echo "error: smart checkout not available"
+              return
+            fi
+
+            bug_dir='/home/avoecks/cribshome/wiki/bugs/'
             bug_branch="BR_BUG_$(find "$bug_dir"   |
                                  grep "$2"         |
                                  grep -o '[0-9]\+' |
@@ -301,7 +308,12 @@ g (){
             shift
         ;;
 
-      "ds") branch="$(git rev-parse --abbrev-ref HEAD)"
+      "ds") if ! (( at_work )); then
+              echo "error: smart diff not available"
+              return
+            fi
+
+            branch="$(git rev-parse --abbrev-ref HEAD)"
             diff="/home/avoecks/cribshome/diffs/${branch}.diff"
             if [ "$2" -eq "$2" ] 2>/dev/null ; then
               confirm "$cnfrm" "git diff --full-index HEAD~$2 > $diff"
@@ -358,12 +370,12 @@ g (){
     c  : commit
     ca : commit amend
     cb : checkout -b (branch)
-    cg : attempt to checkout branch by bug name
+    cs : attempt to checkout branch by bug name [work only]
     cm : commit -m (message)
     co : checkout (file)
     d  : diff changes [output_file]
     dh : diff commits [number of commits] [output_file]
-    ds : diff commits [number of commits] - auto names diff
+    ds : diff commits [number of commits] - auto names diff [work only]
     f  : fetch
     l  : log
     ll : log graph
@@ -388,31 +400,6 @@ g (){
 
     [[ -z "$1" ]] || echo
   done
-}
-
-sf (){
-
-  local files; files=""
-
-  while [[ ! -z "$1" ]]; do
-
-    if [[ ! -f "$1" ]]; then
-      # shellcheck disable=SC2038
-      files="$files $(find . -name "$1" | xargs)"
-
-    else
-      files="$files $1"
-    fi
-    shift
-  done
-
-  if [[ ! -z "$files" ]]; then
-    # shellcheck disable=SC2086
-    vim -p $files
-
-  else
-    echo "error: no files found"
-  fi
 }
 
 # provide functions to callers
