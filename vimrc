@@ -220,7 +220,7 @@
         %s/\s\+$//e
         call cursor(l, c)
     endfun
-    autocmd FileType sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+    autocmd FileType tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
   " File specific 
     autocmd FileType make setlocal noexpandtab
 
@@ -487,6 +487,7 @@
 
   " generic ':' command
     nnoremap m :
+    vnoremap m :
     nnoremap <leader>; :
     vnoremap <leader>; :
 

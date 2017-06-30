@@ -28,7 +28,6 @@
 # =============================================================================
 alias b='bash'
 alias e='echo'
-alias F='find . -name'
 alias h='head'
 alias l='ls'
 alias p='python'
@@ -50,7 +49,6 @@ alias vd='vimdiff'
 alias vs='vim - ; fg'
 alias sv='sudo vim'
 alias vv='vim -p *.{h,c{,c,++,xx,pp},java,sh,py,md,html,css,js,php,pl,txt}'
-alias cl='clear;ls'
 alias lo='locate -A'
 
 alias sai='sudo apt install'
@@ -104,6 +102,16 @@ calc () { bc -l <<< "$@"; }
 freq () { sort | uniq -c | sort -nr | head -n "$1"; }
 
 weather () { curl http://wttr.in/~"$1"; }
+
+F () {
+  if [[ "$1" == "z" ]]; then
+    shift
+    find . -name '*'"$1"'*'
+
+  else
+    find . -name "$1"
+  fi
+}
 
 cleanup () {
   # smart remove duplicate file names and intermediary file types
@@ -197,7 +205,7 @@ confirm (){
 
   else
     shift
-    printf "%b%s%b " "$green" "$@" "$normal"
+    printf "%b%s%b\n" "$green" "$@" "$normal"
   fi
 }
 

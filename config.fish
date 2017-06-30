@@ -114,7 +114,7 @@ if test "$wiki_loc"
 end
 
 function f 
-  # smart cd
+  # smart cd, find, jump, open, create
   
   if test -z "$argv" 
     cd 
@@ -126,8 +126,15 @@ function f
     cd "$argv[1]"; ls
 
   else
-    if not j "$argv[1]" ^/dev/null
-      vim "$argv"
+    if not j "$argv[1]" >/dev/null
+      set files (find . -name "$argv[1]")
+
+      if test -z "$files"
+        vim "$argv"
+
+      else
+        vim -p "$files"
+      end
     end
   end
 end
