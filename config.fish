@@ -114,7 +114,12 @@ if test "$wiki_loc"
 end
 
 function f 
-  # smart cd
+  # nothing    -> cd ~/
+  # file?      -> vim
+  # directory? -> cd; ls
+  # autojump?  -> jump
+  # find-able? -> open
+  # else       -> vim new files
   
   if test -z "$argv" 
     cd 
@@ -125,10 +130,26 @@ function f
   else if test -d "$argv[1]"
     cd "$argv[1]"; ls
 
-  else
-    if not j "$argv[1]" ^/dev/null
-      vim "$argv"
+  else if j "$argv[1]" ^/dev/null
+    return
+
+  else 
+    if test "$argv[1]" = 'z'
+      set files (find . -name "*$argv[1]*")
+    else
+      set files (find . -name "$argv[1]")
     end
+
+    set num_files (echo "$files" | wc -w)
+    echo $num_files
+
+    if not test -z "$files"
+      #cd dirname ("$files")
+      vim -p "$files"
+    else
+      vim -p "$argv"
+    end
+
   end
 end
 
