@@ -125,37 +125,66 @@ function f
   end
   
   set files
+  set fuzzy "no"
+  set locate "no"
+
   for arg in $argv
 
-    if test -f "$arg"
+    # enable fuzzy search
+    if test $arg = 'z'
+      set fuzzy "yes"
+
+    # enable locate mode - just print accrued files
+    else if test $arg = 'l'
+      set locate "yes"
+
+    # file
+    else if test -f "$arg"
       set files $arg $files
 
+    # directory
     else if test -d "$arg"
       cd "$arg"; ls
 
+    # attempt autojump
     else if j "$arg" ^/dev/null
       true
 
-      # did we autojump to the directory a file is in?
+      # did we autojump to a directory with a similar name to the arg?
       if test -f "$arg"
         set files $arg $files
       end
 
+    # attempt search
     else 
-      set search (timeout 1 find . -name "$arg")
+      set search
 
-      if not test -z "$search"
-        for file in $search
-          set files $file $files
+      if test "$fuzzy" = "yes"
+        set search (timeout 1 find . -name '*'"$arg"'*')
+      else
+        set search (timeout 1 find . -name "$arg")
+      end
+
+      if test "$search"
+        for new_file in $search
+          set files $new_file $files
         end
       end
     end
 
   end
   
-  # and files to open?
+  # open, print accrued files, if any
   if test "$files"
-    vim -p $files
+
+    if test $locate = yes
+      for file in $files
+        echo $file
+      end
+    else
+      vim -p $files
+    end
+
   end
 end
 
