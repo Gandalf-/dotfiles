@@ -114,37 +114,48 @@ if test "$wiki_loc"
 end
 
 function f 
-  # smart cd, find, jump, open, create
-  
+  # smart cd, find, jump, open
+  # f       -> cd ~
+  # f file  -> vim file
+  # f dir   -> cd dir
+  # f name  -> autojump name
+
   if test -z "$argv" 
-    cd 
+    cd ; return
+  end
+  
+  set files
+  for arg in $argv
 
-  else if test -f "$argv[1]"
-    vim -p $argv
+    if test -f "$arg"
+      set files $arg $files
 
-  else if test -d "$argv[1]"
-    cd "$argv[1]"; ls
+    else if test -d "$arg"
+      cd "$arg"; ls
 
-  else if j "$argv[1]" ^/dev/null
-    return
+    else if j "$arg" ^/dev/null
+      true
 
-  else 
-    if test "$argv[1]" = 'z'
-      set files (find . -name "*$argv[1]*")
-    else
-      set files (find . -name "$argv[1]")
+      # did we autojump to the directory a file is in?
+      if test -f "$arg"
+        set files $arg $files
+      end
+
+    else 
+      set search (timeout 1 find . -name "$arg")
+
+      if not test -z "$search"
+        for file in $search
+          set files $file $files
+        end
+      end
     end
 
-    set num_files (echo "$files" | wc -w)
-    echo $num_files
-
-    if not test -z "$files"
-      #cd dirname ("$files")
-      vim -p "$files"
-    else
-      vim -p "$argv"
-    end
-
+  end
+  
+  # and files to open?
+  if test "$files"
+    vim -p $files
   end
 end
 
@@ -168,12 +179,12 @@ end
 function j
   set new_path (autojump $argv)
 
-  if test -d "$new_path"
-    echo $new_path
+  if test -d "$new_path" -a "$new_path" != "."
+    printf "%s\n\n" $new_path
     cd "$new_path"
     ls
   else
-    echo "autojump: directory '$argv' not found"
+    echo "autojump: directory '$argv' not found" >&2
     false
   end
 end
