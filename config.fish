@@ -39,7 +39,6 @@ set -x OLD_PATH $PATH
 if status --is-interactive
     set -g fish_user_abbreviations
     abbr --add bash b
-    abbr --add cd   c
     abbr --add echo e
     abbr --add head h
     abbr --add ls   l
@@ -90,6 +89,10 @@ if test $at_work
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/index.md 
   set scripts  ~/google_drive/personal/share/Public/DotFiles/scripts.sh
+
+# temporary
+else if test -d /tmp/DotFiles
+  set scripts /tmp/DotFiles/scripts.sh
 end
 
 # Fish Functions
