@@ -114,12 +114,7 @@ if test "$wiki_loc"
 end
 
 function f 
-  # nothing    -> cd ~/
-  # file?      -> vim
-  # directory? -> cd; ls
-  # autojump?  -> jump
-  # find-able? -> open
-  # else       -> vim new files
+  # smart cd, find, jump, open, create
   
   if test -z "$argv" 
     cd 
