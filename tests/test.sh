@@ -16,12 +16,12 @@ function cleanup() {
 # verbosity
 function qout() {
   if test "$VERBOSE" == 1 ; then
-    while read data ; do
-      printf "$data"
+    while read -r data ; do
+      echo -n "$data"
     done
 
   else
-    while read data ; do
+    while read -r data ; do
       :
     done
   fi
@@ -29,7 +29,7 @@ function qout() {
 
 # get result of test
 function tresult() {
-  if test $? == $1 ; then
+  if [[ $? == "$1" ]] ; then
     echo "PASSED"
   else
     echo "FAILED"
@@ -41,7 +41,7 @@ function tresult() {
 cleanup
 mkdir /tmp/qcrypt_test
 cp ../qcrypt /tmp/qcrypt_test
-cd /tmp/qcrypt_test
+cd /tmp/qcrypt_test || { echo "cd failure"; exit; }
 chmod +x qcrypt
 export QCRYPT_MODE="TEST"
 
@@ -150,7 +150,7 @@ touch test9 \
   \
   && mv test9.zaes256 test9.z \
   && ./qcrypt -d test9.z <<< $'y\n' | qout \
-  && [[ -e test9 ]] 
+  && [[ -e test9 ]]
 tresult $PASS
 
 # test10
@@ -164,7 +164,7 @@ touch test10 \
   \
   && mv test10.taes256 test10.t \
   && ./qcrypt -d -t test10.t <<< $'y\n' | qout \
-  && [[ -e test10 ]] 
+  && [[ -e test10 ]]
 tresult $PASS
 
 # test11
@@ -184,7 +184,7 @@ tresult $FAIL
 echo warn if file with output name already exists during encryption
 # create file
 # create file.zaes256
-# try to encrypt file, reject overwrite 
+# try to encrypt file, reject overwrite
 # ensure original file hasn't changed
 touch test12 \
   && echo testinfo > test12.zaes256 \
