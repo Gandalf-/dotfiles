@@ -15,6 +15,8 @@ error () { for msg in "$@"; do echo "$msg"; done; exit 1; }
 # =============================
 function encrypt() {
 
+  tar="$1"
+  file="$2"
   local sum in_ext out_ext
 
   [[ "$(dirname "$file")" != "." ]] && {
@@ -91,17 +93,15 @@ function encrypt() {
 # =============================
 function decrypt() {
 
-  # variables
+  tar="$1"
+  file="$2"
   local file_ext in_ext out_ext out_file nonstandard date sum
 
   nonstandard=0
-  file_ext=""
   in_ext=".zip"
   out_ext=".zaes256"
   date="date information not found"
-
-  # check if file name is long enough for qcrypt ext check
-  [[ ${#file} -gt 8 ]] && file_ext=${file: -8}
+  file_ext=""; [[ ${#file} -gt 8 ]] && file_ext=${file: -8}
 
   # determine compression to use
   case $file_ext in
@@ -143,11 +143,8 @@ function decrypt() {
     [[ -e "$out_file" ]] && {
       read -n 2 -r -p "??? \"$out_file\" already exists. Overwrite?  "
 
-      # no overwrite, cleanup and exit
-      [[ 'Yy' =~ $REPLY ]] || {
-        rm -f "$file""$in_ext"
-        exit
-      }
+      # overwrite or cleanup and exit
+      [[ 'Yy' =~ $REPLY ]] || { rm -f "$file""$in_ext"; exit; }
     }
   fi
 
@@ -197,18 +194,12 @@ function decrypt() {
 
 main () {
 
-  # check for openssl, md5sum
+  local tar file filearg auto_ext
+  tar=0
+
   [[ -z "$(which openssl)" ]] && error "!!! Requires openssl"
   [[ -z "$(which md5sum)"  ]] && error "!!! Requires md5sum"
-
-  # check for compression program, prefer zip, this can be overridden with flags
-  tar=0
-  [[ -z "$(which zip)" ]] && {
-
-    # check for tar if can't find zip
-    tar=1
-    [[ -z "$(which tar)" ]] && error "!!! Requires zip or tar"
-  }
+  [[ -z "$(which zip)" && -z "$(which tar)" ]] && error "!!! Requires zip or tar"
 
   # usage
   arg1=${1:-} ; arg2=${2:-} ; arg3=${3:-} ; arg4=${4:-}
@@ -217,7 +208,7 @@ main () {
   # compression program specified
   if [[ $arg2 =~ -z|-t ]]; then
 
-    tar=0; [[ "$arg2" == "-t" ]] && tar=1
+    [[ "$arg2" == "-t" ]] && tar=1
     filearg="$arg3"
     [[ -z "$arg4" ]] || error "!!! qcrypt only handles one directory at a time"
 
@@ -235,17 +226,17 @@ main () {
   file=${filearg%/}
 
   case $arg1 in
-    '-e') encrypt ;;
-    '-d') decrypt ;;
+    '-e') encrypt "$tar" "$file" ;;
+    '-d') decrypt "$tar" "$file" ;;
     *)
       # check if file name is long enough for qcrypt ext check
       auto_ext=${file: -8}; [[ ${#file} -le 8 ]] && auto_ext=""
 
       case $auto_ext in
         '.zaes256'|'.taes256')
-          echo "Attempting decryption"; decrypt ;;
+          echo "Attempting decryption"; decrypt "$tar" "$file" ;;
         *)
-          echo "Attempting encryption"; encrypt ;;
+          echo "Attempting encryption"; encrypt "$tar" "$file" ;;
       esac
       ;;
   esac
