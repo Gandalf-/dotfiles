@@ -62,10 +62,10 @@ echo warn when re-encrypt but allow
 # encrypt archive
 echo "hello" > test2 \
   && ./qcrypt -e test2 | qout \
-  && [[ -e test2.zaes256 ]] \
+  && [[ -e test2.qaes256 ]] \
   \
-  && ./qcrypt -e test2.zaes256 <<< $'y\n' | qout \
-  && [[ -e test2.zaes256.zaes256 ]]
+  && ./qcrypt -e test2.qaes256 <<< $'y\n' | qout \
+  && [[ -e test2.qaes256.qaes256 ]]
 tresult $PASS
 
 # test3
@@ -74,38 +74,12 @@ echo encrypt with tar, decrypt with tar
 # decrypt with tar
 echo "hello" > test3 \
   && sha=$(sha1sum test3) \
-  && ./qcrypt -e -t test3 | qout \
-  && [[ -e test3.taes256 ]] \
+  && ./qcrypt -e test3 | qout \
+  && [[ -e test3.qaes256 ]] \
   \
-  && ./qcrypt -d -t test3.taes256 | qout \
+  && ./qcrypt -d test3.qaes256 | qout \
   && [[ -e test3 ]] \
   && [[ "$sha" = "$(sha1sum test3)" ]]
-tresult $PASS
-
-# test4
-echo encrypt with tar, decrypt with zip when file extension is provided
-# encrypt with tar
-# decrypt with zip
-echo "hello" > test4 \
-  && ./qcrypt -e -t test4 | qout \
-  && [[ -e test4.taes256 ]] \
-  \
-  && ./qcrypt -d -z test4.taes256 | qout \
-  && [[ -e test4 ]]
-tresult $PASS
-
-# test5
-echo encrypt with zip, decrypt with zip
-# encrypt with zip
-# decrypt with zip
-echo "hello" > test5 \
-  && sha=$(sha1sum test5) \
-  && ./qcrypt -e -z test5 | qout \
-  && [[ -e test5.zaes256 ]] \
-  \
-  && ./qcrypt -d -z test5.zaes256 | qout \
-  && [[ -e test5 ]] \
-  && [[ "$sha" = "$(sha1sum test5)" ]]
 tresult $PASS
 
 # test6
@@ -116,12 +90,12 @@ echo warn when decryption output will overwrite existing file
 # ensure new file with same name hasn't changed
 echo "hello" > test6 \
   && ./qcrypt -e test6 | qout \
-  && [[ -e test6.zaes256 ]] \
+  && [[ -e test6.qaes256 ]] \
   \
   && ! [[ -e test6 ]] \
   && echo testinfo > test6 \
   \
-  && ./qcrypt -d test6.zaes256 <<< $'n\n' | qout \
+  && ./qcrypt -d test6.qaes256 <<< $'n\n' | qout \
   && test "testinfo" == "$(cat test6)"
 tresult $PASS
 
@@ -129,8 +103,8 @@ tresult $PASS
 echo check for encryption failure
 # create fake encrypted file
 # decrypt the fake archive
-echo "hello" > test7.zaes256 \
-  && ./qcrypt -d test7.zaes256 | qout
+echo "hello" > test7.qaes256 \
+  && ./qcrypt -d test7.qaes256 | qout
 tresult $FAIL
 
 # test8
@@ -139,25 +113,12 @@ echo check auto encryption normal usage
 # decrypt file
 echo "hello" > test8 \
   && ./qcrypt -a test8 | qout \
-  && [[ -e test8.zaes256 ]] \
+  && [[ -e test8.qaes256 ]] \
   \
-  && ./qcrypt -a test8.zaes256 | qout \
+  && ./qcrypt -a test8.qaes256 | qout \
   && [[ -e test8 ]]
 tresult $PASS
 
-# test9
-echo rename archive after encryption using zip
-# encrypt file with zip
-# rename to non qcrypt extension
-# decrypt file with zip
-echo "hello" > test9 \
-  && ./qcrypt -e test9 | qout \
-  && [[ -e test9.zaes256 ]] \
-  \
-  && mv test9.zaes256 test9.z \
-  && ./qcrypt -d -z test9.z <<< $'y\n' | qout \
-  && [[ -e test9 ]]
-tresult $PASS
 
 # test10
 echo rename archive after encryption with tar
@@ -165,37 +126,25 @@ echo rename archive after encryption with tar
 # rename to non qcrypt extension
 # decrypt file with tar
 echo "hello" > test10 \
-  && ./qcrypt -e -t test10 | qout \
-  && [[ -e test10.taes256 ]] \
+  && ./qcrypt -e test10 | qout \
+  && [[ -e test10.qaes256 ]] \
   \
-  && mv test10.taes256 test10.t \
-  && ./qcrypt -d -t test10.t <<< $'y\n' | qout \
+  && mv test10.qaes256 test10.t \
+  && ./qcrypt -d test10.t <<< $'y\n' | qout \
   && [[ -e test10 ]]
 tresult $PASS
 
-# test11
-echo rename archive after encryption but use the wrong decompression program
-# encrypt file with zip
-# rename to non qcrypt extension
-# decrypt file with tar
-echo "hello" > test11 \
-  && ./qcrypt -e -t test11 | qout \
-  && [[ -e test11.taes256 ]] \
-  \
-  && mv test11.taes256 test11.t \
-  && ./qcrypt -d -z test11.t <<< $'y\n' | qout
-tresult $FAIL
 
 # test12
 echo warn if file with output name already exists during encryption
 # create file
-# create file.zaes256
+# create file.qaes256
 # try to encrypt file, reject overwrite
 # ensure original file hasn't changed
 echo "hello" > test12 \
-  && echo testinfo > test12.zaes256 \
+  && echo testinfo > test12.qaes256 \
   && ./qcrypt -e test12 <<< $'n\n' | qout \
-  && test "testinfo" == "$(cat test12.zaes256)"
+  && test "testinfo" == "$(cat test12.qaes256)"
 tresult $PASS
 
 if (( FAILURES )); then

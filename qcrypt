@@ -8,16 +8,15 @@
 # author  : leaf@anardil.net
 
 set -u -o pipefail
-usage="usage: $0 (-a|-e|-d) [-z|-t] (directory)"
+usage="usage: $0 (-a|-e|-d) (directory)"
 error () { for msg in "$@"; do echo "$msg"; done; exit 1; }
 
 # compress and then aes256 encrypt
 # =============================
 function encrypt() {
 
-  tar="$1"
-  file="$2"
-  local sum in_ext out_ext
+  file="$1"
+  local sum
 
   [[ "$(dirname "$file")" != "." ]] && {
     error \
@@ -27,65 +26,48 @@ function encrypt() {
   }
 
   # try to catch attempted re-encryption
-  [[ "${file: -8}" == ".zaes256" || "${file: -8}" == ".taes256" ]] && {
+  [[ "${file: -8}" == ".qaes256" ]] && {
     echo    "??? $file appears to already be encrypted by qcrypt."
     read -p "    Are you sure you want to continue? (y/n) " -n 2 -r
     [[ 'Yy' =~ $REPLY ]] || exit
   }
 
   # create an md5sum of the directory or file and creation date file
-  sum=$(find "$file" -type f -exec md5sum {} \; |
-        sort -k 34 | md5sum | cut -c 1-32)
-  echo "$sum" > md5sum.qcrypt
-  date        > date.qcrypt
+  date > date.qcrypt
+  find "$file" -type f -exec md5sum {} \; \
+    | sort -k 34 | md5sum | cut -c 1-32 > md5sum.qcrypt
 
-  if (( tar )) ; then
-    in_ext=".tar" ; out_ext=".taes256"
-    tar -zcf "$file."tar ./*.qcrypt "$file" >/dev/null
-
-  else
-    in_ext=".zip" ; out_ext=".zaes256"
-    zip -r "$file".zip ./*.qcrypt "$file" >/dev/null
-  fi
-
+  tar -zcf "$file.tar" ./*.qcrypt "$file" >/dev/null
   (( $? )) && {
     rm ./*.qcrypt
     error "!!! Compression failed, not continuing."
   }
 
-  [[ -e "$file""$out_ext" ]] && {
-    read -p "??? \"$file$out_ext\" already exists. Overwrite? (y/n) " -n 2 -r
-
-    [[ 'Yy' =~ $REPLY ]] || {
-      rm -f "$file""$in_ext" ./*.qcrypt
-      exit
-    }
-
-    # remove old version
-    rm -f "$file""$out_ext"
+  [[ -e "$file.qaes256" ]] && {
+    read -p "??? \"$file.qaes256\" already exists. Overwrite? (y/n) " -n 2 -r
+    [[ 'Yy' =~ $REPLY ]] || { rm -f "$file.tar" ./*.qcrypt; exit; }
+    rm -f "$file.qaes256"
   }
 
   # encrypt with openssl and aes256
   if [[ "${QCRYPT_MODE:-}" == "TEST" ]]; then
     echo "!!! qcrypt test mode"
-    openssl aes256 -in "$file""$in_ext" -out "$file""$out_ext" -salt -k "default"
+    openssl aes256 -in "$file.tar" -out "$file.qaes256" -salt -k "default"
 
   else
-    openssl aes256 -in "$file""$in_ext" -out "$file""$out_ext" -salt 2>/dev/null
+    openssl aes256 -in "$file.tar" -out "$file.qaes256" -salt 2>/dev/null
   fi
 
   # check for encryption failure
   (( $? )) && {
-    rm -rf "$file""$in_ext" ./*.qcrypt
+    rm -rf "$file.tar" ./*.qcrypt
     error "!!! Encryption failed, not continuing."
   }
 
   # set output to read only and cleanup working files
-  chmod 400 "$file""$out_ext"
-  rm -rf "$file" "$file""$in_ext" ./*.qcrypt
-  (( $? )) && error "!!! Cleanup failed, check for extra files."
-
-  echo "+++ Encryption completed. Output file is $file$out_ext"
+  chmod 400 "$file.qaes256"
+  rm -rf "$file" "$file.tar" ./*.qcrypt
+  echo "+++ Encryption completed. Output file is $file.qaes256"
 }
 
 
@@ -93,150 +75,105 @@ function encrypt() {
 # =============================
 function decrypt() {
 
-  tar="$1"
-  file="$2"
-  local file_ext in_ext out_ext out_file nonstandard date sum
+  file="$1"
+  local file_ext out_file date sum
 
-  nonstandard=0
-  in_ext=".zip"
-  out_ext=".zaes256"
   date="date information not found"
   file_ext=""; [[ ${#file} -gt 8 ]] && file_ext=${file: -8}
 
-  # determine compression to use
   case $file_ext in
-    '.taes256') out_file=${file::-8}; in_ext=".tar"; out_ext=".taes256";;
-    '.zaes256') out_file=${file::-8} ;;
+    '.qaes256')
+      out_file=${file::-8}
+      ;;
     *)
-      # try to catch attempted re-encryption
       echo    "??? $file doesn't appear to be encrypted by qcrypt. "
       read -p "    Are you sure you want to continue? (y/n) " -n 2 -r
       [[ 'Yy' =~ $REPLY ]] || exit
 
-      out_file="$file" ; nonstandard=1
-      (( tar )) && { in_ext=".tar"; out_ext=".taes256"; }
+      out_file="$file"
       ;;
   esac
 
   # decrypt with openssl
   if [[ "${QCRYPT_MODE:-}" == "TEST" ]]; then
     echo "!!! qcrypt test mode"
-    openssl aes256 -d -in "$file" -out "$file""$in_ext" -salt -k "default"
+    openssl aes256 -d -in "$file" -out "$file.tar" -salt -k "default"
 
   else
-    openssl aes256 -d -in "$file" -out "$file""$in_ext" -salt 2>/dev/null
+    openssl aes256 -d -in "$file" -out "$file.tar" -salt 2>/dev/null
   fi
 
   # check for decryption failure
   (( $? )) && {
-    rm -f "$file""$in_ext"
+    rm -f "$file.tar"
     error "!!! Decryption failed, not continuing."
   }
 
-  # non standard skips overwrite checks
-  if (( nonstandard )); then
-    echo "??? Cannot verify file integrity of files or that output will
-          not overwrite an existing file"
-
-  # check if file with output name already exists
-  else
-    [[ -e "$out_file" ]] && {
-      read -n 2 -r -p "??? \"$out_file\" already exists. Overwrite?  "
-
-      # overwrite or cleanup and exit
-      [[ 'Yy' =~ $REPLY ]] || { rm -f "$file""$in_ext"; exit; }
-    }
-  fi
-
-  # overwrite, remove previous version
-  rm -rf "$out_file"
+  # check for overwrite
+  [[ -e "$out_file" ]] && {
+    read -n 2 -r -p "??? \"$out_file\" already exists. Overwrite?  "
+    [[ 'Yy' =~ $REPLY ]] || { rm -f "$file.tar"; exit; }
+    rm -rf "$out_file"
+  }
 
   # decompress the output
-  case $in_ext in
-    '.zip') unzip   "$file".zip >/dev/null 2>/dev/null ;;
-    *)      tar -xf "$file".tar >/dev/null 2>/dev/null ;;
-  esac
-
-  # check for decompression failure
+  tar -xf "$file".tar >/dev/null 2>/dev/null
   (( $? )) && {
-    rm -f "$file""$in_ext"
+    rm -f "$file.tar"
     error "!!! Decompression failed, not continuing."
   }
 
   # attempt to grab date of encryption
   [[ -e "date.qcrypt" ]] && date=$(cat date.qcrypt)
 
-  # verify that md5sum has not changed, this is skipped for non standard files
-  (( ! nonstandard )) && {
-
+  if [[ -e "md5sum.qcrypt" ]]; then
     sum=$(find "$out_file" -type f -exec md5sum {} \; |
           sort -k 34 | md5sum | cut -c 1-32)
 
-    if [[ -e "md5sum.qcrypt" ]]; then
+    [[ "$(cat md5sum.qcrypt)" != "$sum" ]] && {
+      rm -f "$file.tar" ./*.qcrypt
+      error "!!! File integrity checks failed."
+    }
 
-      [[ "$(cat md5sum.qcrypt)" != "$sum" ]] && {
-        rm -f "$file""$in_ext" ./*.qcrypt
-        error "!!! File integrity checks failed."
-      }
-
-    else
-      echo "??? Cannot find file integrity check, unable to verify integrity."
-    fi
-  }
+  else
+    echo "??? Cannot find file integrity check, unable to verify integrity."
+  fi
 
   # clean up the working files
-  rm -rf "$file" "$file""$in_ext" ./*.qcrypt
-  (( $? )) && error "!!! Cleanup failed, check for extra files."
-
+  rm -rf "$file" "$file.tar" ./*.qcrypt
   echo "+++ Decryption completed. Archive was created on: $date"
 }
 
 
 main () {
 
-  local tar file filearg auto_ext
-  tar=0
+  local file auto_ext
 
-  [[ -z "$(which openssl)" ]] && error "!!! Requires openssl"
-  [[ -z "$(which md5sum)"  ]] && error "!!! Requires md5sum"
-  [[ -z "$(which zip)" && -z "$(which tar)" ]] && error "!!! Requires zip or tar"
+  for program in "openssl" "md5sum" "tar"; do
+    [[ -z "$(which $program)" ]] && error "!!! Requires $program"
+  done
 
   # usage
-  arg1=${1:-} ; arg2=${2:-} ; arg3=${3:-} ; arg4=${4:-}
-  [[ $arg1 =~ -a|-e|-d ]] || error "$usage"
+  flag=${1:-}; file=${2:-}; arg3=${3:-}
 
-  # compression program specified
-  if [[ $arg2 =~ -z|-t ]]; then
-
-    [[ "$arg2" == "-t" ]] && tar=1
-    filearg="$arg3"
-    [[ -z "$arg4" ]] || error "!!! qcrypt only handles one directory at a time"
-
-  # compression program not specified
-  else
-    filearg="$arg2"
-    [[ -z "$arg3" ]] || error "!!! qcrypt only handles one directory at a time"
-  fi
-
-  # check if target exists
-  [[ -z "$filearg" ]] && error "$usage"
-  [[ -e "$filearg" ]] || error "!!! File provided does not exist."
+  [[ $flag =~ -a|-e|-d ]] || error "$usage"
+  [[ -z "$file" ]] && error "$usage"
+  [[ -e "$file" ]] || error "!!! File provided does not exist."
+  [[ -z "$arg3" ]] || error "!!! qcrypt only handles one directory at a time"
 
   # remove trailing slash, if any
-  file=${filearg%/}
+  file=${file%/}
 
-  case $arg1 in
-    '-e') encrypt "$tar" "$file" ;;
-    '-d') decrypt "$tar" "$file" ;;
+  case $flag in
+    '-e') encrypt "$file" ;;
+    '-d') decrypt "$file" ;;
     *)
       # check if file name is long enough for qcrypt ext check
       auto_ext=${file: -8}; [[ ${#file} -le 8 ]] && auto_ext=""
 
       case $auto_ext in
-        '.zaes256'|'.taes256')
-          echo "Attempting decryption"; decrypt "$tar" "$file" ;;
-        *)
-          echo "Attempting encryption"; encrypt "$tar" "$file" ;;
+        '.qaes256') echo "Attempting decryption"; decrypt "$file" ;;
+        *)          echo "Attempting encryption"; encrypt "$file" ;;
       esac
       ;;
   esac
