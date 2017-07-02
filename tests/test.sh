@@ -6,6 +6,7 @@ set -o pipefail
 FAIL=1
 PASS=0
 VERBOSE=0
+FAILURES=0
 
 # cleanup
 function cleanup() {
@@ -33,6 +34,7 @@ function tresult() {
     echo "PASSED"
   else
     echo "FAILED"
+    let FAILURES++
   fi
   echo
 }
@@ -58,7 +60,7 @@ tresult $FAIL
 echo warn when re-encrypt but allow
 # encrypt file
 # encrypt archive
-touch test2 \
+echo "hello" > test2 \
   && ./qcrypt -e test2 | qout \
   && [[ -e test2.zaes256 ]] \
   \
@@ -70,19 +72,21 @@ tresult $PASS
 echo encrypt with tar, decrypt with tar
 # encrypt with tar
 # decrypt with tar
-touch test3 \
+echo "hello" > test3 \
+  && sha=$(sha1sum test3) \
   && ./qcrypt -e -t test3 | qout \
   && [[ -e test3.taes256 ]] \
   \
   && ./qcrypt -d -t test3.taes256 | qout \
-  && [[ -e test3 ]]
+  && [[ -e test3 ]] \
+  && [[ "$sha" = "$(sha1sum test3)" ]]
 tresult $PASS
 
 # test4
 echo encrypt with tar, decrypt with zip when file extension is provided
 # encrypt with tar
 # decrypt with zip
-touch test4 \
+echo "hello" > test4 \
   && ./qcrypt -e -t test4 | qout \
   && [[ -e test4.taes256 ]] \
   \
@@ -94,12 +98,14 @@ tresult $PASS
 echo encrypt with zip, decrypt with zip
 # encrypt with zip
 # decrypt with zip
-touch test5 \
+echo "hello" > test5 \
+  && sha=$(sha1sum test5) \
   && ./qcrypt -e -z test5 | qout \
   && [[ -e test5.zaes256 ]] \
   \
   && ./qcrypt -d -z test5.zaes256 | qout \
-  && [[ -e test5 ]]
+  && [[ -e test5 ]] \
+  && [[ "$sha" = "$(sha1sum test5)" ]]
 tresult $PASS
 
 # test6
@@ -108,7 +114,7 @@ echo warn when decryption output will overwrite existing file
 # create file with original name
 # decrypt file, reject overwrite
 # ensure new file with same name hasn't changed
-touch test6 \
+echo "hello" > test6 \
   && ./qcrypt -e test6 | qout \
   && [[ -e test6.zaes256 ]] \
   \
@@ -123,7 +129,7 @@ tresult $PASS
 echo check for encryption failure
 # create fake encrypted file
 # decrypt the fake archive
-touch test7.zaes256 \
+echo "hello" > test7.zaes256 \
   && ./qcrypt -d test7.zaes256 | qout
 tresult $FAIL
 
@@ -131,7 +137,7 @@ tresult $FAIL
 echo check auto encryption normal usage
 # encrypt file
 # decrypt file
-touch test8 \
+echo "hello" > test8 \
   && ./qcrypt -a test8 | qout \
   && [[ -e test8.zaes256 ]] \
   \
@@ -144,12 +150,12 @@ echo rename archive after encryption using zip
 # encrypt file with zip
 # rename to non qcrypt extension
 # decrypt file with zip
-touch test9 \
+echo "hello" > test9 \
   && ./qcrypt -e test9 | qout \
   && [[ -e test9.zaes256 ]] \
   \
   && mv test9.zaes256 test9.z \
-  && ./qcrypt -d test9.z <<< $'y\n' | qout \
+  && ./qcrypt -d -z test9.z <<< $'y\n' | qout \
   && [[ -e test9 ]]
 tresult $PASS
 
@@ -158,7 +164,7 @@ echo rename archive after encryption with tar
 # encrypt file with tar
 # rename to non qcrypt extension
 # decrypt file with tar
-touch test10 \
+echo "hello" > test10 \
   && ./qcrypt -e -t test10 | qout \
   && [[ -e test10.taes256 ]] \
   \
@@ -172,7 +178,7 @@ echo rename archive after encryption but use the wrong decompression program
 # encrypt file with zip
 # rename to non qcrypt extension
 # decrypt file with tar
-touch test11 \
+echo "hello" > test11 \
   && ./qcrypt -e -t test11 | qout \
   && [[ -e test11.taes256 ]] \
   \
@@ -186,11 +192,15 @@ echo warn if file with output name already exists during encryption
 # create file.zaes256
 # try to encrypt file, reject overwrite
 # ensure original file hasn't changed
-touch test12 \
+echo "hello" > test12 \
   && echo testinfo > test12.zaes256 \
   && ./qcrypt -e test12 <<< $'n\n' | qout \
   && test "testinfo" == "$(cat test12.zaes256)"
 tresult $PASS
 
-cleanup
-exit
+if (( FAILURES )); then
+  echo "Finished with $FAILURES failures."
+  echo "Inspect /tmp/qcrypt_test for information"
+else
+  cleanup
+fi
