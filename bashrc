@@ -51,10 +51,14 @@ fi
 # scripts.sh
   if (( at_work )); then
     #shellcheck disable=SC1090
-    source ~/cribshome/avoecks/DotFiles/scripts.sh
+    for script in ~/cribshome/avoecks/DotFiles/bin/*.sh; do
+      source "$script"
+    done
   else
     #shellcheck disable=SC1090
-    source ~/google_drive/personal/share/Public/DotFiles/scripts.sh
+    for script in ~/google_drive/personal/share/Public/DotFiles/bin/*.sh; do
+      source "$script"
+    done
   fi
 
 # functions

@@ -7,7 +7,7 @@
 # requires: openssl, md5sum, tar
 # author  : leaf@anardil.net
 
-function qencrypt() {
+_qencrypt() {
 
   file="$1"
   local sum
@@ -61,7 +61,7 @@ function qencrypt() {
   echo "+++ Encryption completed. Output file is $file.qaes256"
 }
 
-function qdecrypt() {
+_qdecrypt() {
   file="$1"
   local file_ext out_file date sum
   date="date information not found"
@@ -118,10 +118,10 @@ function qdecrypt() {
 }
 
 
-main () {
+qcrypt () {
   set -u -o pipefail
   local file auto_ext
-  usage="usage: $0 (-a|-e|-d) (directory)"
+  usage="usage: $(basename "$0") (-a|-e|-d) (directory)"
   error () { for msg in "$@"; do echo "$msg"; done; exit 1; }
 
   for program in "openssl" "md5sum" "tar"; do
@@ -136,16 +136,16 @@ main () {
   file=${file%/}
 
   case $flag in
-    '-e') qencrypt "$file" ;;
-    '-d') qdecrypt "$file" ;;
+    '-e') _qencrypt "$file" ;;
+    '-d') _qdecrypt "$file" ;;
     *)
       auto_ext=${file: -8}; [[ ${#file} -le 8 ]] && auto_ext=""
       case $auto_ext in
-        '.qaes256') echo "Attempting decryption"; qdecrypt "$file" ;;
-        *)          echo "Attempting encryption"; qencrypt "$file" ;;
+        '.qaes256') echo "Attempting decryption"; _qdecrypt "$file" ;;
+        *)          echo "Attempting encryption"; _qencrypt "$file" ;;
       esac
       ;;
   esac
 }
 
-main "$@"
+"$@"

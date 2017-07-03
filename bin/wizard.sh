@@ -3,7 +3,7 @@
 # usage
 #   sh prepare.sh (username)
 
-do_check () {
+_do_check () {
 
   if [ "$(whoami)" != 'root' ] || [ "$(uname)" != 'Linux' ]; then
     echo "Must be root on Linux"
@@ -16,20 +16,20 @@ do_check () {
   fi
 }
 
-do_update () {
+_do_update () {
   apt-add-repository ppa:fish-shell/release-2
   apt update
   apt upgrade
   apt install tmux fish vim git make gcc libreadline-dev
 }
 
-do_security () {
+_do_security () {
 
   ufw allow 22/tcp
   ufw enable
 }
 
-do_vnc () {
+_do_vnc () {
   apt install xfce4 xfce4-goodies tightvncserver
   vncserver
   vncserver -kill :1
@@ -41,7 +41,7 @@ startxfce4 &
   chmod +x "$HOME"/.vnc/xstartup
 }
 
-add_user () {
+_add_user () {
   user="$1"
 
   adduser "$user"
@@ -59,7 +59,7 @@ add_user () {
   chown -R "$user":"$user" /home/"$user"/
 }
 
-install_vim () {
+_install_vim () {
   cd /tmp/ || exit
   wget https://www.lua.org/ftp/lua-5.3.3.tar.gz \
         && tar zxvf lua-5.3.3.tar.gz && cd lua-5.3.3 \
@@ -82,9 +82,11 @@ install_vim () {
   make install
 }
 
-do_check "$@"
-do_update
-add_user "$@"
-install_vim
-do_security
-do_vnc
+#_do_check "$@"
+#_do_update
+#_add_user "$@"
+#_install_vim
+#_do_security
+#_do_vnc
+
+"$@"

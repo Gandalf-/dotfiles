@@ -83,30 +83,35 @@ end
 # workstation
 if test $at_work
   set wiki_loc ~/cribshome/wiki/index.md
-  set scripts  ~/cribshome/DotFiles/scripts.sh
+  set scripts  ~/cribshome/DotFiles/bin/*.sh
 
 # personal
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/index.md 
-  set scripts  ~/google_drive/personal/share/Public/DotFiles/scripts.sh
+  set scripts  ~/google_drive/personal/share/Public/DotFiles/bin/*.sh
 
 # temporary
 else if test -d /tmp/DotFiles
-  set scripts /tmp/DotFiles/scripts.sh
+  set scripts /tmp/DotFiles/bin/*.sh
 end
 
 # Fish Functions
 #===========================
 
 if test "$scripts"
-  # external functions
-  for ex_function in (grep '()' "$scripts" | grep -v '#' | cut -f 1 -d ' ')
-    eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
-  end
 
-  # external aliases
-  for ex_alias in (grep '^alias ' "$scripts")
-    eval "$ex_alias"
+  for script in $scripts
+
+    # external functions
+    for ex_function in (grep '^[a-Z]\+ ()' "$script" | cut -f1 -d' ')
+      eval "function $ex_function ; bash $script $ex_function \$argv ; end" 
+    end
+
+    # external aliases
+    for ex_alias in (grep '^alias ' "$script")
+      eval "$ex_alias"
+    end
+
   end
 end
 
