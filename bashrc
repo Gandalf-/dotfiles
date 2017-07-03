@@ -60,7 +60,7 @@ fi
   fi
 
   if [[ ! -z "$scripts" ]]; then
-    source $scripts/aliases.list
+    source $scripts/bin/aliases.list
 		export PATH=$scripts/bin:"${PATH}"
   fi
 

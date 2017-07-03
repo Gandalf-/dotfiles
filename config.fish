@@ -90,7 +90,7 @@ end
 
 if test "$scripts"
   set PATH $scripts/bin $PATH
-  source $scripts/aliases.list
+  source $scripts/bin/aliases.list
 end
 
 # vimwiki

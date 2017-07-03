@@ -1,29 +1,6 @@
 #!/bin/bash
 
 # =============================================================================
-# script.sh
-# =============================================================================
-#
-# shell agnostic 'shell' functions and aliases
-#
-# using in fish shell
-#   set scripts ~/.config/fish/script.sh
-#
-#   # external functions
-#   for ex_function in (grep '()' $scripts | grep -v '#' | cut -f 1 -d ' ')
-#     eval "function $ex_function ; bash $scripts $ex_function \$argv ; end"
-#   end
-#
-#   # external aliases
-#   for ex_alias in (grep '^alias ' $scripts)
-#     eval "$ex_alias"
-#   end
-#
-# using in bash
-#   scripts='~/.config/fish/script.sh'
-#   source $scripts
-
-# =============================================================================
 # aliases
 # =============================================================================
 alias b='bash'
@@ -85,10 +62,10 @@ alias xklip='head -c -1 | xclip -selection c'
 # functions
 # =============================================================================
 
-#shttp ()     { python -m SimpleHTTPServer; }
-#silent ()    { cat - >/dev/null 2>/dev/null; }
-#sandman ()   { kill -9 "$(jobs -p)"; }
-#startsshd () { sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd; }
+alias     shttp='python -m SimpleHTTPServer'
+alias    silent='cat - >/dev/null 2>/dev/null'
+alias   sandman='kill -9 "$(jobs -p)"'
+alias startsshd='sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd'
 #
 #pin () { [[ ! -z "$@" ]] && ln -s "$@" ~/; }
 #mkc () { mkdir "$1" && cd "$1" || return; }
