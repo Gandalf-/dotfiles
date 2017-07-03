@@ -50,15 +50,18 @@ fi
 
 # scripts.sh
   if (( at_work )); then
-    #shellcheck disable=SC1090
-    for script in ~/cribshome/avoecks/DotFiles/bin/*.sh; do
-      source "$script"
-    done
+    scripts=~/cribshome/avoecks/DotFiles
+
+  elif [[ -d ~/google_drive ]]; then
+    scripts=~/google_drive/personal/share/Public/DotFiles/
+
   else
-    #shellcheck disable=SC1090
-    for script in ~/google_drive/personal/share/Public/DotFiles/bin/*.sh; do
-      source "$script"
-    done
+    scripts=/tmp/DotFiles
+  fi
+
+  if [[ ! -z "$scripts" ]]; then
+    source $scripts/aliases.list
+		export PATH=$scripts/bin:"${PATH}"
   fi
 
 # functions

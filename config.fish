@@ -9,10 +9,6 @@ set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
 test (hostname) = 'wkstn-avoecks'; and set at_work yes
 
 function fish_prompt
-  # add the current directory to the path
-  set PATH $OLD_PATH
-  set PATH $PWD $PATH
-
   echo -n (whoami)"@$__HOST__"
   set_color $fish_color_cwd
   echo -n ' '(prompt_pwd)
@@ -28,12 +24,6 @@ end
 
 # PATH
 set -gx TMP /tmp
-
-if test -d ~/.cabal/bin
-  set PATH /home/leaf/.cabal/bin $PATH
-end
-
-set -x OLD_PATH $PATH
 
 # Abbreviations
 if status --is-interactive
@@ -83,36 +73,24 @@ end
 # workstation
 if test $at_work
   set wiki_loc ~/cribshome/wiki/index.md
-  set scripts  ~/cribshome/DotFiles/bin/*.sh
+  set scripts  ~/cribshome/DotFiles
 
 # personal
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/index.md 
-  set scripts  ~/google_drive/personal/share/Public/DotFiles/bin/*.sh
+  set scripts  ~/google_drive/personal/share/Public/DotFiles
 
 # temporary
 else if test -d /tmp/DotFiles
-  set scripts /tmp/DotFiles/bin/*.sh
+  set scripts /tmp/DotFiles
 end
 
 # Fish Functions
 #===========================
 
 if test "$scripts"
-
-  for script in $scripts
-
-    # external functions
-    for ex_function in (grep '^[a-Z]\+ ()' "$script" | cut -f1 -d' ')
-      eval "function $ex_function ; bash $script $ex_function \$argv ; end" 
-    end
-
-    # external aliases
-    for ex_alias in (grep '^alias ' "$script")
-      eval "$ex_alias"
-    end
-
-  end
+  set PATH $scripts/bin $PATH
+  source $scripts/aliases.list
 end
 
 # vimwiki

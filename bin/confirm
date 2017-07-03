@@ -1,0 +1,19 @@
+#!/bin/bash
+
+confirm (){
+  # print arguments with green color
+
+  local green normal; green="\033[01;32m"; normal="\033[00m"
+
+  if [[ "$1" != 0 ]]; then
+    shift
+    printf "%b%s%b " "$green" "$@" "$normal"
+    read -r reply; [[ "$reply" =~ [Nn] ]] && exit
+
+  else
+    shift
+    printf "%b%s%b\n" "$green" "$@" "$normal"
+  fi
+}
+
+confirm "$@"

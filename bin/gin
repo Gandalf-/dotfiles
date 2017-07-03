@@ -1,0 +1,29 @@
+#!/bin/bash
+
+gin (){
+  # insync-headless wrapper
+
+  case "$1" in
+    "s")   insync-headless start             ;;
+    "ps")  insync-headless pause_syncing     ;;
+    "rs")  insync-headless resume_syncing    ;;
+    "re")  insync-headless retry_errors      ;;
+    "gs")  insync-headless get_status        ;;
+    "ge")  insync-headless get_errors        ;;
+    "gsp") insync-headless get_sync_progress ;;
+    *)
+      echo "
+insync-headless wrapper
+   s : start
+  ps : pause syncing
+  rs : resume syncing
+  re : retry errors
+  gs : get status
+  ge : get errors
+ gsp : get sync progress
+       "
+      ;;
+  esac
+}
+
+gin "$@"
