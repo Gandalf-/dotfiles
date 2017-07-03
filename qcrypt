@@ -1,0 +1,151 @@
+#!/bin/bash
+
+# Script that compresses and encrypts directories or files with openssl and tar
+# also handles the reverse process to restore the files. Works on files and
+# directories, don't have to be in the current working directory
+#
+# requires: openssl, md5sum, tar
+# author  : leaf@anardil.net
+
+function qencrypt() {
+
+  file="$1"
+  local sum
+
+  [[ "$(dirname "$file")" != "." ]] && {
+    error \
+      "!!! qcrypt encryption should not be run on files outside of the    " \
+      "current working directory. Please move to the directory containing " \
+      "the file and run again.                                            "
+  }
+
+  # try to catch attempted re-encryption
+  [[ "${file: -8}" == ".qaes256" ]] && {
+    echo    "??? $file appears to already be encrypted by qcrypt."
+    read -p "    Are you sure you want to continue? (y/n) " -n 2 -r
+    [[ 'Yy' =~ $REPLY ]] || exit
+  }
+
+  # create an md5sum of the directory or file and creation date file
+  date > date.qcrypt
+  find "$file" -type f -exec md5sum {} \; \
+    | sort -k 34 | md5sum | cut -c 1-32 > md5sum.qcrypt
+
+  tar -zcf "$file.tar" ./*.qcrypt "$file" >/dev/null
+  (( $? )) && {
+    rm ./*.qcrypt
+    error "!!! Compression failed, not continuing."
+  }
+
+  [[ -e "$file.qaes256" ]] && {
+    read -p "??? \"$file.qaes256\" already exists. Overwrite? (y/n) " -n 2 -r
+    [[ 'Yy' =~ $REPLY ]] || { rm -f "$file.tar" ./*.qcrypt; exit; }
+    rm -f "$file.qaes256"
+  }
+
+  # encrypt with openssl and aes256
+  if [[ "${QCRYPT_MODE:-}" == "TEST" ]]; then
+    echo "!!! qcrypt test mode"
+    openssl aes256 -in "$file.tar" -out "$file.qaes256" -salt -k "default"
+  else
+    openssl aes256 -in "$file.tar" -out "$file.qaes256" -salt 2>/dev/null
+  fi
+  (( $? )) && {
+    rm -rf "$file.tar" ./*.qcrypt
+    error "!!! Encryption failed, not continuing."
+  }
+
+  # set output to read only and cleanup working files
+  chmod 400 "$file.qaes256"
+  rm -rf "$file" "$file.tar" ./*.qcrypt
+  echo "+++ Encryption completed. Output file is $file.qaes256"
+}
+
+function qdecrypt() {
+  file="$1"
+  local file_ext out_file date sum
+  date="date information not found"
+  file_ext=""; [[ ${#file} -gt 8 ]] && file_ext=${file: -8}
+
+  case $file_ext in
+    '.qaes256') out_file=${file::-8} ;;
+    *)
+      echo    "??? $file doesn't appear to be encrypted by qcrypt. "
+      read -p "    Are you sure you want to continue? (y/n) " -n 2 -r
+      [[ 'Yy' =~ $REPLY ]] || exit
+      out_file="$file"
+      ;;
+  esac
+
+  # decrypt with openssl
+  if [[ "${QCRYPT_MODE:-}" == "TEST" ]]; then
+    echo "!!! qcrypt test mode"
+    openssl aes256 -d -in "$file" -out "$file.tar" -salt -k "default"
+  else
+    openssl aes256 -d -in "$file" -out "$file.tar" -salt 2>/dev/null
+  fi
+  (( $? )) && { rm -f "$file.tar"; error "!!! Decryption failed, quiting."; }
+
+  # check for overwrite
+  [[ -e "$out_file" ]] && {
+    read -n 2 -r -p "??? \"$out_file\" already exists. Overwrite?  "
+    [[ 'Yy' =~ $REPLY ]] || { rm -f "$file.tar"; exit; }
+    rm -rf "$out_file"
+  }
+
+  # decompress the output
+  tar -xf "$file".tar >/dev/null 2>/dev/null
+  (( $? )) && { rm -f "$file.tar"; error "!!! Untar failed, quiting."; }
+
+  # verify integrity
+  [[ -e "date.qcrypt" ]] && date=$(cat date.qcrypt)
+
+  if [[ -e "md5sum.qcrypt" && -e "$out_file" ]]; then
+    sum=$(find "$out_file" -type f -exec md5sum {} \; |
+          sort -k 34 | md5sum | cut -c 1-32)
+
+    [[ "$(cat md5sum.qcrypt)" != "$sum" ]] && {
+      rm -f "$file.tar" ./*.qcrypt
+      error "!!! File integrity checks failed."
+    }
+  else
+    echo "??? Cannot find file integrity check, unable to verify integrity."
+  fi
+
+  # clean up the working files
+  rm -rf "$file" "$file.tar" ./*.qcrypt
+  echo "+++ Decryption completed. Archive was created on: $date"
+}
+
+
+main () {
+  set -u -o pipefail
+  local file auto_ext
+  usage="usage: $0 (-a|-e|-d) (directory)"
+  error () { for msg in "$@"; do echo "$msg"; done; exit 1; }
+
+  for program in "openssl" "md5sum" "tar"; do
+    [[ -z "$(which $program)" ]] && error "!!! Requires $program"
+  done
+
+  flag=${1:-}; file=${2:-}; arg3=${3:-}
+  [[ $flag =~ -a|-e|-d ]] || error "$usage"
+  [[ -z "$file" ]] && error "$usage"
+  [[ -e "$file" ]] || error "!!! File provided does not exist."
+  [[ -z "$arg3" ]] || error "!!! qcrypt only handles one directory at a time"
+  file=${file%/}
+
+  case $flag in
+    '-e') qencrypt "$file" ;;
+    '-d') qdecrypt "$file" ;;
+    *)
+      auto_ext=${file: -8}; [[ ${#file} -le 8 ]] && auto_ext=""
+      case $auto_ext in
+        '.qaes256') echo "Attempting decryption"; qdecrypt "$file" ;;
+        *)          echo "Attempting encryption"; qencrypt "$file" ;;
+      esac
+      ;;
+  esac
+}
+
+main "$@"
