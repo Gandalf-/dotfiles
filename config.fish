@@ -136,11 +136,6 @@ function f
     else if j "$arg" ^/dev/null
       true
 
-      # did we autojump to a directory with a similar name to the arg?
-      if test -f "$arg"
-        set files $arg $files
-      end
-
     # attempt search
     else 
       set search

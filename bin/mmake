@@ -1,0 +1,85 @@
+#!/bin/bash
+
+flags="-Wall -Wextra"
+
+usage() {
+  echo "usage: (-l language | -n name | -o output) [-x extra]"
+  exit
+}
+
+# parse arguments
+while ! [[ -z $1 ]]; do
+  case "$1" in
+    -l)
+      shift; lang=$1; shift
+      ;;
+    -n)
+      shift; name=$1; shift
+      ;;
+    -o)
+      shift; output=$1; shift
+      ;;
+    -x)
+      shift; extra=$1; shift
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+# verify
+if [[ -z $lang || -z $name || -z $output ]]; then
+  usage
+fi
+
+# construct makefile
+case "$lang" in
+  # c
+  c)
+cat > Makefile << EOF
+${output}: ${name}
+	clang ${flags} -o ${output} ${name}
+
+clean:
+	@rm ${name}
+	@echo Done
+EOF
+  ;;
+
+  # cpp
+  cpp)
+cat > Makefile << EOF
+${output}: ${name}
+	clang++ ${flags} -o ${output} ${name}
+
+clean:
+	@rm ${name}
+	@echo Done
+EOF
+  ;;
+
+  # java
+  java)
+cat > Makefile << EOF
+JAVAC=javac -cp .:${extra}
+sources = \$(wildcard *.java)
+classes = \$(sources:.java=.class)
+
+all: \$(classes)
+
+clean:
+	@rm -f *.class
+	@echo Done
+
+%.class : %.java
+	\$(JAVAC) $<
+EOF
+  ;;
+
+  # usage
+  *)
+  echo "Unsupported language"
+  usage
+  ;;
+esac

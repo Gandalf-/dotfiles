@@ -56,29 +56,6 @@ alias dos2unix='recode dos/CR-LF..l1'
 alias unix2win='recode l1..windows-1250'
 alias unix2dos='recode l1..dos/CR-LF'
 
-alias xklip='head -c -1 | xclip -selection c'
-
-# =============================================================================
-# functions
-# =============================================================================
-
+alias     xklip='head -c -1 | xclip -selection c'
 alias     shttp='python -m SimpleHTTPServer'
-alias    silent='cat - >/dev/null 2>/dev/null'
-alias   sandman='kill -9 "$(jobs -p)"'
 alias startsshd='sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd'
-#
-#pin () { [[ ! -z "$@" ]] && ln -s "$@" ~/; }
-#mkc () { mkdir "$1" && cd "$1" || return; }
-#tmr () { tmux send-keys -t right "$@" C-m; }
-#tml () { tmux send-keys -t left  "$@" C-m; }
-#
-## shellcheck disable=SC2009
-#grap () { ps aux | grep "$1" | grep -v "grep $1"; }
-#grip () { ps -fC "$1"; }
-#calc () { bc -l <<< "$@"; }
-#freq () { sort | uniq -c | sort -nr | head -n "$1"; }
-#
-#weather () { curl http://wttr.in/~"$1"; }
-#
-## provide functions to callers
-#"$@"

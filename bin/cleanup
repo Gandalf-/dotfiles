@@ -1,34 +1,29 @@
 #!/bin/bash
 
-cleanup () {
-  # smart remove duplicate file names and intermediary file types
+# smart remove duplicate file names and intermediary file types
 
-  local dry counter fixed; dry=0
-  [[ "$1" == '-i' ]] && dry=1
+[[ "$1" == '-i' ]] && dry=1
 
-  counter=0
-  while read -r file; do
-    fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
+counter=0
+while read -r file; do
+  fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
 
-    if [[ -f "$fixed" ]]; then
-      echo "remove dup: $file"
-      (( dry )) && rm "$file"
-
-    else
-      echo "rename dup: $file"
-      (( dry )) && mv "$file" "$fixed"
-    fi
-
-    let counter++
-  done < <(find -regex '.*([0-9]+).*')
-
-  while read -r file; do
-    echo "remove    : $file"
+  if [[ -f "$fixed" ]]; then
+    echo "remove dup: $file"
     (( dry )) && rm "$file"
-    let counter++
-  done < <(find -regex '.*\.\(pyc\|class\|o\|bak\)')
 
-  echo "Cleaned up $counter files"
-}
+  else
+    echo "rename dup: $file"
+    (( dry )) && mv "$file" "$fixed"
+  fi
 
-cleanup "$@"
+  let counter++
+done < <(find -regex '.*([0-9]+).*')
+
+while read -r file; do
+  echo "remove    : $file"
+  (( dry )) && rm "$file"
+  let counter++
+done < <(find -regex '.*\.\(pyc\|class\|o\|bak\)')
+
+echo "Cleaned up $counter files"
