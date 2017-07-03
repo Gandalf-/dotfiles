@@ -32,8 +32,18 @@
 " => Plugins
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   " Vundle 
+    let has_vundle=1
+    let vundle_url='https://github.com/VundleVim/Vundle.vim'
+
+    if !filereadable(expand('~/.vim/bundle/Vundle.vim/README.md')) 
+      silent !mkdir -p ~/.vim/bundle
+      silent exe "!git clone " . g:vundle_url . " ~/.vim/bundle/Vundle.vim"
+      let has_vundle=0
+    endif
+
     filetype off
     set rtp+=~/.vim/bundle/Vundle.vim
+
     call vundle#begin()
       Plugin 'vimwiki/vimwiki'
       Plugin 'VundleVim/Vundle.vim'
@@ -42,6 +52,10 @@
       Plugin 'Shougo/neosnippet-snippets'
       Plugin 'Shougo/neoinclude.vim'
       Plugin 'vim-syntastic/syntastic'
+
+      if has_vundle == 0
+        :PluginInstall
+      endif
     call vundle#end()
     filetype plugin indent on
 
