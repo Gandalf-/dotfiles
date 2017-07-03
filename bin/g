@@ -2,6 +2,7 @@
 
 g (){
   # super git wrapper!
+
   at_work=0
   [[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
 
@@ -130,12 +131,18 @@ g (){
             remote_branch="$2"
             new_branch_name="$3"
             git checkout "$remote_branch" -b "$new_branch_name"
-            shift
-            shift
+            shift; shift
+        ;;
+      "m")  confirm "$cnfrm" "git merge $2"
+            if [[ ! -z "$2" ]]; then
+              git commit -m "$2"; shift
+            fi
         ;;
       "cm") confirm "$cnfrm" "git commit -m $2"
             if [[ ! -z "$2" ]]; then
               git commit -m "$2"; shift
+            else
+              git commit
             fi
         ;;
       "pl") confirm "$cnfrm" "git pull $2"
@@ -161,7 +168,7 @@ g (){
         ;;
       *)
         echo "
-  g
+  g - super git wrapper
     !  : toggle confirmation
     a  : add everything
     bv : branch -vv
@@ -178,6 +185,7 @@ g (){
     f  : fetch
     l  : log
     ll : log graph
+    m  : merge (branch)
     s  : status
     rv : remote -vv
     ri : interactive rebase

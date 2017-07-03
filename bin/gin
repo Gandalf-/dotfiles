@@ -12,7 +12,7 @@ case "$1" in
   "gsp") insync-headless get_sync_progress ;;
   *)
     echo "
-insync-headless wrapper
+gin - insync-headless wrapper
    s : start
   ps : pause syncing
   rs : resume syncing

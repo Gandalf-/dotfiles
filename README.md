@@ -2,13 +2,50 @@
 My personal configuration files!
 
 ## g
-Super *git* wrapper
+Super *git* wrapper.
+
+Any number of commands can be chained together, making your git workflow much
+simpler. For example, `g s d a cm 'Updating readme.md  ph`, would run the
+following commands in order, pausing for input and confirmation at each step
+
+- git status
+- git diff 
+- git add -A
+- git commit -m 'Updating readme.md'
+- git push
+
+```
+  g
+    !  : toggle confirmation
+    a  : add everything
+    bv : branch -vv
+    bn : checkout (remote branch) -b (local branch)
+    c  : commit
+    ca : commit amend
+    cb : checkout -b (branch)
+    cs : attempt to checkout branch by bug name [work only]
+    cm : commit -m (message)
+    co : checkout (file)
+    d  : diff changes [output_file]
+    dh : diff commits [number of commits] [output_file]
+    ds : diff commits [number of commits] - auto names diff [work only]
+    f  : fetch
+    l  : log
+    ll : log graph
+    s  : status
+    rv : remote -vv
+    ri : interactive rebase
+    p  : pause
+    pl : pull [branch]
+    ph : push [branch]
+    pf : push --force [branch]
+```
 
 
 ## qcrypt
 Full featured command line encryption with OpenSSL
 
-`usage: qcrypt (-a|-e|-d) target_name`
+`usage: qcrypt (-a|-e|-d) target`
 - The `-a` switch signals *auto* mode, in which qcrypt detects whether to
   encrypt or decrypt the file based on the targets file extension. qcrypt
   defaults to encryption.
@@ -44,3 +81,19 @@ however this action is not disallowed. Likewise, attempted decryption of an
 archive without a qcrypt file extension will produce a warning but is allowed.
 This allows the user to rename archives and remove the qcrypt file extension if
 so desired. 
+
+
+## cleanup
+Smart remove duplicate and temporary file names
+
+Suppose you have the following directory structure,
+```
+$ ls -l directory
+file (1).txt
+file.txt
+data (1).csv
+program.pyc
+```
+**cleanup** will remove `file (1).txt` and `program.pyc` and rename 
+`data (1).csv` to `data.csv`. `file (1).txt ` is removed because `file.txt`
+exists.

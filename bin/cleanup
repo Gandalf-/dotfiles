@@ -1,8 +1,16 @@
 #!/bin/bash
 
-# smart remove duplicate file names and intermediary file types
+case "$1" in
+  '-i') dry=1
+    ;;
 
-[[ "$1" == '-i' ]] && dry=1
+  '-h'|'--help')
+    echo "
+  cleanup [-i]
+    smart remove duplicate file names and intermediary file types
+    "
+    ;;
+esac
 
 counter=0
 while read -r file; do
