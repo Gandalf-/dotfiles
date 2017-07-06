@@ -75,6 +75,14 @@ if test $at_work
   set wiki_loc ~/cribshome/wiki/index.md
   set scripts  ~/cribshome/DotFiles
 
+  function fl
+    if echo (pwd) | grep -q "onefs";
+      cd (echo (pwd) | sed -e "s/onefs/twofs/")
+    else if echo (pwd) | grep -q "twofs"
+      cd (echo (pwd) | sed -e "s/twofs/onefs/")
+    end
+  end
+
 # personal
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/index.md 

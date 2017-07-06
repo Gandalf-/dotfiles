@@ -50,7 +50,7 @@ fi
 
 # scripts.sh
   if (( at_work )); then
-    scripts=~/cribshome/avoecks/DotFiles
+    scripts=~/cribshome/DotFiles
 
   elif [[ -d ~/google_drive ]]; then
     scripts=~/google_drive/personal/share/Public/DotFiles/

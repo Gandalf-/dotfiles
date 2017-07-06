@@ -205,7 +205,7 @@
     highlight VertSplit cterm=NONE ctermbg=0 ctermfg=NONE
 
   " Status line
-    highlight StatusLine ctermfg=245 cterm=none
+    highlight StatusLine ctermfg=246
     set statusline=%f    " Path.
     set statusline+=%m   " Modified flag.
     set statusline+=%r   " Readonly flag.
