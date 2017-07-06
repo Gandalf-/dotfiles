@@ -119,8 +119,8 @@ function f
   end
   
   set files
-  set fuzzy "no"
-  set locate "no"
+  set fuzzy
+  set locate
 
   for arg in $argv
 
@@ -141,14 +141,14 @@ function f
       cd "$arg"; ls
 
     # attempt autojump
-    else if j "$arg" ^/dev/null
+    else if not test "$locate"; and j "$arg" ^/dev/null
       true
 
     # attempt search
     else 
       set search
 
-      if test "$fuzzy" = "yes"
+      if test "$fuzzy"
         set search (timeout 1 find . -name '*'"$arg"'*')
       else
         set search (timeout 1 find . -name "$arg")
@@ -166,7 +166,7 @@ function f
   # open, print accrued files, if any
   if test "$files"
 
-    if test $locate = yes
+    if test "$locate"
       for file in $files
         echo $file
       end

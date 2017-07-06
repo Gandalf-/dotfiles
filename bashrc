@@ -1,5 +1,8 @@
 #~/.bashrc: executed by bash(1) for non-login shells.
 
+# If not running interactively, don't do anything
+case $- in *i*) ;; *) return;; esac
+
 # where are we?
 at_work=0
 [[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
@@ -34,12 +37,6 @@ fi
 
 # better completion?
   complete -cf man
-
-# If not running interactively, don't do anything
-  case $- in
-    *i*) ;;
-    *) return;;
-  esac
 
 # basics
   export EDITOR=vim
