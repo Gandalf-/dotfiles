@@ -50,20 +50,23 @@ _add_user () {
   mkdir -p /home/"$user"/.ssh/
   cp -r /root/.ssh/ /home/"$user"/
 
+  chown -R "$user":"$user" /home/"$user"/
+}
+
+_add_configs () {
   git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
   ln -sf /tmp/DotFiles/config.fish  /home/"$user"/.config/fish/config.fish
   ln -sf /tmp/DotFiles/vimrc        /home/"$user"/.vimrc
   ln -sf /tmp/DotFiles/tmux.conf    /home/"$user"/.tmux.conf
   ln -sf /tmp/DotFiles/bashrc       /home/"$user"/.bashrc
 
-  chown -R "$user":"$user" /home/"$user"/
 }
 
 _install_vim () {
   cd /tmp/ || exit
   wget https://www.lua.org/ftp/lua-5.3.3.tar.gz \
         && tar zxvf lua-5.3.3.tar.gz && cd lua-5.3.3 \
-        && make linux && make install
+        && make linux && sudo make install
 
   git clone https://github.com/vim/vim.git /tmp/vim
   cd /tmp/vim || exit
@@ -79,7 +82,7 @@ _install_vim () {
       --enable-perlinterp=yes \
       --enable-luainterp=yes \
       --enable-gui=gtk2 --enable-cscope --prefix=/usr
-  make install
+  sudo make install
 }
 
 #_do_check "$@"
