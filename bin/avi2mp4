@@ -1,7 +1,7 @@
 #!/bin/bash
 
 for file in *.avi; do
-  ffmpeg -i "$file" -acodec copy -vcodec copy -map 0 "${file//.avi}.mp4"
+  ffmpeg -hide_banner -i "$file" -c:v libx264 -crf 19 -preset veryfast -strict -2 -c:a aac -b:a 192k -ac 2 "${file//.avi}.mp4"
   (( $? )) && exit 1
   rm "$file"
 done
