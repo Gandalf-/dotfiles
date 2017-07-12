@@ -1,5 +1,6 @@
 #!/bin/bash
 
+dry=0
 case "$1" in
   '-i') dry=1
     ;;
@@ -16,21 +17,25 @@ counter=0
 while read -r file; do
   fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
 
-  if [[ -f "$fixed" ]]; then
-    echo "remove dup: $file"
-    (( dry )) && rm "$file"
+  # make sure the file still exists
+  if [[ -e "$file" ]] ; then
 
-  else
-    echo "rename dup: $file"
-    (( dry )) && mv "$file" "$fixed"
+    if [[ -f "$fixed" ]]; then
+      echo "remove dup: $file"
+      (( dry )) || rm "$file" || exit
+
+    else
+      echo "rename dup: $file"
+      (( dry )) || mv "$file" "$fixed" || exit
+    fi
+
+    let counter++
   fi
-
-  let counter++
 done < <(find -regex '.*([0-9]+).*')
 
 while read -r file; do
   echo "remove    : $file"
-  (( dry )) && rm "$file"
+  (( dry )) || rm "$file" || exit
   let counter++
 done < <(find -regex '.*\.\(pyc\|class\|o\|bak\)')
 
