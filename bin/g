@@ -3,11 +3,8 @@
 g (){
   # super git wrapper!
 
-  at_work=0
-  [[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
-
-  local cnfrm fmt remote_branch bug_dir bug_branch
-  local new_branch_name commits branch diff
+  local cnfrm fmt remote_branch bug_dir branch
+  local new_branch_name commits diff
 
   if [[ -z "$1" ]]; then
     g --help
@@ -20,7 +17,7 @@ g (){
 
   while [[ ! -z "$1" ]]; do
     case "$1" in
-      "!")  cnfrm=$(( ! cnfrm ))                          ;;
+      "!")  cnfrm=$(( ! cnfrm ))                                    ;;
 
       "a")  confirm "$cnfrm" "git add -A :/"
             git add -A :/                                           ;;
@@ -33,6 +30,11 @@ g (){
 
       "c")  confirm "$cnfrm" "git commit"
             git commit                                              ;;
+
+      "cc") confirm "$cnfrm" "git clean -nfd"
+            git clean -nfd
+            confirm "$cnfrm" "Continue?"
+            git clean -fd                                           ;;
 
       "ca") confirm "$cnfrm" "git commit --amend"
             git commit --amend                                      ;;
@@ -99,13 +101,14 @@ g (){
             shift
         ;;
 
-      "ds") if ! (( at_work )); then
+      "ds") if [[ -z "$DIFFDIR" ]]; then
               echo "error: smart diff not available"
               return
             fi
 
             branch="$(git rev-parse --abbrev-ref HEAD)"
-            diff="/home/avoecks/cribshome/diffs/${branch}.diff"
+            diff="$DIFFDIR/${branch}.diff"
+
             if [ "$2" -eq "$2" ] 2>/dev/null ; then
               confirm "$cnfrm" "git diff --full-index HEAD~$2 > $diff"
               git diff --full-index HEAD~"$2" > "$diff"
@@ -136,7 +139,14 @@ g (){
               git commit
             fi
         ;;
-      "pl") confirm "$cnfrm" "git pull $2"
+      "pm") confirm "$cnfrm" "git pull $2"
+            if [[ ! -z "$2" ]]; then
+              git pull "$2"; shift
+            else
+              git pull
+            fi
+        ;;
+      "pl") confirm "$cnfrm" "git pull --no-edit $2"
             if [[ ! -z "$2" ]]; then
               git pull "$2"; shift
             else
@@ -165,6 +175,7 @@ g (){
     bv : branch -vv
     bn : checkout (remote branch) -b (local branch)
     c  : commit
+    cc : clean -nfd, confirm, clean -fd
     ca : commit amend
     cb : checkout -b (branch)
     cs : attempt to checkout branch by bug name [work only]
@@ -181,7 +192,8 @@ g (){
     rv : remote -vv
     ri : interactive rebase
     p  : pause
-    pl : pull [branch]
+    pl : pull --no-edit [branch]
+    pm : pull [branch]
     ph : push [branch]
     pf : push --force [branch]
         "

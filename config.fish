@@ -7,6 +7,7 @@ set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
 
 # where are we?
 test (hostname) = 'wkstn-avoecks'; and set at_work yes
+set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 
 function fish_prompt
   echo -n (whoami)"@$__HOST__"
@@ -27,12 +28,15 @@ set -gx TMP /tmp
 
 # Abbreviations
 if status --is-interactive
+
+  if test $fish_version -ge 220; 
     set -g fish_user_abbreviations
     abbr --add bash b
     abbr --add echo e
     abbr --add head h
     abbr --add ls   l
     abbr --add vim  v
+  end
 end
 
 # Vim mode
@@ -72,8 +76,9 @@ end
 
 # workstation
 if test $at_work
-  set wiki_loc ~/cribshome/wiki/index.md
-  set scripts  ~/cribshome/DotFiles
+  set     wiki_loc ~/cribshome/wiki/index.md
+  set     scripts  ~/cribshome/DotFiles
+  set -gx DIFFDIR  ~/cribshome/diffs/
 
   function fl
     if echo (pwd) | grep -q "onefs";
@@ -174,17 +179,6 @@ function f
       vim -p $files
     end
 
-  end
-end
-
-function repeat
-  # replay some number of commands from history (experiment)
-  #
-  for cmd in (seq "$argv[1]" -1 1)
-    if test (echo "$history[$cmd]" | head -c 6) != "repeat"
-      show "[repeat] $history[$cmd]"
-      eval $history[$cmd]
-    end
   end
 end
 
