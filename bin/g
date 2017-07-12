@@ -43,18 +43,9 @@ g (){
       "cb") confirm "$cnfrm" "git checkout -b $2"
             git checkout -b "$2"; shift                             ;;
 
-      "cs") if ! (( at_work )); then
-              echo "error: smart checkout not available"
-              return
-            fi
-
-            bug_dir='/home/avoecks/cribshome/wiki/bugs/'
-            bug_branch="BR_BUG_$(find "$bug_dir"   |
-                                 grep "$2"         |
-                                 grep -o '[0-9]\+' |
-                                 head -n 1)"
-            confirm "cnfrm" "git checkout $bug_branch"
-            git checkout "$bug_branch"; shift                       ;;
+      "cs") branch=$(git branch -q | grep -i "$2" | xargs)
+            confirm "cnfrm" "git checkout $branch"
+            git checkout "$branch"; shift                           ;;
 
       "f")  confirm "$cnfrm" "git fetch"
             git fetch                                               ;;
