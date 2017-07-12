@@ -45,7 +45,7 @@ g (){
       "cb") confirm "$cnfrm" "git checkout -b $2"
             git checkout -b "$2"; shift                             ;;
 
-      "cs") branch=$(git branch -q | grep -i "$2" | xargs)
+      "cs") branch=$(git branch -q | grep -i "$2" | xargs | cut -f1 -d' ')
             confirm "cnfrm" "git checkout $branch"
             git checkout "$branch"; shift                           ;;
 
