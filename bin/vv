@@ -1,0 +1,2 @@
+#!/bin/bash
+vim -p ./*.{h,c{,c,++,xx,pp},java,sh,py,md,html,css,js,php,pl,txt}

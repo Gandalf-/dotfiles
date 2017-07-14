@@ -589,6 +589,7 @@
 " Movement
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   " recenter
+    nnoremap <silent> Z zz
     nnoremap <silent> <C-]> <C-]>zz
     nnoremap <silent> n nzz
     nnoremap <silent> N Nzz
