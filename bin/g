@@ -15,7 +15,7 @@ g (){
   fmt="\
 %Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
 
-  while [[ ! -z "$1" ]]; do
+  while [[ -n "$1" ]]; do
     case "$1" in
       "!")  cnfrm=$(( ! cnfrm ))                                    ;;
 

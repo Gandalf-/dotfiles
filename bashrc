@@ -4,8 +4,7 @@
 case $- in *i*) ;; *) return;; esac
 
 # where are we?
-at_work=0
-[[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
+at_work=0; [[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
 
 if (( at_work )); then
 	export QA=/usr/local/qa
@@ -57,7 +56,6 @@ fi
   fi
 
   if [[ ! -z "$scripts" ]]; then
-    source $scripts/bin/aliases.list
 		export PATH=$scripts/bin:"${PATH}"
   fi
 

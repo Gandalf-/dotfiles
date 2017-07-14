@@ -1,0 +1,13 @@
+#!/bin/sh
+
+case $1 in
+  3)
+    python3 "$@"
+    ;;
+  i)
+    ipython "$@"
+    ;;
+  *)
+    python "$@"
+    ;;
+esac
