@@ -1,7 +1,13 @@
 #!/bin/bash
 
-for file in *.avi; do
-  ffmpeg -hide_banner -i "$file" -c:v libx264 -crf 19 -preset veryfast -strict -2 -c:a aac -b:a 192k -ac 2 "${file//.avi}.mp4"
+echo "Processing: $@"
+
+for file in "$@"; do
+  ffmpeg -hide_banner -i "$file" \
+    -c:v libx264 -crf 19 -preset veryfast -strict -2 \
+    -c:a aac -b:a 192k -ac 2 "${file%.*}.mp4"
+
+  echo "Waiting..."; sleep 5
   (( $? )) && exit 1
   rm "$file"
 done
