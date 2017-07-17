@@ -131,11 +131,12 @@ function f
   set locate
   set move
 
-  # enable fuzzy, locate, move
-  if not string match -q -r '[^zlc]' $argv[1]
+  # check for fuzzy, locate, move flags
+  if not string match -q -r '[^zlc-]' $argv[1]
     if string match -q -r '.*z.*' $argv[1]; set fuzzy  "yes"; end
     if string match -q -r '.*l.*' $argv[1]; set locate "yes"; end
     if string match -q -r '.*c.*' $argv[1]; set move   "yes"; end
+    if string match -q '-' $argv[1]; cd -; return; end
     set --erase argv[1]
     set has_flag "yes"
   end
@@ -167,7 +168,6 @@ function f
   
   # open, print accrued files, if any
   if test "$files"
-
     if test "$locate"
       for file in $files; echo $file; end
 
@@ -177,7 +177,6 @@ function f
     else
       vim -p $files
     end
-
   end
 end
 
