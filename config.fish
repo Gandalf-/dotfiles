@@ -115,50 +115,42 @@ if test "$wiki_loc"
   alias vw="vim $wiki_loc"
 end
 
-function f 
-  # smart cd, find, jump, open
+function f
+  # f [zlc] [target]
+  #
   # f       -> cd ~
   # f file  -> vim file
   # f dir   -> cd dir
   # f name  -> autojump name
 
-  if test -z "$argv" 
-    cd ; return
-  end
+  if test -z "$argv"; cd; return; end
   
+  set has_flag
   set files
   set fuzzy
   set locate
   set move
 
+  # enable fuzzy, locate, move
+  if not string match -q -r '[^zlc]' $argv[1]
+    if string match -q -r '.*z.*' $argv[1]; set fuzzy  "yes"; end
+    if string match -q -r '.*l.*' $argv[1]; set locate "yes"; end
+    if string match -q -r '.*c.*' $argv[1]; set move   "yes"; end
+    set --erase argv[1]
+    set has_flag "yes"
+  end
+
   for arg in $argv
-
-    # enable fuzzy search
-    if test $arg = 'z'
-      set fuzzy "yes"
-
-    # enable locate mode - just print accrued files
-    else if test $arg = 'l'
-      set locate "yes"
-
-    # enable search file -> move
-    else if test $arg = 'c'
-      set move "yes"
-
-    # file
-    else if test -f "$arg"
+    if test -f "$arg"                                       # file
       set files $arg $files
 
-    # directory
-    else if test -d "$arg"
-      cd "$arg"; ls
+    else if test -d "$arg"                                  # directory
+      cd "$arg"; ls --color=auto
 
-    # attempt autojump
-    else if not test "$locate"; and not test "$move"; and j "$arg" ^/dev/null
+    else if not test "$has_flag"; and j "$arg" ^/dev/null   # autojump
       true
 
-    # attempt search
-    else 
+    else                                                    # search
       set search
 
       if test "$fuzzy"
@@ -168,21 +160,16 @@ function f
       end
 
       if test "$search"
-        for new_file in $search
-          set files $new_file $files
-        end
+        for new_file in $search; set files "$new_file" $files; end
       end
     end
-
   end
   
   # open, print accrued files, if any
   if test "$files"
 
     if test "$locate"
-      for file in $files
-        echo $file
-      end
+      for file in $files; echo $file; end
 
     else if test "$move"
       cd (dirname $files[1])
@@ -205,8 +192,7 @@ function j
 
   if test -d "$new_path" -a "$new_path" != "."
     printf "%s\n\n" $new_path
-    cd "$new_path"
-    ls
+    cd "$new_path"; ls --color=auto
   else
     echo "autojump: directory '$argv' not found" >&2
     false
