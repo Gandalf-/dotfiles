@@ -6,16 +6,13 @@ g (){
   local cnfrm fmt remote_branch bug_dir branch
   local new_branch_name commits diff
 
-  if [[ -z "$1" ]]; then
-    g --help
-    return
-  fi
+  [[ -z $1 ]] && { g --help; return; }
 
   cnfrm=1
   fmt="\
 %Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
 
-  while [[ -n "$1" ]]; do
+  while [[ $1 ]]; do
     case "$1" in
       "!")  cnfrm=$(( ! cnfrm ))                                    ;;
 
@@ -65,14 +62,14 @@ g (){
             git status                                              ;;
 
       "ri") confirm "$cnfrm" "git rebase -i $2"
-            if [[ ! -z "$2" ]]; then
+            if [[ $2 ]]; then
               git rebase -i "$2"; shift
             else
               git rebase -i
             fi
         ;;
 
-      "d")  if [[ -f "$2" ]]; then
+      "d")  if [[ -f $2 ]]; then
               confirm "$cnfrm" "git diff --full-index > $2"
               git diff --full-index > "$2"
               shift
@@ -101,10 +98,10 @@ g (){
             shift
         ;;
 
-      "ds") if [[ -z "$DIFFDIR" ]]; then
+      "ds") [[ -z "$DIFFDIR" ]] && {
               echo "error: smart diff not available"
               return
-            fi
+            }
 
             branch="$(git rev-parse --abbrev-ref HEAD)"
             diff="$DIFFDIR/${branch}.diff"
@@ -128,40 +125,38 @@ g (){
             shift; shift
         ;;
       "m")  confirm "$cnfrm" "git merge $2"
-            if [[ ! -z "$2" ]]; then
-              git commit -m "$2"; shift
-            fi
+            [[ $2 ]] && { git commit -m "$2"; shift; }
         ;;
       "cm") confirm "$cnfrm" "git commit -m $2"
-            if [[ ! -z "$2" ]]; then
+            if [[ $2 ]]; then
               git commit -m "$2"; shift
             else
               git commit
             fi
         ;;
       "pm") confirm "$cnfrm" "git pull $2"
-            if [[ ! -z "$2" ]]; then
+            if [[ $2 ]]; then
               git pull "$2"; shift
             else
               git pull
             fi
         ;;
       "pl") confirm "$cnfrm" "git pull --no-edit $2"
-            if [[ ! -z "$2" ]]; then
+            if [[ $2 ]]; then
               git pull "$2"; shift
             else
               git pull
             fi
         ;;
       "ph") confirm "$cnfrm" "git push $2"
-            if [[ ! -z "$2" ]]; then
+            if [[ $2 ]]; then
               git push "$2"; shift
             else
               git push
             fi
         ;;
       "pf") confirm "$cnfrm" "git push --force $2"
-            if [[ ! -z "$2" ]]; then
+            if [[ $2 ]]; then
               git push --force "$2"; shift
             else
               git push --force
@@ -201,11 +196,7 @@ g (){
         ;;
     esac
 
-    if (( $? )); then
-      confirm 0 "Detected failure, not continuing"
-      return
-    fi
-
+    (( $? )) && { confirm 0 "Detected failure, not continuing"; return; }
     shift
 
     [[ -z "$1" ]] || echo
