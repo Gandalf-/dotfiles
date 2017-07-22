@@ -16,25 +16,19 @@ g (){
     case "$1" in
       "!")  cnfrm=$(( ! cnfrm ))                                    ;;
 
-      "a")  confirm "$cnfrm" "git add -A :/"
-            git add -A :/                                           ;;
+      "a")  confirm! "$cnfrm" "git add -A :/" ;;
 
-      "bv") confirm "$cnfrm" "git branch -vv"
-            git branch -vv                                          ;;
+      "bv") confirm! "$cnfrm" "git branch -vv" ;;
 
-      "rv") confirm "$cnfrm" "git remote -vv"
-            git remote -vv                                          ;;
+      "rv") confirm! "$cnfrm" "git remote -vv" ;;
 
-      "c")  confirm "$cnfrm" "git commit"
-            git commit                                              ;;
+      "c")  confirm! "$cnfrm" "git commit" ;;
 
-      "cc") confirm "$cnfrm" "git clean -nfd"
-            git clean -nfd
+      "cc") confirm! "$cnfrm" "git clean -nfd"
             confirm "$cnfrm" "Continue?"
             git clean -fd                                           ;;
 
-      "ca") confirm "$cnfrm" "git commit --amend"
-            git commit --amend                                      ;;
+      "ca") confirm! "$cnfrm" "git commit --amend" ;;
 
       "co") confirm "$cnfrm" "git checkout $2"
             git checkout "$2"   ; shift                             ;;
@@ -46,8 +40,7 @@ g (){
             confirm "cnfrm" "git checkout $branch"
             git checkout "$branch"; shift                           ;;
 
-      "f")  confirm "$cnfrm" "git fetch"
-            git fetch                                               ;;
+      "f")  confirm! "$cnfrm" "git fetch" ;;
 
       "l")  confirm "$cnfrm" "git log"
             git log --color=always | head -n 20                     ;;
@@ -58,8 +51,7 @@ g (){
       "ll") confirm "$cnfrm" "git log --graph"
             git log --graph --pretty=format:"$fmt" --abbrev-commit  ;;
 
-      "s")  confirm "$cnfrm" "git status"
-            git status                                              ;;
+      "s")  confirm! "$cnfrm" "git status" ;;
 
       "ri") confirm "$cnfrm" "git rebase -i $2"
             if [[ $2 ]]; then
@@ -124,16 +116,13 @@ g (){
             git checkout "$remote_branch" -b "$new_branch_name"
             shift; shift
         ;;
-      "m")  confirm "$cnfrm" "git merge $2"
-            [[ $2 ]] && { git commit -m "$2"; shift; }
+
+      "m")  confirm! "$cnfrm" "git merge ${2%.}"; shift
         ;;
-      "cm") confirm "$cnfrm" "git commit -m $2"
-            if [[ $2 ]]; then
-              git commit -m "$2"; shift
-            else
-              git commit
-            fi
+
+      "cm") confirm! "$cnfrm" "git commit -m $2"; shift
         ;;
+
       "pm") confirm "$cnfrm" "git pull $2"
             if [[ $2 ]]; then
               git pull "$2"; shift
