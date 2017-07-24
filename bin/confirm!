@@ -1,0 +1,4 @@
+#!/bin/bash
+
+val=$1; shift
+confirm $val "$@" && eval "$@"
