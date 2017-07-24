@@ -1,118 +1,113 @@
 #!/bin/bash
 
-g (){
-  # super git wrapper!
+# super git wrapper!
 
-  local cnfrm fmt remote_branch bug_dir branch
-  local new_branch_name commits diff
+[[ -z $1 ]] && { g --help; exit 1; }
 
-  [[ -z $1 ]] && { g --help; return; }
-
-  cnfrm=1
-  fmt="\
+cnfrm=1
+fmt="\
 %Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
 
-  while [[ $1 ]]; do
-    case "$1" in
-      !)  cnfrm=$(( ! cnfrm ))                                    ;;
-      a)  confirm! "$cnfrm" "git add -A :/" ;;
-      bv) confirm! "$cnfrm" "git branch -vv" ;;
-      rv) confirm! "$cnfrm" "git remote -vv" ;;
-      f)  confirm! "$cnfrm" "git fetch" ;;
+while [[ $1 ]]; do
+  case "$1" in
+    !)  cnfrm=$(( ! cnfrm ))                                    ;;
+    a)  confirm! "$cnfrm" "git add -A :/" ;;
+    bv) confirm! "$cnfrm" "git branch -vv" ;;
+    rv) confirm! "$cnfrm" "git remote -vv" ;;
+    f)  confirm! "$cnfrm" "git fetch" ;;
 
-      c)  confirm! "$cnfrm" "git commit" ;;
-      ca) confirm! "$cnfrm" "git commit --amend" ;;
-      cn) confirm! "$cnfrm" "git commit --amend --no-edit" ;;
+    c)  confirm! "$cnfrm" "git commit" ;;
+    ca) confirm! "$cnfrm" "git commit --amend" ;;
+    cn) confirm! "$cnfrm" "git commit --amend --no-edit" ;;
 
-      co) confirm! "$cnfrm" "git checkout \"$2\""; shift ;;
-      cb) confirm! "$cnfrm" "git checkout -b \"$2\""; shift ;;
-      s)  confirm! "$cnfrm" "git status" ;;
+    co) confirm! "$cnfrm" "git checkout \"$2\""; shift ;;
+    cb) confirm! "$cnfrm" "git checkout -b \"$2\""; shift ;;
+    s)  confirm! "$cnfrm" "git status" ;;
 
-      cc) confirm! "$cnfrm" "git clean -nfd"
-          confirm "$cnfrm" "Continue?"
-          git clean -fd                                           ;;
+    ri) confirm! "$cnfrm" "git rebase -i \"$2\""; shift ;;
+    cm) confirm! "$cnfrm" "git commit -m \"$2\""; shift ;;
+    m)  confirm! "$cnfrm" "git merge \"$2\""    ; shift ;;
 
-      cs) branch=$(git branch -q | grep -i "$2" | xargs | cut -f1 -d' ')
-          confirm "cnfrm" "git checkout $branch"
-          git checkout "$branch"; shift                           ;;
+    pm) confirm! "$cnfrm" "git pull \"${2%.}\""          ; shift ;;
+    pl) confirm! "$cnfrm" "git pull --no-edit \"${2%.}\""; shift ;;
 
-      l)  confirm "$cnfrm" "git log"
-          git log --color=always | head -n 20                     ;;
+    ph) confirm! "$cnfrm" "git push \"${2%.}\""; shift ;;
+    pf) confirm! "$cnfrm" "git push --force \"${2%.}\""; shift ;;
 
-      lo) confirm "$cnfrm" "git log --oneline"
-          git log --oneline --color=always | head -n 10           ;;
+    cc) confirm! "$cnfrm" "git clean -nfd"
+        confirm "$cnfrm" "Continue?"
+        git clean -fd                                           ;;
 
-      ll) confirm "$cnfrm" "git log --graph"
-          git log --graph --pretty=format:"$fmt" --abbrev-commit  ;;
+    cs) branch=$(git branch -q | grep -i "$2" | xargs | cut -f1 -d' ')
+        confirm "cnfrm" "git checkout $branch"
+        git checkout "$branch"; shift                           ;;
 
-      ri) confirm! "$cnfrm" "git rebase -i \"$2\""; shift ;;
-      cm) confirm! "$cnfrm" "git commit -m \"$2\""; shift ;;
-      m)  confirm! "$cnfrm" "git merge \"$2\""    ; shift ;;
+    l)  confirm "$cnfrm" "git log"
+        git log --color=always | head -n 20                     ;;
 
-      pm) confirm! "$cnfrm" "git pull \"${2%.}\""          ; shift ;;
-      pl) confirm! "$cnfrm" "git pull --no-edit \"${2%.}\""; shift ;;
+    lo) confirm "$cnfrm" "git log --oneline"
+        git log --oneline --color=always | head -n 10           ;;
 
-      ph) confirm! "$cnfrm" "git push \"${2%.}\""; shift ;;
-      pf) confirm! "$cnfrm" "git push --force \"${2%.}\""; shift ;;
+    ll) confirm "$cnfrm" "git log --graph"
+        git log --graph --pretty=format:"$fmt" --abbrev-commit  ;;
 
-      "d")  if [[ -f $2 ]]; then
-              confirm "$cnfrm" "git diff --full-index > $2"
-              git diff --full-index > "$2"
-              shift
-
-            else
-              confirm "$cnfrm" "git diff --full-index"
-              git diff --full-index
-            fi
-        ;;
-
-      "dh") if [ "$2" -eq "$2" ] 2>/dev/null ; then
-              commits="$2"
-            else
-              commits="1"
-            fi
-
-            if [[ -f "$3" ]]; then
-              confirm "$cnfrm" "git diff --full-index HEAD~$commits > $3"
-              git diff --full-index HEAD~"$commits" > "$3"
-              shift
-
-            else
-              confirm "$cnfrm" "git diff --full-index HEAD~$commits"
-              git diff --full-index HEAD~"$commits"
-            fi
+    d)  if [[ -f $2 ]]; then
+            confirm "$cnfrm" "git diff --full-index > $2"
+            git diff --full-index > "$2"
             shift
-        ;;
 
-      "ds") [[ -z "$DIFFDIR" ]] && {
-              echo "error: smart diff not available"
-              return
-            }
+          else
+            confirm "$cnfrm" "git diff --full-index"
+            git diff --full-index
+          fi
+      ;;
 
-            branch="$(git rev-parse --abbrev-ref HEAD)"
-            diff="$DIFFDIR/${branch}.diff"
+    dh) if [ "$2" -eq "$2" ] 2>/dev/null ; then
+            commits="$2"
+          else
+            commits="1"
+          fi
 
-            if [ "$2" -eq "$2" ] 2>/dev/null ; then
-              confirm "$cnfrm" "git diff --full-index HEAD~$2 > $diff"
-              git diff --full-index HEAD~"$2" > "$diff"
-              shift
+          if [[ -f "$3" ]]; then
+            confirm "$cnfrm" "git diff --full-index HEAD~$commits > $3"
+            git diff --full-index HEAD~"$commits" > "$3"
+            shift
 
-            else
-              confirm "$cnfrm" "git diff --full-index HEAD~1 > $diff"
-              git diff --full-index HEAD~1 > "$diff"
-              shift
-            fi
-        ;;
+          else
+            confirm "$cnfrm" "git diff --full-index HEAD~$commits"
+            git diff --full-index HEAD~"$commits"
+          fi
+          shift
+      ;;
 
-      bn) confirm "$cnfrm" "git checkout $remote_branch -b $new_branch_name"
-            remote_branch="$2"
-            new_branch_name="$3"
-            git checkout "$remote_branch" -b "$new_branch_name"
-            shift; shift
-        ;;
+    ds) [[ -z "$DIFFDIR" ]] && {
+            echo "error: smart diff not available"
+            exit 1
+          }
+          branch="$(git rev-parse --abbrev-ref HEAD)"
+          diff="$DIFFDIR/${branch}.diff"
 
-      *)
-        echo "
+          if [ "$2" -eq "$2" ] 2>/dev/null ; then # checks if $2 is a number
+            confirm "$cnfrm" "git diff --full-index HEAD~$2 > $diff"
+            git diff --full-index HEAD~"$2" > "$diff"
+            shift
+
+          else
+            confirm "$cnfrm" "git diff --full-index HEAD~1 > $diff"
+            git diff --full-index HEAD~1 > "$diff"
+            shift
+          fi
+      ;;
+
+    bn) confirm "$cnfrm" "git checkout $remote_branch -b $new_branch_name"
+          remote_branch="$2"
+          new_branch_name="$3"
+          git checkout "$remote_branch" -b "$new_branch_name"
+          shift; shift
+      ;;
+
+    *)
+      echo "
   g - super git wrapper
     !  : toggle confirmation
     a  : add everything
@@ -141,17 +136,13 @@ g (){
     pm : pull [branch]
     ph : push [branch]
     pf : push --force [branch]
-        "
-        return
-        ;;
-    esac
+      "
+      exit 1
+      ;;
+  esac
 
-    (( $? )) && { confirm 0 "Detected failure, not continuing"; return; }
-    shift
+  (( $? )) && { confirm 0 "Detected failure, not continuing"; exit 1; }
+  shift
 
-    [[ -z "$1" ]] || echo
-  done
-}
-
-# provide functions to callers
-g "$@"
+  [[ -z "$1" ]] || echo
+done
