@@ -39,9 +39,9 @@ end
 
 # 'aliases'
 function sfish; source ~/.config/fish/config.fish; end
-function    ..; builtin cd ../;      command ls ;end
-function   ...; builtin cd ../../;   command ls; end
-function  ....; builtin cd ../../../;command ls; end
+function    ..; builtin cd ../;      command ls --color=auto ; end
+function   ...; builtin cd ../../;   command ls --color=auto ; end
+function  ....; builtin cd ../../../;command ls --color=auto ; end
 
 # Vim mode
 #===========================

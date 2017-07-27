@@ -22,7 +22,11 @@
   set hidden nobackup nowritebackup noswapfile
   set ttimeout ttimeoutlen=20
 
-  let hostname = substitute(system('hostname'), '\n', '', '') " where are we?
+  if has("unix")
+    let hostname = substitute(system('hostname'), '\n', '', '') " where are we?
+  else
+    let hostname = "Windows"
+  endif
 
   let g:tex_conceal = ""  " Don't hide LaTeX symbols
   nnoremap <SPACE> <Nop>
@@ -44,19 +48,22 @@
     filetype off
     set rtp+=~/.vim/bundle/Vundle.vim
 
-    call vundle#begin()
-      Plugin 'vimwiki/vimwiki'
-      Plugin 'VundleVim/Vundle.vim'
-      Plugin 'Shougo/neocomplete.vim'
-      Plugin 'Shougo/neosnippet.vim'
-      Plugin 'Shougo/neosnippet-snippets'
-      Plugin 'Shougo/neoinclude.vim'
-      Plugin 'vim-syntastic/syntastic'
+    try
+      call vundle#begin()
+        Plugin 'vimwiki/vimwiki'
+        Plugin 'VundleVim/Vundle.vim'
+        Plugin 'Shougo/neocomplete.vim'
+        Plugin 'Shougo/neosnippet.vim'
+        Plugin 'Shougo/neosnippet-snippets'
+        Plugin 'Shougo/neoinclude.vim'
+        Plugin 'vim-syntastic/syntastic'
 
-      if has_vundle == 0
-        :PluginInstall
-      endif
-    call vundle#end()
+        if has_vundle == 0
+          :PluginInstall
+        endif
+      call vundle#end()
+    catch
+    endtry
     filetype plugin indent on
 
   " vimwiki
@@ -139,19 +146,22 @@
     endif
 
   " neosnippet 
-    imap <C-j> <Plug>(neosnippet_expand_or_jump)
-    smap <C-j> <Plug>(neosnippet_expand_or_jump)
-    xmap <C-j> <Plug>(neosnippet_expand_target)
+    if exists("*neosnippet")
+      imap <C-j> <Plug>(neosnippet_expand_or_jump)
+      smap <C-j> <Plug>(neosnippet_expand_or_jump)
+      xmap <C-j> <Plug>(neosnippet_expand_target)
 
-    imap <expr><TAB>
-     \ pumvisible() ? "\<C-n>" :
-     \ neosnippet#expandable_or_jumpable() ?
-     \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+      imap <expr><TAB>
+       \ pumvisible() ? "\<C-n>" :
+       \ neosnippet#expandable_or_jumpable() ?
+       \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
-    let g:neosnippet#snippets_directory = "~/.vim/bundle/neosnippet-snippets/neosnippets/"
-    if has('conceal')
-      set conceallevel=2 concealcursor=i
+      let g:neosnippet#snippets_directory = "~/.vim/bundle/neosnippet-snippets/neosnippets/"
+      if has('conceal')
+        set conceallevel=2 concealcursor=i
+      endif
     endif
+
 
   " syntastic
     "let g:syntastic_cpp_compiler = 'clang++'
@@ -176,6 +186,13 @@
     set t_Co=256
     set number wrap tw=79 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
+
+  " Fonts
+    if has("gui_running")
+      if has("gui_win32")
+        set guifont=Lucida_Console:h10:cANSI
+      endif
+    endif
 
   " Resize vim windows when overall window size changes
     autocmd VimResized * wincmd =
@@ -239,7 +256,9 @@
     autocmd FileType make setlocal noexpandtab
 
   " Avoid dumb markdown extension
-    autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
+    if has("*vimwiki")
+      autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
+    endif
 
   " Searching
     set hlsearch incsearch showmatch ignorecase smartcase infercase ruler
@@ -332,11 +351,13 @@
     autocmd BufNewFile,BufRead *.py setlocal tabstop=4
 
   " External tools
-    call system('type ag')
-		if v:shell_error == 0
-			if exists('+grepprg')    | set grepprg=ag\ --vimgrep\ $* | endif
-			if exists('+grepformat') | set grepformat=%f:%l:%c:%m    | endif
-		endif
+    if has("unix")
+      call system('type ag')
+      if v:shell_error == 0
+        if exists('+grepprg')    | set grepprg=ag\ --vimgrep\ $* | endif
+        if exists('+grepformat') | set grepformat=%f:%l:%c:%m    | endif
+      endif
+    endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
