@@ -116,7 +116,7 @@ if test "$wiki_loc"
 end
 
 function f
-  # f [zlc] [target]
+  # f [zlct] [target]
   #
   # f       -> cd ~
   # f file  -> vim file
@@ -130,12 +130,14 @@ function f
   set fuzzy
   set locate
   set move
+  set notimeout
 
   # check for fuzzy, locate, move flags
-  if not string match -q -r '[^zlc-]' $argv[1]
-    if string match -q -r '.*z.*' $argv[1]; set fuzzy  "yes"; end
-    if string match -q -r '.*l.*' $argv[1]; set locate "yes"; end
-    if string match -q -r '.*c.*' $argv[1]; set move   "yes"; end
+  if not string match -q -r '[^zlct-]' $argv[1]
+    if string match -q -r '.*z.*' $argv[1]; set fuzzy     "yes"; end
+    if string match -q -r '.*l.*' $argv[1]; set locate    "yes"; end
+    if string match -q -r '.*c.*' $argv[1]; set move      "yes"; end
+    if string match -q -r '.*t.*' $argv[1]; set notimeout "yes"; end
     if string match -q '-' $argv[1]; cd -; return; end
     set --erase argv[1]
     set has_flag "yes"
@@ -155,9 +157,17 @@ function f
       set search
 
       if test "$fuzzy"
-        set search (timeout 1 find . -name '*'"$arg"'*')
+        if test "$notimeout"
+          set search (find . -name '*'"$arg"'*')
+        else
+          set search (timeout 1 find . -name '*'"$arg"'*')
+        end
       else
-        set search (timeout 1 find . -name "$arg")
+        if test "$notimeout"
+          set search (find . -name "$arg")
+        else
+          set search (timeout 1 find . -name "$arg")
+        end
       end
 
       if test "$search"
@@ -173,6 +183,7 @@ function f
 
     else if test "$move"
       cd (dirname $files[1])
+      ls --color=auto
 
     else
       vim -p $files

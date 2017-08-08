@@ -352,11 +352,11 @@
 
   " External tools
     if has("unix")
-      call system('type ag')
-      if v:shell_error == 0
-        if exists('+grepprg')    | set grepprg=ag\ --vimgrep\ $* | endif
-        if exists('+grepformat') | set grepformat=%f:%l:%c:%m    | endif
-      endif
+      "call system('type ag')
+      "if v:shell_error == 0
+      "  if exists('+grepprg')    | set grepprg=ag\ --vimgrep\ $* | endif
+      "  if exists('+grepformat') | set grepformat=%f:%l:%c:%m    | endif
+      "endif
     endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -630,8 +630,8 @@
     nnoremap <silent> } :tabn<cr>
 
   " cycle through quickfix
-    nnoremap <C-{> :cp<cr>
-    nnoremap <C-}> :cn<cr>
+    "nnoremap <C-{> :cp<cr>
+    "nnoremap <C-}> :cn<cr>
 
   " List navigation with arrows
     noremap <silent> <Left>  :lprev<cr>zz
