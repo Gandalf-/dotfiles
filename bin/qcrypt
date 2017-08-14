@@ -7,12 +7,13 @@
 # requires: openssl, md5sum, tar
 # author  : leaf@anardil.net
 
-_qencrypt() {
+function qencrypt() {
 
   file="$1"
   local sum
 
-  [[ "$(dirname "$file")" != "." ]] && {
+  [[ "$(dirname "$file")" != "." ]] &&
+  {
     error \
       "!!! qcrypt encryption should not be run on files outside of the    " \
       "current working directory. Please move to the directory containing " \
@@ -20,7 +21,8 @@ _qencrypt() {
   }
 
   # try to catch attempted re-encryption
-  [[ "${file: -8}" == ".qaes256" ]] && {
+  [[ "${file: -8}" == ".qaes256" ]] &&
+  {
     echo    "??? $file appears to already be encrypted by qcrypt."
     read -p "    Are you sure you want to continue? (y/n) " -n 2 -r
     [[ 'Yy' =~ $REPLY ]] || exit
@@ -28,16 +30,17 @@ _qencrypt() {
 
   # create an md5sum of the directory or file and creation date file
   date > date.qcrypt
-  find "$file" -type f -exec md5sum {} \; \
-    | sort -k 34 | md5sum | cut -c 1-32 > md5sum.qcrypt
+  find "$file" -type f -exec md5sum {} \; |
+    sort -k 34 | md5sum | cut -c 1-32 > md5sum.qcrypt
 
-  tar -zcf "$file.tar" ./*.qcrypt "$file" >/dev/null
-  (( $? )) && {
+  tar -zcf "$file.tar" ./*.qcrypt "$file" >/dev/null ||
+  {
     rm ./*.qcrypt
     error "!!! Compression failed, not continuing."
   }
 
-  [[ -e "$file.qaes256" ]] && {
+  [[ -e "$file.qaes256" ]] &&
+  {
     read -p "??? \"$file.qaes256\" already exists. Overwrite? (y/n) " -n 2 -r
     [[ 'Yy' =~ $REPLY ]] || { rm -f "$file.tar" ./*.qcrypt; exit; }
     rm -f "$file.qaes256"
@@ -49,8 +52,8 @@ _qencrypt() {
     openssl aes256 -in "$file.tar" -out "$file.qaes256" -salt -k "default"
   else
     openssl aes256 -in "$file.tar" -out "$file.qaes256" -salt 2>/dev/null
-  fi
-  (( $? )) && {
+  fi ||
+  {
     rm -rf "$file.tar" ./*.qcrypt
     error "!!! Encryption failed, not continuing."
   }
@@ -61,7 +64,7 @@ _qencrypt() {
   echo "+++ Encryption completed. Output file is $file.qaes256"
 }
 
-_qdecrypt() {
+function qdecrypt() {
   file="$1"
   local file_ext out_file date sum
   date="date information not found"
@@ -83,19 +86,20 @@ _qdecrypt() {
     openssl aes256 -d -in "$file" -out "$file.tar" -salt -k "default"
   else
     openssl aes256 -d -in "$file" -out "$file.tar" -salt 2>/dev/null
-  fi
-  (( $? )) && { rm -f "$file.tar"; error "!!! Decryption failed, quiting."; }
+  fi ||
+  { rm -f "$file.tar"; error "!!! Decryption failed, quiting."; }
 
   # check for overwrite
-  [[ -e "$out_file" ]] && {
+  [[ -e "$out_file" ]] &&
+  {
     read -n 2 -r -p "??? \"$out_file\" already exists. Overwrite?  "
     [[ 'Yy' =~ $REPLY ]] || { rm -f "$file.tar"; exit; }
     rm -rf "$out_file"
   }
 
   # decompress the output
-  tar -xf "$file".tar >/dev/null 2>/dev/null
-  (( $? )) && { rm -f "$file.tar"; error "!!! Untar failed, quiting."; }
+  tar -xf "$file".tar >/dev/null 2>/dev/null ||
+  { rm -f "$file.tar"; error "!!! Untar failed, quiting."; }
 
   # verify integrity
   [[ -e "date.qcrypt" ]] && date=$(cat date.qcrypt)
@@ -104,7 +108,8 @@ _qdecrypt() {
     sum=$(find "$out_file" -type f -exec md5sum {} \; |
           sort -k 34 | md5sum | cut -c 1-32)
 
-    [[ "$(cat md5sum.qcrypt)" != "$sum" ]] && {
+    [[ "$(cat md5sum.qcrypt)" != "$sum" ]] &&
+    {
       rm -f "$file.tar" ./*.qcrypt
       error "!!! File integrity checks failed."
     }
@@ -118,14 +123,14 @@ _qdecrypt() {
 }
 
 
-qcrypt () {
+main () {
   set -u -o pipefail
   local file auto_ext
-  usage="usage: $(basename "$0") (-a|-e|-d) (directory)"
+  usage="usage: $0 (-a|-e|-d) (directory)"
   error () { for msg in "$@"; do echo "$msg"; done; exit 1; }
 
   for program in "openssl" "md5sum" "tar"; do
-    [[ -z "$(which $program)" ]] && error "!!! Requires $program"
+    which "$program" >/dev/null || error "!!! Requires $program"
   done
 
   flag=${1:-}; file=${2:-}; arg3=${3:-}
@@ -136,16 +141,17 @@ qcrypt () {
   file=${file%/}
 
   case $flag in
-    '-e') _qencrypt "$file" ;;
-    '-d') _qdecrypt "$file" ;;
+    '-e') qencrypt "$file" ;;
+    '-d') qdecrypt "$file" ;;
+    -h|--help|"") echo $usage ;;
     *)
       auto_ext=${file: -8}; [[ ${#file} -le 8 ]] && auto_ext=""
       case $auto_ext in
-        '.qaes256') echo "Attempting decryption"; _qdecrypt "$file" ;;
-        *)          echo "Attempting encryption"; _qencrypt "$file" ;;
+        '.qaes256') echo "Attempting decryption"; qdecrypt "$file" ;;
+        *)          echo "Attempting encryption"; qencrypt "$file" ;;
       esac
       ;;
   esac
 }
 
-"$@"
+main "$@"
