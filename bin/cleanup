@@ -31,12 +31,12 @@ while read -r file; do
 
     let counter++
   fi
-done < <(find -regex '.*([0-9]+).*')
+done < <(find . -regex '.*([0-9]+).*')
 
 while read -r file; do
   echo "remove    : $file"
   (( dry )) || rm "$file" || exit
   let counter++
-done < <(find -regex '.*\.\(pyc\|class\|o\|bak\)')
+done < <(find . -regex '.*\.\(pyc\|class\|o\|bak\)')
 
 echo "Cleaned up $counter files"
