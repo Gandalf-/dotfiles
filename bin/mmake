@@ -8,28 +8,30 @@ usage() {
 }
 
 # parse arguments
-while ! [[ -z $1 ]]; do
+while [[ $1 && $2 ]]; do
   case "$1" in
     -l)
-      shift; lang=$1; shift
+      lang=$2
       ;;
     -n)
-      shift; name=$1; shift
+      name=$2
       ;;
     -o)
-      shift; output=$1; shift
+      output=$2
       ;;
     -x)
-      shift; extra=$1; shift
+      extra=$2
       ;;
     *)
       usage
+      exit 1
       ;;
   esac
+  shift 2
 done
 
 # verify
-if [[ -z $lang || -z $name || -z $output ]]; then
+if [[ -z $lang || -z $output ]]; then
   usage
 fi
 
@@ -38,11 +40,20 @@ case "$lang" in
   # c
   c)
 cat > Makefile << EOF
-${output}: ${name}
-	clang ${flags} -o ${output} ${name}
+CC= clang
+CFLAGS= -I. ${flags}
+DEPS=
+LIBS=
+OBJ= ${output}.o
+
+%.o: %.c \$(DEPS)
+	\$(CC) -c -o \$@ $< \$(CFLAGS)
+
+${output}: \$(OBJ)
+	\$(CC) -o ${output} \$^ \$(CFLAGS)
 
 clean:
-	@rm ${name}
+	@rm ${output} *.o
 	@echo Done
 EOF
   ;;
