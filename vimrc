@@ -260,6 +260,15 @@
       autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
     endif
 
+  " silver searcher-ing
+    if executable('ag')
+        set grepprg=ag\ --nogroup\ --nocolor\ --smart-case\ --column
+        set grepformat=%f:%l:%c%m
+    endif
+
+    command! -nargs=+ -complete=file -bar Ag silent! grep! <args>|cwindow|redraw!
+    nnoremap \ :Ag<SPACE>
+
   " Searching
     set hlsearch incsearch showmatch ignorecase smartcase infercase ruler
 
@@ -351,13 +360,6 @@
     autocmd BufNewFile,BufRead *.py setlocal tabstop=4
 
   " External tools
-    if has("unix")
-      "call system('type ag')
-      "if v:shell_error == 0
-      "  if exists('+grepprg')    | set grepprg=ag\ --vimgrep\ $* | endif
-      "  if exists('+grepformat') | set grepformat=%f:%l:%c:%m    | endif
-      "endif
-    endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
