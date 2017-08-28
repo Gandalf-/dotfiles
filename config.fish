@@ -145,17 +145,19 @@ function f
   set notimeout
   set vim_opt
 
-  # check for fuzzy, locate, move flags
-  if not string match -q -r '[^azlct-]' $argv[1]
-    if string match -q -r '.*z.*' $argv[1]; set fuzzy     "yes"; end
-    if string match -q -r '.*l.*' $argv[1]; set locate    "yes"; end
-    if string match -q -r '.*c.*' $argv[1]; set move      "yes"; end
-    if string match -q -r '.*t.*' $argv[1]; set notimeout "yes"; end
-    if string match -q -r '.*t.*' $argv[1]; set notimeout "yes"; end
-    if string match -q -r '.*a.*' $argv[1]; set grepper   "yes"; end
-    if string match -q    '-'     $argv[1]; cd -; return; end
-    set --erase argv[1]
-    set has_flag "yes"
+  # check for flags if we have enough arguments
+  if test (count $argv) -ge 2
+    if not string match -q -r '[^azlct-]' $argv[1]
+      if string match -q -r '.*z.*' $argv[1]; set fuzzy     "yes"; end
+      if string match -q -r '.*l.*' $argv[1]; set locate    "yes"; end
+      if string match -q -r '.*c.*' $argv[1]; set move      "yes"; end
+      if string match -q -r '.*t.*' $argv[1]; set notimeout "yes"; end
+      if string match -q -r '.*t.*' $argv[1]; set notimeout "yes"; end
+      if string match -q -r '.*a.*' $argv[1]; set grepper   "yes"; end
+      if string match -q    '-'     $argv[1]; cd -; return; end
+      set --erase argv[1]
+      set has_flag "yes"
+    end
   end
 
   for arg in $argv
