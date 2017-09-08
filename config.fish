@@ -44,7 +44,6 @@ if status --is-interactive
     set -g fish_user_abbreviations
     abbr --add bash b
     abbr --add ls   l
-    abbr --add vim  v
   end
 end
 

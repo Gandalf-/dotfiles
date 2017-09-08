@@ -4,13 +4,13 @@
 
 [[ -z $1 ]] && { g --help; exit 1; }
 
-cnfrm=1
+cnfrm=0
 fmt="\
 %Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
 
 while [[ $1 ]]; do
   case "$1" in
-    !)  cnfrm=$(( ! cnfrm ))                                    ;;
+    !)  cnfrm=$(( ! cnfrm ))              ;;
     a)  confirm! "$cnfrm" "git add -A :/" ;;
     bv) confirm! "$cnfrm" "git branch -vv" ;;
     rv) confirm! "$cnfrm" "git remote -vv" ;;
