@@ -122,8 +122,8 @@ end
 
 # vimwiki
 if test "$wiki_loc"
-  function vws; vim "$wiki_loc" +"VimwikiSearch $argv"; end
-  alias vw="vim $wiki_loc"
+  function vws; v "$wiki_loc" +"VimwikiSearch $argv"; end
+  alias vw="v $wiki_loc"
 end
 
 function f
@@ -213,9 +213,10 @@ function f
     else if test "$move"
       cd (dirname $files[1])
       ls --color=auto
+      v (basename $files[1]) $vim_opt
 
     else
-      vim -p $files $vim_opt
+      v $files $vim_opt
     end
   end
 end

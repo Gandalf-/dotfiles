@@ -74,7 +74,7 @@ EOF
   java)
 cat > Makefile << EOF
 JAVAC=javac -cp .:${extra}
-sources = \$(wildcard *.java)
+sources = \$(wildcard ./*.java)
 classes = \$(sources:.java=.class)
 
 all: \$(classes)

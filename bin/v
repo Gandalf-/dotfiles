@@ -1,2 +1,9 @@
-#!/bin/sh
-vim "$@"
+#!/bin/bash
+
+if [[ "$TMUX" ]] && grep -q '+clientserver' <<< "$(vim --version)"; then
+  echo "using existing vim session"
+  #shellcheck disable=SC2068
+  vim --servername "$(tmux display-message -p '#S#W')" --remote-tab-silent $@
+else
+  vim "$@"
+fi

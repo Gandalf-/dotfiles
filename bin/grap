@@ -1,3 +1,4 @@
 #!/bin/bash
 
-ps aux | grep "$1" | grep -v "grep $1"; 
+#shellcheck disable=SC2009
+ps aux | grep -i "$1" | grep -v "grep $1";

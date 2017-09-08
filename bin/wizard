@@ -50,7 +50,7 @@ _add_user () {
   mkdir -p /home/"$user"/.ssh/
   cp -r /root/.ssh/ /home/"$user"/
 
-  chown -R "$user":"$user" /home/"$user"/
+  chown -R "$user:$user" /home/"$user"/
 }
 
 _add_configs () {
