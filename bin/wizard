@@ -1,7 +1,25 @@
-#!/bin/sh
+#!/bin/bash
 
 # usage
 #   sh prepare.sh (username)
+
+green="\033[01;32m"; normal="\033[00m"
+PLATFORM=$(uname)
+QUIET=0
+#CONFIRM=0
+
+error() {
+  printf "%b%s%b " "$green" "$*" "$normal" ; exit 1;
+}
+
+chk() {
+  printf "%b%s%b\n" "$green" "$*" "$normal"
+  if (( QUIET )); then
+    eval "$@" >/dev/null || error "error running \"$*\""
+  else
+    eval "$@" || error "error running \"$*\""
+  fi
+}
 
 _do_check () {
 
@@ -16,80 +34,360 @@ _do_check () {
   fi
 }
 
-_do_update () {
-  apt-add-repository ppa:fish-shell/release-2
-  apt update
-  apt upgrade
-  apt install tmux fish vim git make gcc libreadline-dev
+do_update () {
+  chk sudo apt-add-repository ppa:fish-shell/release-2
+  chk sudo apt update
+  chk sudo apt upgrade
+  chk sudo apt install tmux fish vim git make gcc libreadline-dev
 }
 
 _do_security () {
 
-  ufw allow 22/tcp
-  ufw enable
+  chk sudo ufw allow 22/tcp
+  chk sudo ufw enable
 }
 
 _do_vnc () {
-  apt install xfce4 xfce4-goodies tightvncserver
-  vncserver
-  vncserver -kill :1
-  echo "
+  chk sudo apt install xfce4 xfce4-goodies tightvncserver
+  chk sudo vncserver
+  chk sudo vncserver -kill :1
+  cat > "$HOME"/.vnc/xstartup << EOF
 #!/bin/bash
 xrdb \$HOME/.Xresources
 startxfce4 &
-" > "$HOME"/.vnc/xstartup
-  chmod +x "$HOME"/.vnc/xstartup
+EOF
+  chk chmod +x "$HOME"/.vnc/xstartup
 }
 
 _add_user () {
   user="$1"
 
-  adduser "$user"
-  usermod -aG sudo "$user"
-  chsh -s /usr/bin/fish "$user"
-  mkdir -p /home/"$user"/.ssh/
-  cp -r /root/.ssh/ /home/"$user"/
+  chk adduser "$user"
+  chk usermod -aG sudo "$user"
+  chk chsh -s /usr/bin/fish "$user"
+  chk mkdir -p /home/"$user"/.ssh/
+  chk cp -r /root/.ssh/ /home/"$user"/
 
-  chown -R "$user:$user" /home/"$user"/
+  chk chown -R "$user:$user" /home/"$user"/
 }
 
 _add_configs () {
-  git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
-  ln -sf /tmp/DotFiles/config.fish  /home/"$user"/.config/fish/config.fish
-  ln -sf /tmp/DotFiles/vimrc        /home/"$user"/.vimrc
-  ln -sf /tmp/DotFiles/tmux.conf    /home/"$user"/.tmux.conf
-  ln -sf /tmp/DotFiles/bashrc       /home/"$user"/.bashrc
+  chk git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
+  chk ln -sf /tmp/DotFiles/config.fish  /home/"$user"/.config/fish/config.fish
+  chk ln -sf /tmp/DotFiles/vimrc        /home/"$user"/.vimrc
+  chk ln -sf /tmp/DotFiles/tmux.conf    /home/"$user"/.tmux.conf
+  chk ln -sf /tmp/DotFiles/bashrc       /home/"$user"/.bashrc
 
 }
 
-_install_vim () {
-  cd /tmp/ || exit
-  wget https://www.lua.org/ftp/lua-5.3.3.tar.gz \
-        && tar zxvf lua-5.3.3.tar.gz && cd lua-5.3.3 \
-        && make linux && sudo make install
+_make() {
 
-  git clone https://github.com/vim/vim.git /tmp/vim
-  cd /tmp/vim || exit
-  export LUA_PREFIX=/usr/local
-  ./configure \
-      --with-features=huge \
-      --enable-multibyte \
-      --enable-rubyinterp=yes \
-      --enable-pythoninterp=yes \
-      --with-python-config-dir=/usr/lib/python2.7/config \
-      --enable-python3interp=yes \
-      --with-python3-config-dir=/usr/lib/python3.5/config \
-      --enable-perlinterp=yes \
-      --enable-luainterp=yes \
-      --enable-gui=gtk2 --enable-cscope --prefix=/usr
-  sudo make install
+  local usage="
+    wizard make [target]
+
+    target
+      project
+      file
+  "
+
+  case $1 in
+    project)
+      shift; make_project "$@"
+      ;;
+    file)
+      shift; make_file "$@"
+      ;;
+    ""|*)
+      error "$usage"
+      ;;
+  esac
 }
 
-#_do_check "$@"
-#_do_update
-#_add_user "$@"
-#_install_vim
-#_do_security
-#_do_vnc
+make_file() {
+  #
 
-"$@"
+  local usage="
+    wizard make file [language] [name]
+
+    language
+      shell
+      python
+      c
+      cpp
+      java
+  "
+  [[ $1 && $2 ]] || error "$usage"
+  name="$2"
+
+  case $1 in
+    shell)
+      cat > "$name".sh << EOF
+#!/bin/bash
+
+main() {
+
+  exit 0
+}
+
+main "\$@"
+EOF
+      ;;
+
+    python)
+      cat > "$name.py" << EOF
+#!/usr/bin/python
+
+import sys
+
+def main(args):
+  ''' list of strings -> none
+  '''
+  pass
+
+if __name__ == '__main__':
+  main(sys.argv)
+EOF
+      ;;
+
+    c)
+      cat > "$name".c << EOF
+#include "$name.h"
+
+int main(int argc, char *argv[]) {
+
+  return 0;
+}
+EOF
+      ;;
+
+    cpp)
+      cat > "$name".cpp << EOF
+#include "$name.h"
+
+int main(int argc, char const *argv[]) {
+
+  return 0;
+}
+EOF
+      cat > "$name.h" << EOF
+#include <string>
+EOF
+      mmake -l cpp -o "$name"
+      ;;
+
+    java)
+      cat > "$name".java << EOF
+public $name {
+
+  public static void main(String[] argv) {
+
+    System.out.println("Hello world");
+  }
+}
+EOF
+      ;;
+    *)
+      error "$usage"
+      ;;
+  esac
+}
+
+make_project() {
+  # make project language name
+
+  local usage="
+    wizard make project [language] [name]
+
+    language
+      python
+      c
+      cpp
+      java
+  "
+  [[ $2 ]] || error "$usage"; name=$2
+
+  case $1 in
+    python)
+      chk mkdir "$name"
+      chk cd "$name"
+      make_file python "$name"
+      ;;
+
+    c)
+      chk mkdir "$name"
+      chk cd "$name"
+      make_file c "$name"
+      touch "$name".h
+      mmake -l c -o "$name"
+      ;;
+
+    cpp)
+      chk mkdir "$name"
+      chk cd "$name"
+      make_file cpp "$name"
+      touch "$name".h
+      mmake -l cpp -o "$name"
+      ;;
+
+    java)
+      chk mkdir "$name"
+      chk cd "$name"
+      make_file java "$name"
+      mmake -l java -o "$name"
+      ;;
+
+    ""|*)
+      error "$usage"
+      ;;
+
+  esac
+}
+
+update() {
+  # update this, whatever that means
+
+  case $PLATFORM in
+    Linux)
+      chk sudo apt update
+      chk sudo apt upgrade -y
+      chk sudo apt-get autoremove
+      ;;
+    ""|*)
+      error "don't know how to update on $PLATFORM"
+      ;;
+  esac
+}
+
+build() {
+  # compile and install something
+
+  usage="
+    wizard build [target]
+
+    target
+      lua
+      vim
+      shellcheck
+    "
+
+  case $1 in
+    lua)
+      build_lua
+      ;;
+    vim)
+      build_vim
+      ;;
+    shellcheck)
+      build_shellcheck
+      ;;
+    ""|*)
+      error "$usage"
+      ;;
+  esac
+}
+
+build_lua() {
+  # compile and install lua 5.3.3
+
+  echo "installing lua"
+  chk cd /tmp/
+
+  chk wget 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
+  chk tar zxvf lua-5.3.3.tar.gz
+  chk cd lua-5.3.3
+  chk make linux
+  chk sudo make install
+
+  chk cd -
+  echo "done"
+}
+
+build_vim () {
+  # compile and install the lastest vim
+
+  echo "installing vim"
+  build_lua
+
+	chk sudo apt-get build-dep vim-gnome
+	chk sudo apt-get install \
+    libncurses5-dev libgnome2-dev libgnomeui-dev \
+		libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
+		libcairo2-dev libx11-dev libxpm-dev libxt-dev
+
+  chk cd /tmp/
+  chk wget 'https://github.com/vim/vim/archive/master.zip'
+  chk unzip master.zip
+  chk cd vim-master
+
+	chk ./configure \
+    --with-features=huge \
+    --with-lua-prefix=/usr/local \
+    --enable-multibyte \
+    --enable-rubyinterp=yes \
+    --enable-pythoninterp=yes \
+    --with-python-config-dir=/usr/lib/python2.7/config \
+    --enable-python3interp=yes \
+    --with-python3-config-dir=/usr/lib/python3.5/config \
+    --enable-perlinterp=yes \
+    --enable-luainterp=yes \
+    --enable-gui=auto \
+    --enable-cscope \
+    --prefix=/usr
+
+	chk make -j 4
+	chk sudo make install
+  echo "done"
+}
+
+build_shellcheck() {
+  # download and install the latest shellcheck
+
+  chk wget \
+    'http://ftp.us.debian.org/debian/pool/main/s/shellcheck/shellcheck_0.4.6-1_i386.deb'
+  chk sudo dpkg -i shellcheck_*.deb || true
+  chk sudo apt-get install -f
+}
+
+main() {
+
+  local usage="
+    wizard [options] [command]
+
+    options
+      --quiet
+
+    command
+      build
+      make
+      update
+  "
+
+  case $1 in
+    -q|--quiet)
+      QUIET=1
+      ;;
+
+    b|build)
+      shift; build "$@"
+      ;;
+
+    m|make)
+      shift; _make "$@"
+      ;;
+
+    u|update)
+      shift; update "$@"
+      ;;
+
+    test)
+      chk false
+      ;;
+
+    ""|*)
+      error "$usage"
+      ;;
+  esac
+
+}
+
+main "$@"
