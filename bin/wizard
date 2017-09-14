@@ -3,6 +3,8 @@
 # usage
 #   sh prepare.sh (username)
 
+source "$(dirname "$0")"/reflection.sh
+
 green="\033[01;32m"; normal="\033[00m"
 PLATFORM=$(uname)
 QUIET=0
@@ -21,7 +23,7 @@ chk() {
   fi
 }
 
-_do_check () {
+wizard_do_check () {
 
   if [ "$(whoami)" != 'root' ] || [ "$(uname)" != 'Linux' ]; then
     echo "Must be root on Linux"
@@ -34,20 +36,20 @@ _do_check () {
   fi
 }
 
-do_update () {
+wizard_do_update () {
   chk sudo apt-add-repository ppa:fish-shell/release-2
   chk sudo apt update
   chk sudo apt upgrade
   chk sudo apt install tmux fish vim git make gcc libreadline-dev
 }
 
-_do_security () {
+wizard_do_security () {
 
   chk sudo ufw allow 22/tcp
   chk sudo ufw enable
 }
 
-_do_vnc () {
+wizard_do_vnc () {
   chk sudo apt install xfce4 xfce4-goodies tightvncserver
   chk sudo vncserver
   chk sudo vncserver -kill :1
@@ -59,7 +61,7 @@ EOF
   chk chmod +x "$HOME"/.vnc/xstartup
 }
 
-_add_user () {
+wizard_add_user () {
   user="$1"
 
   chk adduser "$user"
@@ -69,9 +71,10 @@ _add_user () {
   chk cp -r /root/.ssh/ /home/"$user"/
 
   chk chown -R "$user:$user" /home/"$user"/
+  return 1
 }
 
-_add_configs () {
+wizard_add_configs () {
   chk git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
   chk ln -sf /tmp/DotFiles/config.fish  /home/"$user"/.config/fish/config.fish
   chk ln -sf /tmp/DotFiles/vimrc        /home/"$user"/.vimrc
@@ -80,48 +83,31 @@ _add_configs () {
 
 }
 
-_make() {
+wizard_clean_boot() {
 
-  local usage="
-    wizard make [target]
-
-    target
-      project
-      file
-  "
-
-  case $1 in
-    project)
-      shift; make_project "$@"
-      ;;
-    file)
-      shift; make_file "$@"
-      ;;
-    ""|*)
-      error "$usage"
-      ;;
-  esac
+  dpkg --list |
+    grep linux-image |
+    awk '{ print $2 }' |
+    sort -V |
+    sed -n '/'"$(uname -r)"'/q;p' |
+    xargs sudo apt-get -y purge
 }
 
-make_file() {
+wizard_make_session() {
+  # maybe string -> int
   #
+  # create a new tmux session and move to it
 
-  local usage="
-    wizard make file [language] [name]
+  name=${1:-$RANDOM}
+  tmux new -d -s "$name"
+  tmux switch-client -t "$name"
+  return 1
+}
 
-    language
-      shell
-      python
-      c
-      cpp
-      java
-  "
-  [[ $1 && $2 ]] || error "$usage"
-  name="$2"
+wizard_make_file_shell() {
+  : "${1? You must provide a name!}"
 
-  case $1 in
-    shell)
-      cat > "$name".sh << EOF
+  cat > "$1".sh << EOF
 #!/bin/bash
 
 main() {
@@ -131,10 +117,13 @@ main() {
 
 main "\$@"
 EOF
-      ;;
+}
 
-    python)
-      cat > "$name.py" << EOF
+
+wizard_make_file_python() {
+  : "${1? You must provide a name!}"
+
+  cat > "$1.py" << EOF
 #!/usr/bin/python
 
 import sys
@@ -147,10 +136,12 @@ def main(args):
 if __name__ == '__main__':
   main(sys.argv)
 EOF
-      ;;
+}
 
-    c)
-      cat > "$name".c << EOF
+wizard_make_file_c() {
+  : "${1? You must provide a name!}"
+
+  cat > "$1".c << EOF
 #include "$name.h"
 
 int main(int argc, char *argv[]) {
@@ -158,10 +149,12 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 EOF
-      ;;
+}
 
-    cpp)
-      cat > "$name".cpp << EOF
+wizard_make_file_cpp() {
+  : "${1? You must provide a name!}"
+
+  cat > "$1".cpp << EOF
 #include "$name.h"
 
 int main(int argc, char const *argv[]) {
@@ -169,15 +162,12 @@ int main(int argc, char const *argv[]) {
   return 0;
 }
 EOF
-      cat > "$name.h" << EOF
-#include <string>
-EOF
-      mmake -l cpp -o "$name"
-      ;;
+}
 
-    java)
-      cat > "$name".java << EOF
-public $name {
+wizard_make_file_java() {
+  : "${1? You must provide a name!}"
+  cat > "$1".java << EOF
+public class $1 {
 
   public static void main(String[] argv) {
 
@@ -185,65 +175,43 @@ public $name {
   }
 }
 EOF
-      ;;
-    *)
-      error "$usage"
-      ;;
-  esac
 }
 
-make_project() {
-  # make project language name
-
-  local usage="
-    wizard make project [language] [name]
-
-    language
-      python
-      c
-      cpp
-      java
-  "
-  [[ $2 ]] || error "$usage"; name=$2
-
-  case $1 in
-    python)
-      chk mkdir "$name"
-      chk cd "$name"
-      make_file python "$name"
-      ;;
-
-    c)
-      chk mkdir "$name"
-      chk cd "$name"
-      make_file c "$name"
-      touch "$name".h
-      mmake -l c -o "$name"
-      ;;
-
-    cpp)
-      chk mkdir "$name"
-      chk cd "$name"
-      make_file cpp "$name"
-      touch "$name".h
-      mmake -l cpp -o "$name"
-      ;;
-
-    java)
-      chk mkdir "$name"
-      chk cd "$name"
-      make_file java "$name"
-      mmake -l java -o "$name"
-      ;;
-
-    ""|*)
-      error "$usage"
-      ;;
-
-  esac
+wizard_make_project_python() {
+  : "${1? You must provide a name!}"
+  chk mkdir "$1"
+  chk cd "$1"
+  wizard_make_file python "$1"
+  return 1
 }
 
-update() {
+wizard_make_project_c() {
+  : "${1? You must provide a name!}"
+  chk mkdir "$1"
+  chk cd "$1"
+  wizard_make_file c "$1"
+  touch "$1".h
+  mmake -l c -o "$1"
+}
+
+wizard_make_project_cpp() {
+  : "${1? You must provide a name!}"
+  chk mkdir "$1"
+  chk cd "$1"
+  wizard_make_file cpp "$1"
+  touch "$1".h
+  mmake -l cpp -o "$1"
+}
+
+wizard_make_project_java() {
+  : "${1? You must provide a name!}"
+  chk mkdir "$1"
+  chk cd "$1"
+  wizard_make_file java "$1"
+  mmake -l java -o "$1"
+}
+
+wizard_update() {
   # update this, whatever that means
 
   case $PLATFORM in
@@ -258,35 +226,7 @@ update() {
   esac
 }
 
-build() {
-  # compile and install something
-
-  usage="
-    wizard build [target]
-
-    target
-      lua
-      vim
-      shellcheck
-    "
-
-  case $1 in
-    lua)
-      build_lua
-      ;;
-    vim)
-      build_vim
-      ;;
-    shellcheck)
-      build_shellcheck
-      ;;
-    ""|*)
-      error "$usage"
-      ;;
-  esac
-}
-
-build_lua() {
+wizard_build_lua() {
   # compile and install lua 5.3.3
 
   echo "installing lua"
@@ -302,11 +242,11 @@ build_lua() {
   echo "done"
 }
 
-build_vim () {
+wizard_build_vim () {
   # compile and install the lastest vim
 
   echo "installing vim"
-  build_lua
+  wizard_build_lua
 
 	chk sudo apt-get build-dep vim-gnome
 	chk sudo apt-get install \
@@ -339,7 +279,7 @@ build_vim () {
   echo "done"
 }
 
-build_shellcheck() {
+wizard_build_shellcheck() {
   # download and install the latest shellcheck
 
   chk wget \
@@ -348,46 +288,5 @@ build_shellcheck() {
   chk sudo apt-get install -f
 }
 
-main() {
-
-  local usage="
-    wizard [options] [command]
-
-    options
-      --quiet
-
-    command
-      build
-      make
-      update
-  "
-
-  case $1 in
-    -q|--quiet)
-      QUIET=1
-      ;;
-
-    b|build)
-      shift; build "$@"
-      ;;
-
-    m|make)
-      shift; _make "$@"
-      ;;
-
-    u|update)
-      shift; update "$@"
-      ;;
-
-    test)
-      chk false
-      ;;
-
-    ""|*)
-      error "$usage"
-      ;;
-  esac
-
-}
-
-main "$@"
+make_reflective_functions
+wizard "$@"

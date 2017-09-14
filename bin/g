@@ -62,6 +62,17 @@ while [[ $1 ]]; do
           fi
       ;;
 
+    dc)  if [[ -f $2 ]]; then
+            confirm "$cnfrm" "git diff --cached --full-index > $2"
+            git diff --full-index > "$2"
+            shift
+
+          else
+            confirm "$cnfrm" "git diff --cached --full-index"
+            git diff --full-index
+          fi
+      ;;
+
     dh) if [ "$2" -eq "$2" ] 2>/dev/null ; then
             commits="$2"
           else
@@ -122,6 +133,7 @@ while [[ $1 ]]; do
     cm : commit -m (message)
     co : checkout (file)
     d  : diff changes [output_file]
+    dc : diff cached changes [output_file]
     dh : diff commits [number of commits] [output_file]
     ds : diff commits [number of commits] - auto names diff [work only]
     f  : fetch
