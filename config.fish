@@ -125,6 +125,19 @@ if test "$wiki_loc"
   alias vw="v $wiki_loc"
 end
 
+function m
+  # interact with the bookmark script
+
+  bookmark "$argv"
+  set line "$status"
+
+  if test $line -gt 0
+    set choice (sed -n "$line{p;q}" "$HOME/.bookmarks")
+    echo $choice
+    cd $choice
+  end
+end
+
 function f
   # f [azlct] [target]
   #

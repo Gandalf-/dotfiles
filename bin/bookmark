@@ -1,0 +1,51 @@
+#!/bin/bash
+
+conf="$HOME/.bookmarks"
+usage="
+  m [+] bookmark current directory
+"
+
+case $1 in
+  +)
+    pwd >> "$conf"
+    ;;
+
+  -)
+    grep -wv "^$(pwd)$" "$conf" > "$conf.swap" && mv "$conf.swap" "$conf"
+    ;;
+
+  -h|--help)
+    echo "$usage"
+    ;;
+
+  *)
+    if [[ $1 ]]; then
+      files=( $(grep -i -- "$1" "$conf") )
+    else
+      files=( $(cat "$conf") )
+    fi
+
+    case ${#files[@]} in
+      0)
+        exit 0
+        ;;
+      1)
+        choice=0
+        ;;
+      *)
+        let i=0
+        sort <<< "${files[@]}" | tr ' ' '\n' | while read -r file; do
+          printf "(%d) %s\n" "$i" "$file"
+          let i++
+        done
+
+        read -p '? ' -r choice
+        (( choice < 0 || choice > ${#files[@]} )) && exit 0
+        ;;
+    esac
+
+    line="$(grep -nw -- "^${files[$choice]}$" "$conf" | cut -d ':' -f 1)"
+    #shellcheck disable=SC2086
+    exit $line
+    ;;
+esac
