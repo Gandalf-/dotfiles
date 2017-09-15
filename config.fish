@@ -225,7 +225,6 @@ function f
     else if test "$move"
       cd (dirname $files[1])
       ls --color=auto
-      v (basename $files[1]) $vim_opt
 
     else
       v $files $vim_opt
