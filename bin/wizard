@@ -31,6 +31,17 @@ wizard_status_disk() {
   df -h
 }
 
+wizard_install_docker() {
+
+  chk curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
+    | sudo apt-key add -
+  chk sudo add-apt-repository \
+    "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
+  chk sudo apt-get update
+  chk apt-cache policy docker-ce
+  chk sudo apt-get install -y docker-ce
+}
+
 wizard_do_update () {
   chk sudo apt-add-repository ppa:fish-shell/release-2
   chk sudo apt update
