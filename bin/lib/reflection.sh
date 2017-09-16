@@ -1,50 +1,40 @@
 #!/bin/bash
 
+set -o pipefail
+
 DEBUG=${DEBUG:-0}
-START=$(date +%N)
 
-typeset -F SECONDS
 declare -A meta_head meta_body
-
-_profile() {
-  (( "$DEBUG" )) && {
-    echo "$@"
-    now=$(date +%N)
-    bc -l <<< "$now - $START"
-    echo
-    START=$now
-  }
-}
 
 _return() {
   return "$1"
 }
 
 _debug() {
-  if (( "$DEBUG" )); then
-    eval "$*"
-  fi
+  (( "$DEBUG" )) \
+    && eval "$*"
 }
 
 make_reflective_functions() {
   #
   #
 
-  _profile "start"
-  local commands len base function_body
+  local sub_commands commands len base i j
+  local meta_functions auto_usage function_body
+
   declare -A meta_functions
-  functions=()
+  sub_commands=()
 
   # read in all functions declared thus far, split them on '_'
   while read -r func; do
-    functions+=( "${func//_/ }" )
-  done < <(declare -F -p | cut -d ' ' -f 3)
-  _profile "functions read"
+    sub_commands+=( "${func//_/ }" )
+  done \
+    < <(declare -F -p | cut -d ' ' -f 3)
 
   # for each defined function, determine the base and assign sub functions to
   # meta functions
-  for ((i=0; i < ${#functions[@]}; i++)); do
-    commands=( ${functions[$i]} )
+  for ((i=0; i < ${#sub_commands[@]}; i++)); do
+    commands=( ${sub_commands[$i]} )
     len=${#commands[@]}
     base=${commands[0]}
 
@@ -58,10 +48,9 @@ make_reflective_functions() {
       base+="_${commands[$j]}"
     done
   done
-  _profile "meta functions discovered"
 
   _debug declare -p  meta_functions
-  _debug echo "keys ${!meta_functions[@]}"
+  _debug echo "keys ${!meta_functions[*]}"
 
   existing_functions=( $(declare -F | cut -d ' ' -f 3) )
 
@@ -92,17 +81,18 @@ make_reflective_functions() {
       if [[ \$usage ]]; then
         echo \$usage
       else
+        echo
         echo $(tr '_' ' ' <<< "$meta_func")
         echo \"$auto_usage\"
+        echo
       fi
       ;;
     "
-    _profile "$meta_func defined"
 
     eval "
     $meta_func() {
       [[ \$1 ]] || \$FUNCNAME --help
-      local __shifts=0
+      local __ret __shifts=0
       ${meta_head[$meta_func]}
 
       while [[ \$1 ]]; do
@@ -111,14 +101,12 @@ make_reflective_functions() {
           $function_body
         esac
 
-        ret=\$?; shift; shift \$ret; let __shifts+=\$ret+1
+        __ret=\$?; shift; shift \$__ret; let __shifts+=\$__ret+1
       done
       return \$__shifts
     }
     "
-    _profile "$meta_func defined"
   done
-  _profile "all meta functions defined"
 
   _debug declare -f
 }

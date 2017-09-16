@@ -3,7 +3,8 @@
 # usage
 #   sh prepare.sh (username)
 
-source "$(dirname "$0")"/reflection.sh
+# shellcheck disable=SC1090
+source "$(dirname "$0")"/lib/reflection.sh
 
 green="\033[01;32m"; normal="\033[00m"
 PLATFORM=$(uname)
@@ -11,29 +12,23 @@ QUIET=0
 #CONFIRM=0
 
 error() {
-  printf "%b%s%b " "$green" "$*" "$normal" ; exit 1;
+  printf "%b%s%b\n" "$green" "$*" "$normal"
+  exit 1
 }
 
 chk() {
   printf "%b%s%b\n" "$green" "$*" "$normal"
   if (( QUIET )); then
-    eval "$@" >/dev/null || error "error running \"$*\""
+    eval "$@" >/dev/null \
+      || error "error running \"$*\""
   else
-    eval "$@" || error "error running \"$*\""
+    eval "$@" \
+      || error "error running \"$*\""
   fi
 }
 
-wizard_do_check () {
-
-  if [ "$(whoami)" != 'root' ] || [ "$(uname)" != 'Linux' ]; then
-    echo "Must be root on Linux"
-    exit
-  fi
-
-  if [ -z "$1" ]; then
-    echo "Must provide user name"
-    exit
-  fi
+wizard_status_disk() {
+  df -h
 }
 
 wizard_do_update () {
@@ -85,12 +80,70 @@ wizard_add_configs () {
 
 wizard_clean_boot() {
 
-  dpkg --list |
-    grep linux-image |
-    awk '{ print $2 }' |
-    sort -V |
-    sed -n '/'"$(uname -r)"'/q;p' |
-    xargs sudo apt-get -y purge
+  dpkg --list \
+    | grep linux-image \
+    | awk '{ print $2 }' \
+    | sort -V \
+    | sed -n '/'"$(uname -r)"'/q;p' \
+    | xargs sudo apt-get -y purge
+}
+
+wizard_clean_files() {
+
+  local dry=0 counter fixed
+
+  case "$1" in
+    '-d'|'--dry') dry=1
+      ;;
+
+    *)
+      echo "
+  cleanup [-d|--dry]
+    smart remove duplicate file names and intermediary file types
+      "
+      ;;
+  esac
+
+  counter=0
+  while read -r file; do
+    fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
+
+    # make sure the file still exists
+    if [[ -e "$file" ]] ; then
+
+      if [[ -f "$fixed" ]]; then
+        echo "remove dup: $file"
+        (( dry )) \
+          || rm "$file" \
+          || exit
+
+      else
+        echo "rename dup: $file"
+        (( dry )) \
+          || mv "$file" "$fixed" \
+          || exit
+      fi
+
+      let counter++
+    fi
+  done < <(find . -regex '.*([0-9]+).*')
+
+  while read -r file; do
+    echo "remove: $file"
+
+    (( dry )) \
+      || rm "$file" \
+      || exit
+    let counter++
+
+  done < <(find . -regex '.*\.\(pyc\|class\|o\|bak\)')
+
+  if (( dry )); then
+    echo "Would have cleaned up $counter files"
+  else
+    echo "Cleaned up $counter files"
+  fi
+  return 1
 }
 
 wizard_make_session() {
@@ -105,8 +158,6 @@ wizard_make_session() {
 }
 
 wizard_make_file_shell() {
-  : "${1? You must provide a name!}"
-
   cat > "$1".sh << EOF
 #!/bin/bash
 
@@ -121,8 +172,6 @@ EOF
 
 
 wizard_make_file_python() {
-  : "${1? You must provide a name!}"
-
   cat > "$1.py" << EOF
 #!/usr/bin/python
 
@@ -139,8 +188,6 @@ EOF
 }
 
 wizard_make_file_c() {
-  : "${1? You must provide a name!}"
-
   cat > "$1".c << EOF
 #include "$name.h"
 
@@ -152,8 +199,6 @@ EOF
 }
 
 wizard_make_file_cpp() {
-  : "${1? You must provide a name!}"
-
   cat > "$1".cpp << EOF
 #include "$name.h"
 
@@ -165,7 +210,6 @@ EOF
 }
 
 wizard_make_file_java() {
-  : "${1? You must provide a name!}"
   cat > "$1".java << EOF
 public class $1 {
 
@@ -178,7 +222,6 @@ EOF
 }
 
 wizard_make_project_python() {
-  : "${1? You must provide a name!}"
   chk mkdir "$1"
   chk cd "$1"
   wizard_make_file python "$1"
@@ -186,7 +229,6 @@ wizard_make_project_python() {
 }
 
 wizard_make_project_c() {
-  : "${1? You must provide a name!}"
   chk mkdir "$1"
   chk cd "$1"
   wizard_make_file c "$1"
@@ -195,7 +237,6 @@ wizard_make_project_c() {
 }
 
 wizard_make_project_cpp() {
-  : "${1? You must provide a name!}"
   chk mkdir "$1"
   chk cd "$1"
   wizard_make_file cpp "$1"
@@ -204,7 +245,6 @@ wizard_make_project_cpp() {
 }
 
 wizard_make_project_java() {
-  : "${1? You must provide a name!}"
   chk mkdir "$1"
   chk cd "$1"
   wizard_make_file java "$1"
@@ -282,11 +322,39 @@ wizard_build_vim () {
 wizard_build_shellcheck() {
   # download and install the latest shellcheck
 
+  chk cd /tmp/
   chk wget \
     'http://ftp.us.debian.org/debian/pool/main/s/shellcheck/shellcheck_0.4.6-1_i386.deb'
   chk sudo dpkg -i shellcheck_*.deb || true
   chk sudo apt-get install -f
+  chk cd -
+}
+
+wizard_find() {
+
+  find . -iname "$1"
+}
+
+wizard_open() {
+
+  echo "nop"
+}
+
+wizard_kill() {
+
+  echo "nop"
+}
+
+# shellcheck disable=SC2034,SC2154,SC2016
+{
+meta_head[wizard_make_file]='
+[[ $2 ]] || error "You must provide a name"
+'
+meta_head[wizard_make_project]='
+[[ $2 ]] || error "You must provide a name"
+'
 }
 
 make_reflective_functions
 wizard "$@"
+exit 0
