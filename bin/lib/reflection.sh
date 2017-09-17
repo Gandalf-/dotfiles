@@ -67,7 +67,8 @@ make_reflective_functions() {
     function_body=""
     for sub_func in ${meta_functions[$meta_func]}; do
       function_body+="
-        ${sub_func:0:1}|$sub_func) ${meta_func}_$sub_func \"\${@:2}\";; "
+        ${sub_func:0:1}|${sub_func:0:2}|$sub_func)
+          ${meta_func}_$sub_func \"\${@:2}\";; "
 
       if [[ ${meta_functions[${meta_func}_$sub_func]} ]]; then
         auto_usage+="
