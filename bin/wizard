@@ -6,6 +6,9 @@
 # shellcheck disable=SC1090
 source "$(dirname "$0")"/lib/reflection.sh
 
+[[ -f ~/cribshome/scripts/work_wizard ]] \
+  && source ~/cribshome/scripts/work_wizard
+
 green="\033[01;32m"; normal="\033[00m"
 PLATFORM=$(uname)
 QUIET=0
