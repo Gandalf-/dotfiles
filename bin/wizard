@@ -27,48 +27,103 @@ chk() {
   fi
 }
 
-wizard_status_disk() {
+wizard_show_largest-packages() {
+  # show the largest packages installed
+
+  dpkg-query -Wf '${Installed-Size}\t${Package}\n' \
+    | sort -n
+}
+
+wizard_show_history() {
+
+  local usage="
+  show history [amount] [range]
+  "
+  case $1 in -h|--help) error "$usage" ;; esac
+
+  local amount=${1:-25}
+  local range=${2:-1}
+
+  fish -c history \
+    | cut -f "$range" -d' ' \
+    | sort \
+    | uniq -c \
+    | sort -nr \
+    | head -n "$amount"
+
+  [[ $1 && $2 ]] && return 2
+  [[ $1 ]] && return 1
+  return 0
+}
+
+wizard_show_disk() {
   df -h
 }
 
-wizard_install_docker() {
-
-  chk curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
-    | sudo apt-key add -
-  chk sudo add-apt-repository \
-    "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
-  chk sudo apt-get update
-  chk apt-cache policy docker-ce
-  chk sudo apt-get install -y docker-ce
-}
-
-wizard_status_weather() {
+wizard_show_weather() {
   curl http://wttr.in/~"${1:-Seattle}";
 }
 
-wizard_do_update () {
+wizard_do_http-server() {
+
+  python -m SimpleHTTPServer
+}
+
+wizard_do_first-time-install_small() {
+  # install basic programs
+
   chk sudo apt-add-repository ppa:fish-shell/release-2
   chk sudo apt update
   chk sudo apt upgrade
-  chk sudo apt install tmux fish vim git make gcc libreadline-dev
+  chk sudo apt install \
+    tmux fish vim git make gcc libreadline-dev
 }
 
-wizard_do_security () {
+wizard_do_insync() {
+  # run insync-headless commands
 
-  chk sudo ufw allow 22/tcp
-  chk sudo ufw enable
+  local usage="
+     s : start
+    ps : pause syncing
+    rs : resume syncing
+    re : retry errors
+    gs : get status
+    ge : get errors
+   gsp : get sync progress
+  "
+  [[ $1 ]] || error "$usage"
+
+  case "$1" in
+    s)   insync-headless start             ;;
+    ps)  insync-headless pause_syncing     ;;
+    rs)  insync-headless resume_syncing    ;;
+    re)  insync-headless retry_errors      ;;
+    gs)  insync-headless get_status        ;;
+    ge)  insync-headless get_errors        ;;
+    gsp) insync-headless get_sync_progress ;;
+    *)   error "$usage" ;;
+  esac
+  return 1
 }
 
-wizard_do_vnc () {
-  chk sudo apt install xfce4 xfce4-goodies tightvncserver
-  chk sudo vncserver
-  chk sudo vncserver -kill :1
-  cat > "$HOME"/.vnc/xstartup << EOF
-#!/bin/bash
-xrdb \$HOME/.Xresources
-startxfce4 &
-EOF
-  chk chmod +x "$HOME"/.vnc/xstartup
+wizard_do_frequencies() {
+
+  [[ $1 ]] || error "frequencies [amount]"
+  sort | uniq -c | sort -nr | head -n "$1";
+  return 1
+}
+
+wizard_do_ratio() {
+
+  [[ $1 ]] || error "ratio [amount]"
+  sort \
+    | uniq -c \
+    | sort -nr \
+    | head -n "$1" \
+    | awk '{a[$2]=$1;s+=$1}END{for(i in a)printf"%-40s%-15d%6.2f%%\n",i,a[i],a[i]/s*100}' \
+    | sort -r -k 2,2 -n
+
+  return 1
 }
 
 wizard_add_user () {
@@ -325,6 +380,22 @@ wizard_build_vim () {
   echo "done"
 }
 
+wizard_install_vnc () {
+  # install and start a VNC server
+
+  chk sudo apt update
+  chk sudo apt \
+    install xfce4 xfce4-goodies tightvncserver
+  chk sudo vncserver
+  chk sudo vncserver -kill :1
+  cat > "$HOME"/.vnc/xstartup << EOF
+#!/bin/bash
+xrdb \$HOME/.Xresources
+startxfce4 &
+EOF
+  chk chmod +x "$HOME"/.vnc/xstartup
+}
+
 wizard_install_java() {
   # install the Oracle JDK
 
@@ -360,31 +431,15 @@ wizard_install_lua() {
   echo "done"
 }
 
-wizard_do_insync() {
-  # run insync-headless commands
+wizard_install_docker() {
 
-  local usage="
-     s : start
-    ps : pause syncing
-    rs : resume syncing
-    re : retry errors
-    gs : get status
-    ge : get errors
-   gsp : get sync progress
-  "
-  [[ $1 ]] || error "$usage"
-
-  case "$1" in
-    s)   insync-headless start             ;;
-    ps)  insync-headless pause_syncing     ;;
-    rs)  insync-headless resume_syncing    ;;
-    re)  insync-headless retry_errors      ;;
-    gs)  insync-headless get_status        ;;
-    ge)  insync-headless get_errors        ;;
-    gsp) insync-headless get_sync_progress ;;
-    *)   error "$usage" ;;
-  esac
-  return 1
+  chk curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
+    | sudo apt-key add -
+  chk sudo add-apt-repository \
+    "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
+  chk sudo apt-get update
+  chk apt-cache policy docker-ce
+  chk sudo apt-get install -y docker-ce
 }
 
 wizard_find() {

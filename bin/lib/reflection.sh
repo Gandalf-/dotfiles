@@ -19,24 +19,20 @@ make_reflective_functions() {
   #
   #
 
-  local sub_commands commands len base i j
-  local meta_functions auto_usage function_body
-
   declare -A meta_functions
-  sub_commands=()
+  local i j sub_commands=()
 
   # read in all functions declared thus far, split them on '_'
   while read -r func; do
     sub_commands+=( "${func//_/ }" )
-  done \
-    < <(declare -F -p | cut -d ' ' -f 3)
+  done < <(declare -F -p | cut -d ' ' -f 3)
 
   # for each defined function, determine the base and assign sub functions to
   # meta functions
   for ((i=0; i < ${#sub_commands[@]}; i++)); do
-    commands=( ${sub_commands[$i]} )
-    len=${#commands[@]}
-    base=${commands[0]}
+    local commands=( ${sub_commands[$i]} )
+    local len=${#commands[@]}
+    local base=${commands[0]}
 
     for ((j=1; j < len; j++)); do
       _debug echo "assign meta_functions[$base] += ${commands[$j]}"
@@ -49,9 +45,10 @@ make_reflective_functions() {
     done
   done
 
-  _debug declare -p  meta_functions
+  _debug declare -p meta_functions
   _debug echo "keys ${!meta_functions[*]}"
 
+  local existing_functions
   existing_functions=( $(declare -F | cut -d ' ' -f 3) )
 
   # define each meta function
@@ -63,11 +60,19 @@ make_reflective_functions() {
       exit 1
     fi
 
-    auto_usage=""
-    function_body=""
+    local auto_usage=""
+    local function_body=""
+
     for sub_func in ${meta_functions[$meta_func]}; do
+
+      # allow all sub strings of function name
+      local cases="${sub_func:0:1}"
+      for ((i=2; i < $(( ${#sub_func} + 1)); i++)); do
+        cases+="|${sub_func:0:$i}"
+      done
+
       function_body+="
-        ${sub_func:0:1}|${sub_func:0:2}|$sub_func)
+        $cases)
           ${meta_func}_$sub_func \"\${@:2}\";; "
 
       if [[ ${meta_functions[${meta_func}_$sub_func]} ]]; then
