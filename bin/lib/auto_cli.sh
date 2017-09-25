@@ -60,15 +60,16 @@ make_reflective_functions() {
       exit 1
     fi
 
+    local auto_name; auto_name="$(tr '_' ' ' <<< "$meta_func")"
     local auto_usage=""
     local function_body=""
 
     for sub_func in ${meta_functions[$meta_func]}; do
 
       # allow all sub strings of function name
-      local cases="${sub_func:0:1}"
+      local cases="\"${sub_func:0:1}\""
       for ((i=2; i < $(( ${#sub_func} + 1)); i++)); do
-        cases+="|${sub_func:0:$i}"
+        cases+="|\"${sub_func:0:$i}\""
       done
 
       function_body+="
@@ -85,11 +86,11 @@ make_reflective_functions() {
     done
     function_body+="*)
       if [[ \$usage ]]; then
-        echo \$usage
+        echo \"\$usage\"
       else
         echo
-        echo $(tr '_' ' ' <<< "$meta_func")
-        echo \"$auto_usage\"
+        echo \"\$__name\"
+        echo \"\$__usage\"
         echo
       fi
       ;;
@@ -97,8 +98,10 @@ make_reflective_functions() {
 
     eval "
     $meta_func() {
-      [[ \$1 ]] || \$FUNCNAME --help
+      [[ \$1 ]] || \"\${FUNCNAME[0]}\" --help
       local __ret __shifts=0
+      local __usage=\"$auto_usage\"
+      local __name=\"${auto_name}\"
       ${meta_head[$meta_func]}
 
       while [[ \$1 ]]; do

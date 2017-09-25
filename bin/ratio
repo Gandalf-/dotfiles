@@ -1,5 +1,0 @@
-#!/bin/bash
-
-freq "$1" |
-awk '{a[$2]=$1;s+=$1}END{for(i in a)printf"%-40s%-15d%6.2f%%\n",i,a[i],a[i]/s*100}' |
-sort -r -k2,2 -n

@@ -4,42 +4,65 @@
 #   sh prepare.sh (username)
 
 # shellcheck disable=SC1090
-source "$(dirname "$0")"/lib/reflection.sh
+source "$(dirname "$0")"/lib/auto_cli.sh
+source "$(dirname "$0")"/lib/common.sh
 
-readonly green="\033[01;32m"
-readonly normal="\033[00m"
 readonly PLATFORM=$(uname)
-QUIET=0
+__name=""
 
-error() {
-  printf "%b%s%b\n" "$green" "$*" "$normal"
-  exit 1
-}
+which ffmpeg >/dev/null &&
+wizard_do_transcode_movies() {
+  #
+  local preset=slow
 
-chk() {
-  printf "%b%s%b\n" "$green" "$*" "$normal"
-  if (( QUIET )); then
-    eval "$@" >/dev/null \
-      || error "error running \"$*\""
-  else
-    eval "$@" \
-      || error "error running \"$*\""
-  fi
+  echo "Processing: $*"
+  for file in "$@"; do
+    ffmpeg -hide_banner -i "$file" \
+      -c:v libx264 -crf 19 -preset "$preset" -strict -2 \
+      -c:a aac -b:a 192k -ac 2 "${file%.*}.mp4" \
+      || _error "failed on \"$file\". Giving up"
+
+    echo "Waiting..."; sleep 5
+    rm "$file"
+  done
+
+  return $#
 }
 
 wizard_show_largest-packages() {
-  # show the largest packages installed
+
+  __help "$1" "
+
+  list all packages installed, sorted by size
+  "
 
   dpkg-query -Wf '${Installed-Size}\t${Package}\n' \
     | sort -n
 }
 
-wizard_show_history() {
+wizard_show_progress() {
 
-  local usage="
-  show history [amount] [range]
+  _help "$1" "
+
+  run a command repeatedly, clear the screen between runs
   "
-  case $1 in -h|--help) error "$usage" ;; esac
+
+  while :; do
+    eval "$@"
+    sleep 1
+    clear
+  done
+
+  return $#
+}
+
+wizard_show_history() {
+  #
+
+  _help "$1" "[amount] [range]
+
+  show the <amount> of the most frequently run commands
+  "
 
   local amount=${1:-25}
   local range=${2:-1}
@@ -57,6 +80,11 @@ wizard_show_history() {
 }
 
 wizard_show_disk() {
+  _help "$1" "
+
+  show disk and partition usage
+  "
+
   df -h
 }
 
@@ -76,46 +104,50 @@ wizard_do_first-time-install_small() {
   chk sudo apt update
   chk sudo apt upgrade
   chk sudo apt install \
-    tmux fish vim git make gcc libreadline-dev
+    make gcc libreadline-dev build-essential cmake \
+    tmux fish vim git ipython python-pip \
+    silversearcher-ag
 }
 
-wizard_do_insync() {
-  # run insync-headless commands
-
-  local usage="
-     s : start
-    ps : pause syncing
-    rs : resume syncing
-    re : retry errors
-    gs : get status
-    ge : get errors
-   gsp : get sync progress
-  "
-  [[ $1 ]] || error "$usage"
-
-  case "$1" in
-    s)   insync-headless start             ;;
-    ps)  insync-headless pause_syncing     ;;
-    rs)  insync-headless resume_syncing    ;;
-    re)  insync-headless retry_errors      ;;
-    gs)  insync-headless get_status        ;;
-    ge)  insync-headless get_errors        ;;
-    gsp) insync-headless get_sync_progress ;;
-    *)   error "$usage" ;;
-  esac
-  return 1
-}
+if which insync-headless >/dev/null; then
+  wizard_do_insync_start() {
+    insync-headless start
+  }
+  wizard_do_insync_pause-syncing() {
+    insync-headless pause_syncing
+  }
+  wizard_do_insync_resume-syncing() {
+    insync-headless resume_syncing
+  }
+  wizard_do_insync_retry-errors() {
+    insync-headless retry_errors
+  }
+  wizard_do_insync_status() {
+    insync-headless get_status
+  }
+  wizard_do_insync_errors() {
+    insync-headless get_errors
+  }
+  wizard_do_insync_sync-progress() {
+    insync-headless get_sync_progress
+  }
+fi
 
 wizard_do_frequencies() {
 
-  [[ $1 ]] || error "frequencies [amount]"
+  _help "$1" "$__name [amount]"
+
   sort | uniq -c | sort -nr | head -n "$1";
   return 1
 }
 
 wizard_do_ratio() {
 
-  [[ $1 ]] || error "ratio [amount]"
+  _help "$1" "[amount]
+
+  count the occurances of each input line, produce ratio data
+  "
+
   sort \
     | uniq -c \
     | sort -nr \
@@ -124,6 +156,21 @@ wizard_do_ratio() {
     | sort -r -k 2,2 -n
 
   return 1
+}
+
+wizard_do_parse_json() {
+
+  python -m json.tool
+}
+
+wizard_do_parse_xml() {
+
+  _help "$1" "< file.xml
+
+  pipe in a file an pretty print XML
+  "
+
+  xmllint --format -
 }
 
 wizard_add_user () {
@@ -140,15 +187,21 @@ wizard_add_user () {
 }
 
 wizard_add_configs () {
-  chk git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
-  chk ln -sf /tmp/DotFiles/config.fish  /home/"$user"/.config/fish/config.fish
-  chk ln -sf /tmp/DotFiles/vimrc        /home/"$user"/.vimrc
-  chk ln -sf /tmp/DotFiles/tmux.conf    /home/"$user"/.tmux.conf
-  chk ln -sf /tmp/DotFiles/bashrc       /home/"$user"/.bashrc
 
+  chk git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
+  chk mkdir -p "$HOME"/.config/fish
+  chk ln -sf /tmp/DotFiles/config.fish  "$HOME"/.config/fish/config.fish
+  chk ln -sf /tmp/DotFiles/vimrc        "$HOME"/.vimrc
+  chk ln -sf /tmp/DotFiles/tmux.conf    "$HOME"/.tmux.conf
+  chk ln -sf /tmp/DotFiles/bashrc       "$HOME"/.bashrc
 }
 
 wizard_clean_boot() {
+
+  __help "$1" "
+
+  safely cleans up old Linux kernel versions from /boot
+  "
 
   dpkg --list \
     | grep linux-image \
@@ -161,14 +214,14 @@ wizard_clean_boot() {
 wizard_clean_files() {
 
   local fixed dry=0 counter=0 usage="
-  cleanup [-d|--dry]
+  $__name [-d|--dry]
     smart remove duplicate file names and intermediary file types
   "
-  [[ $1 ]] || error "$usage"
-
   case "$1" in
-    -d|--dry) dry=1 ;;
-    *) error "$usage" ;;
+    -d|--dry)
+      dry=1 ;;
+    *)
+      error "$usage" ;;
   esac
 
   while read -r file; do
@@ -212,16 +265,29 @@ wizard_clean_files() {
   return 1
 }
 
-wizard_make_session() {
-  # maybe string -> int
-  #
-  # create a new tmux session and move to it
+if which tmux >/dev/null; then
+  wizard_make_session() {
+    __help "$1" "[name]
 
-  name=${1:-$RANDOM}
-  tmux new -d -s "$name"
-  tmux switch-client -t "$name"
-  return 1
-}
+  create a new tmux session and move to it
+    "
+
+    name=${1:-$RANDOM}
+    tmux new -d -s "$name"
+    tmux switch-client -t "$name"
+    return 1
+  }
+
+  wizard_do_layout_vertical() {
+    tmux select-layout even-vertical
+  }
+  wizard_do_layout_horizontal() {
+    tmux select-layout even-horizontal
+  }
+  wizard_do_layout_tiled() {
+    tmux select-layout tiled
+  }
+fi
 
 wizard_make_file_shell() {
   cat > "$1".sh << EOF
@@ -330,6 +396,10 @@ wizard_update_platform() {
 
 wizard_update_apt() {
 
+  __help "$1" "
+
+  update all apt packages
+  "
   chk sudo apt update
   chk sudo apt upgrade -y
   chk sudo apt-get autoremove
@@ -337,6 +407,10 @@ wizard_update_apt() {
 
 wizard_update_pip() {
 
+  __help "$1" "
+
+  update all python packages installed by pip
+  "
   sudo -H pip freeze --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \
@@ -347,7 +421,7 @@ wizard_build_vim () {
   # compile and install the lastest vim
 
   echo "installing vim"
-  wizard_install_lua
+  wizard install lua
 
 	chk sudo apt-get build-dep vim-gnome
 	chk sudo apt-get install \
@@ -381,8 +455,11 @@ wizard_build_vim () {
 }
 
 wizard_install_vnc () {
-  # install and start a VNC server
 
+  _help "$1" "
+
+  install and start a VNC server
+  "
   chk sudo apt update
   chk sudo apt \
     install xfce4 xfce4-goodies tightvncserver
@@ -397,16 +474,22 @@ EOF
 }
 
 wizard_install_java() {
-  # install the Oracle JDK
 
+  __help "$1" "
+
+  install the Oracle JDK
+  "
   chk sudo add-apt-repository ppa:webupd8team/java
   chk sudo apt update
   chk sudo apt install oracle-java8-installer
 }
 
 wizard_install_shellcheck() {
-  # download and install the latest shellcheck
 
+  __help "$1" "
+
+  download and install the latest shellcheck
+  "
   chk cd /tmp/
   chk wget \
     'http://ftp.us.debian.org/debian/pool/main/s/shellcheck/shellcheck_0.4.6-1_i386.deb'
@@ -416,7 +499,11 @@ wizard_install_shellcheck() {
 }
 
 wizard_install_lua() {
-  # compile and install lua 5.3.3
+
+  __help "$1" "
+
+  compile and install lua 5.3.3
+  "
 
   echo "installing lua"
   chk cd /tmp/
@@ -433,6 +520,10 @@ wizard_install_lua() {
 
 wizard_install_docker() {
 
+  __help "$1" "
+
+  install the dependencies and kernel headers for docker-ce
+  "
   chk curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
     | sudo apt-key add -
   chk sudo add-apt-repository \
@@ -442,19 +533,44 @@ wizard_install_docker() {
   chk sudo apt-get install -y docker-ce
 }
 
+# shellcheck disable=SC2016
+wizard_do_export() {
+
+  echo '#!/bin/bash
+
+# usage
+#   sh prepare.sh (username)
+
+# shellcheck disable=SC1090
+source "$(dirname "$0")"/lib/reflection.sh
+
+readonly green="\033[01;32m"
+readonly normal="\033[00m"
+readonly PLATFORM=$(uname)
+QUIET=0
+__name=""
+'
+  declare -f -p
+
+  echo '
+wizard "$@"
+exit 0
+'
+}
+
 wizard_find() {
   # find by file name or contents
 
-  local usage fuzzy=1 file=1 text=1 args=1 prog=1
+  local fuzzy=1 file=1 text=1 args=1 prog=1
   local usage="
-  wizard find [option] [object]
+  $__name [option] [object]
 
     option
       --exact
       --text-only
       --file-only
   "
-  [[ $1 ]] || error "$usage"
+  _help "$1" "$usage"
 
   while [[ $1 ]]; do
     case $1 in
@@ -489,21 +605,36 @@ wizard_find() {
 
 wizard_open() {
 
-  echo "nop"
-}
+  for target in "$@"; do
 
-wizard_kill() {
+    if [[ $(file -b "$target") =~ 'ASCII text' ]]; then
+      vim "$target"
 
-  echo "nop"
+    elif which xdg-open >/dev/null; then
+
+      if which xiwit >/dev/null; then
+        xiwit xdg-open "$target"
+
+      else
+        xdg-open "$target"
+      fi
+    fi
+
+  done
+  return $#
 }
 
 # shellcheck disable=SC2034,SC2154,SC2016
 {
 meta_head[wizard_make_file]='
-[[ $2 ]] || error "You must provide a name"
+[[ $2 ]] || _error "$__name [language] [file name]
+$__usage
+"
 '
 meta_head[wizard_make_project]='
-[[ $2 ]] || error "You must provide a name"
+[[ $2 ]] || _error "$__name [language] [project name]
+$__usage
+"
 '
 }
 

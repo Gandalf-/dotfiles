@@ -284,3 +284,9 @@ set -x LESS_TERMCAP_se (printf "\033[0m")
 set -x LESS_TERMCAP_so (printf "\033[01;44;33m")  
 set -x LESS_TERMCAP_ue (printf "\033[0m")  
 set -x LESS_TERMCAP_us (printf "\033[01;32m") 
+
+# Tab completion
+#===========================
+complete -e -c wizard
+complete -x -c wizard -a '(wizard | tail -n +4 | head -n -1 | sed -e "s/[\ \.]//g")'
+
