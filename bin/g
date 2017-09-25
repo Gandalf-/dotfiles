@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#
+# libraries
+#
+# shellcheck disable=SC1090
+source "$(dirname "$0")"/lib/common.sh
+
 # super git wrapper!
 
 [[ -z $1 ]] && { g --help; exit 1; }
@@ -11,30 +17,30 @@ fmt="\
 while [[ $1 ]]; do
   case "$1" in
     !)  cnfrm=$(( ! cnfrm ))              ;;
-    a)  confirm! "$cnfrm" "git add -A :/" ;;
-    bv) confirm! "$cnfrm" "git branch -vv" ;;
-    rv) confirm! "$cnfrm" "git remote -vv" ;;
-    f)  confirm! "$cnfrm" "git fetch" ;;
+    a)  _confirm "$cnfrm" "git add -A :/" ;;
+    bv) _confirm "$cnfrm" "git branch -vv" ;;
+    rv) _confirm "$cnfrm" "git remote -vv" ;;
+    f)  _confirm "$cnfrm" "git fetch" ;;
 
-    c)  confirm! "$cnfrm" "git commit" ;;
-    ca) confirm! "$cnfrm" "git commit --amend" ;;
-    cn) confirm! "$cnfrm" "git commit --amend --no-edit" ;;
+    c)  _confirm "$cnfrm" "git commit" ;;
+    ca) _confirm "$cnfrm" "git commit --amend" ;;
+    cn) _confirm "$cnfrm" "git commit --amend --no-edit" ;;
 
-    co) confirm! "$cnfrm" "git checkout \"$2\""; shift ;;
-    cb) confirm! "$cnfrm" "git checkout -b \"$2\""; shift ;;
-    s)  confirm! "$cnfrm" "git status" ;;
+    co) _confirm "$cnfrm" "git checkout \"$2\""; shift ;;
+    cb) _confirm "$cnfrm" "git checkout -b \"$2\""; shift ;;
+    s)  _confirm "$cnfrm" "git status" ;;
 
-    ri) confirm! "$cnfrm" "git rebase -i \"$2\""; shift ;;
-    cm) confirm! "$cnfrm" "git commit -m \"$2\""; shift ;;
-    m)  confirm! "$cnfrm" "git merge \"$2\""    ; shift ;;
+    ri) _confirm "$cnfrm" "git rebase -i \"$2\""; shift ;;
+    cm) _confirm "$cnfrm" "git commit -m \"$2\""; shift ;;
+    m)  _confirm "$cnfrm" "git merge \"$2\""    ; shift ;;
 
-    pm) confirm! "$cnfrm" "git pull \"${2%.}\""          ; shift ;;
-    pl) confirm! "$cnfrm" "git pull --no-edit \"${2%.}\""; shift ;;
+    pm) _confirm "$cnfrm" "git pull \"${2%.}\""          ; shift ;;
+    pl) _confirm "$cnfrm" "git pull --no-edit \"${2%.}\""; shift ;;
 
-    ph) confirm! "$cnfrm" "git push \"${2%.}\""; shift ;;
-    pf) confirm! "$cnfrm" "git push --force \"${2%.}\""; shift ;;
+    ph) _confirm "$cnfrm" "git push \"${2%.}\""; shift ;;
+    pf) _confirm "$cnfrm" "git push --force \"${2%.}\""; shift ;;
 
-    cc) confirm! "$cnfrm" "git clean -nfd"
+    cc) _confirm "$cnfrm" "git clean -nfd"
         confirm "$cnfrm" "Continue?"
         git clean -fd                                           ;;
 

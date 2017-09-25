@@ -1,8 +1,0 @@
-#!/bin/bash
-
-val=$1; shift
-
-# remove empty quotes, means nothing was passed as an argument
-# for instance: git pull "" -> git pull
-
-confirm $val "${@/ \"\"/}" && eval "${@/ \"\"/}"

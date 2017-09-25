@@ -467,7 +467,26 @@ wizard_build_vim () {
   echo "done"
 }
 
-wizard_install_vnc () {
+wizard_install_apt() {
+  _help "$1" "
+
+  install distribution packages
+  "
+  case $PLATFORM in
+    Linux)
+      if which apt >/dev/null; then
+        sudo apt install "$@"
+      fi
+      ;;
+    *)
+      error "Unsupported platform \"$PLATFORM\""
+      ;;
+  esac
+
+  return $#
+}
+
+wizard_install_vnc() {
 
   _help "$1" "
 

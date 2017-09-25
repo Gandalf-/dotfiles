@@ -37,3 +37,21 @@ chk() {
   fi
 }
 
+confirm() {
+  if [[ "$1" != 0 ]]; then
+    shift
+    printf "%b%s%b " "$green" "$@" "$normal"
+    read -r reply; [[ "$reply" =~ [Nn] ]] && exit 1
+    return 0
+
+  else
+    shift
+    printf "%b%s%b\n" "$green" "$@" "$normal"
+    return 0
+  fi
+}
+
+_confirm() {
+  val=$1; shift
+  confirm "$val" "${@/ \"\"/}" && eval "${@/ \"\"/}"
+}
