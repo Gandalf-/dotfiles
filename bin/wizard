@@ -1,15 +1,28 @@
 #!/bin/bash
 
-# usage
-#   sh prepare.sh (username)
+# wizard
 
+#
+# libraries
+#
 # shellcheck disable=SC1090
 source "$(dirname "$0")"/lib/auto_cli.sh
 source "$(dirname "$0")"/lib/common.sh
 
+[[ -f ~/cribshome/scripts/work_wizard ]] \
+  && source ~/cribshome/scripts/work_wizard
+
+
+#
+# globals
+#
 readonly PLATFORM=$(uname)
 __name=""
 
+
+#
+# commands
+#
 which ffmpeg >/dev/null &&
 wizard_do_transcode_movies() {
   #
