@@ -105,10 +105,10 @@ wizard_start_http-server() {
 wizard_do_first-time-install_small() {
   # install basic programs
 
-  chk sudo apt-add-repository ppa:fish-shell/release-2
-  chk sudo apt update
-  chk sudo apt upgrade
-  chk sudo apt install \
+  common::sudo apt-add-repository ppa:fish-shell/release-2
+  common::sudo apt update
+  common::sudo apt upgrade
+  common::sudo apt install \
     make gcc libreadline-dev build-essential cmake \
     tmux fish vim git ipython python-pip \
     silversearcher-ag
@@ -181,24 +181,24 @@ wizard_do_parse_xml() {
 wizard_add_user () {
   user="$1"
 
-  chk adduser "$user"
-  chk usermod -aG sudo "$user"
-  chk chsh -s /usr/bin/fish "$user"
-  chk mkdir -p /home/"$user"/.ssh/
-  chk cp -r /root/.ssh/ /home/"$user"/
+  common::do adduser "$user"
+  common::do usermod -aG sudo "$user"
+  common::do chsh -s /usr/bin/fish "$user"
+  common::do mkdir -p /home/"$user"/.ssh/
+  common::do cp -r /root/.ssh/ /home/"$user"/
 
-  chk chown -R "$user:$user" /home/"$user"/
+  common::do chown -R "$user:$user" /home/"$user"/
   return 1
 }
 
 wizard_add_configs () {
 
-  chk git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
-  chk mkdir -p "$HOME"/.config/fish
-  chk ln -sf /tmp/DotFiles/config.fish  "$HOME"/.config/fish/config.fish
-  chk ln -sf /tmp/DotFiles/vimrc        "$HOME"/.vimrc
-  chk ln -sf /tmp/DotFiles/tmux.conf    "$HOME"/.tmux.conf
-  chk ln -sf /tmp/DotFiles/bashrc       "$HOME"/.bashrc
+  common::do git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
+  common::do mkdir -p "$HOME"/.config/fish
+  common::do ln -sf /tmp/DotFiles/config.fish  "$HOME"/.config/fish/config.fish
+  common::do ln -sf /tmp/DotFiles/vimrc        "$HOME"/.vimrc
+  common::do ln -sf /tmp/DotFiles/tmux.conf    "$HOME"/.tmux.conf
+  common::do ln -sf /tmp/DotFiles/bashrc       "$HOME"/.bashrc
 }
 
 wizard_clean_boot() {
@@ -359,31 +359,31 @@ EOF
 }
 
 wizard_make_project_python() {
-  chk mkdir "$1"
-  chk cd "$1"
+  common::do mkdir "$1"
+  common::do cd "$1"
   wizard_make_file python "$1"
   return 1
 }
 
 wizard_make_project_c() {
-  chk mkdir "$1"
-  chk cd "$1"
+  common::do mkdir "$1"
+  common::do cd "$1"
   wizard_make_file c "$1"
   touch "$1".h
   mmake -l c -o "$1"
 }
 
 wizard_make_project_cpp() {
-  chk mkdir "$1"
-  chk cd "$1"
+  common::do mkdir "$1"
+  common::do cd "$1"
   wizard_make_file cpp "$1"
   touch "$1".h
   mmake -l cpp -o "$1"
 }
 
 wizard_make_project_java() {
-  chk mkdir "$1"
-  chk cd "$1"
+  common::do mkdir "$1"
+  common::do cd "$1"
   wizard_make_file java "$1"
   mmake -l java -o "$1"
 }
@@ -405,9 +405,9 @@ wizard_update_apt() {
 
   update all apt packages
   "
-  chk sudo apt update
-  chk sudo apt upgrade -y
-  chk sudo apt-get autoremove
+  common::sudo apt update
+  common::sudo apt upgrade -y
+  common::sudo apt-get autoremove
 }
 
 wizard_update_pip() {
@@ -428,18 +428,18 @@ wizard_build_vim () {
   echo "installing vim"
   wizard install lua
 
-	chk sudo apt-get build-dep vim-gnome
-	chk sudo apt-get install \
+	common::sudo apt-get build-dep vim-gnome
+	common::sudo apt-get install \
     libncurses5-dev libgnome2-dev libgnomeui-dev \
 		libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
 		libcairo2-dev libx11-dev libxpm-dev libxt-dev
 
-  chk cd /tmp/
-  chk wget 'https://github.com/vim/vim/archive/master.zip'
-  chk unzip master.zip
-  chk cd vim-master
+  common::do cd /tmp/
+  common::do wget 'https://github.com/vim/vim/archive/master.zip'
+  common::do unzip master.zip
+  common::do cd vim-master
 
-	chk ./configure \
+	common::do ./configure \
     --with-features=huge \
     --with-lua-prefix=/usr/local \
     --enable-multibyte \
@@ -454,8 +454,8 @@ wizard_build_vim () {
     --enable-cscope \
     --prefix=/usr
 
-	chk make -j 4
-	chk sudo make install
+	common::do make -j 4
+	common::sudo make install
   echo "done"
 }
 
@@ -480,9 +480,9 @@ wizard_install_apt() {
 
 wizard_install_git() {
 
-  chk sudo add-apt-repository ppa:git-core/ppa -y
-  chk sudo apt-get update
-  chk sudo apt-get install git -y
+  common::sudo add-apt-repository ppa:git-core/ppa -y
+  common::sudo apt-get update
+  common::sudo apt-get install git -y
 }
 
 wizard_install_vnc() {
@@ -491,17 +491,17 @@ wizard_install_vnc() {
 
   install and start a VNC server
   "
-  chk sudo apt update
-  chk sudo apt \
+  common::sudo apt update
+  common::sudo apt \
     install xfce4 xfce4-goodies tightvncserver
-  chk sudo vncserver
-  chk sudo vncserver -kill :1
+  common::sudo vncserver
+  common::sudo vncserver -kill :1
   cat > "$HOME"/.vnc/xstartup << EOF
 #!/bin/bash
 xrdb \$HOME/.Xresources
 startxfce4 &
 EOF
-  chk chmod +x "$HOME"/.vnc/xstartup
+  common::do chmod +x "$HOME"/.vnc/xstartup
 }
 
 wizard_install_java() {
@@ -510,9 +510,9 @@ wizard_install_java() {
 
   install the Oracle JDK
   "
-  chk sudo add-apt-repository ppa:webupd8team/java
-  chk sudo apt update
-  chk sudo apt install oracle-java8-installer
+  common::sudo add-apt-repository ppa:webupd8team/java
+  common::sudo apt update
+  common::sudo apt install oracle-java8-installer
 }
 
 wizard_install_shellcheck() {
@@ -521,12 +521,12 @@ wizard_install_shellcheck() {
 
   download and install the latest shellcheck
   "
-  chk cd /tmp/
-  chk wget \
+  common::do cd /tmp/
+  common::do wget \
     'http://ftp.us.debian.org/debian/pool/main/s/shellcheck/shellcheck_0.4.6-1_i386.deb'
-  chk sudo dpkg -i shellcheck_*.deb || true
-  chk sudo apt-get install -f
-  chk cd -
+  common::sudo dpkg -i shellcheck_*.deb || true
+  common::sudo apt-get install -f
+  common::do cd -
 }
 
 wizard_install_lua() {
@@ -537,15 +537,15 @@ wizard_install_lua() {
   "
 
   echo "installing lua"
-  chk cd /tmp/
+  common::do cd /tmp/
 
-  chk wget 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
-  chk tar zxvf lua-5.3.3.tar.gz
-  chk cd lua-5.3.3
-  chk make linux
-  chk sudo make install
+  common::do wget 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
+  common::do tar zxvf lua-5.3.3.tar.gz
+  common::do cd lua-5.3.3
+  common::do make linux
+  common::sudo make install
 
-  chk cd -
+  common::do cd -
   echo "done"
 }
 
@@ -555,13 +555,13 @@ wizard_install_docker() {
 
   install the dependencies and kernel headers for docker-ce
   "
-  chk curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
+  common::do curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
     | sudo apt-key add -
-  chk sudo add-apt-repository \
+  common::sudo add-apt-repository \
     "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
-  chk sudo apt-get update
-  chk apt-cache policy docker-ce
-  chk sudo apt-get install -y docker-ce
+  common::sudo apt-get update
+  common::do apt-cache policy docker-ce
+  common::sudo apt-get install -y docker-ce
 }
 
 # shellcheck disable=SC2016

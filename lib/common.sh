@@ -41,13 +41,24 @@ common::color_error() {
   exit 1
 }
 
-chk() {
+common::do() {
   printf "%b%s%b\n" "$green" "$*" "$normal"
   if (( QUIET )); then
     eval "$@" >/dev/null \
       || common::color_error "error running \"$*\""
   else
     eval "$@" \
+      || common::color_error "error running \"$*\""
+  fi
+}
+
+common::sudo() {
+  printf "%b%s%b\n" "$green" "sudo $*" "$normal"
+  if (( QUIET )); then
+    eval sudo "$@" >/dev/null \
+      || common::color_error "error running \"$*\""
+  else
+    eval sudo "$@" \
       || common::color_error "error running \"$*\""
   fi
 }
