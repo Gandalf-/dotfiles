@@ -1,27 +1,42 @@
 #!/bin/bash
 
-readonly green="\033[01;32m"
-readonly normal="\033[00m"
-QUIET=0
+# common
+#   commonly useful functions across all scripts
 
-_help() {
+DEBUG=${DEBUG:-0}
+green="\033[01;32m"
+normal="\033[00m"
+
+common::debug() {
+  (( "$DEBUG" )) && eval "$*"
+}
+
+common::required_help() {
+  # produce help message when $1 is required
+
   caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
   case $1 in ""|-h|--help) _error "
 ${caller} ${*:2}";; esac
 }
 
-__help() {
+common::optional_help() {
+  # produce help message when $1 may be nothing
+
   caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
   case $1 in -h|--help) _error "
 ${caller} ${*:2}";; esac
 }
 
-_error() {
+common::return() {
+  return "$1"
+}
+
+common::error() {
   echo "$*"
   exit 1
 }
 
-error() {
+common::color_error() {
   printf "%b%s%b\n" "$green" "$*" "$normal"
   exit 1
 }
@@ -30,10 +45,10 @@ chk() {
   printf "%b%s%b\n" "$green" "$*" "$normal"
   if (( QUIET )); then
     eval "$@" >/dev/null \
-      || error "error running \"$*\""
+      || common::color_error "error running \"$*\""
   else
     eval "$@" \
-      || error "error running \"$*\""
+      || common::color_error "error running \"$*\""
   fi
 }
 

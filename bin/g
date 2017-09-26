@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#
-# libraries
-#
-# shellcheck disable=SC1090
-source "$(dirname "$0")"/lib/common.sh
+# g
+#   super git wrapper
 
-# super git wrapper!
+# shellcheck disable=SC1090
+
+root="$(dirname "$0")"/..
+source "${root}/lib/common.sh"
 
 [[ -z $1 ]] && { g --help; exit 1; }
 

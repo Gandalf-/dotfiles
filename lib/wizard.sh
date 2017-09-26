@@ -1,28 +1,13 @@
 #!/bin/bash
 
 # wizard
-
+#   The main wizard library. Functions are defined here, processed by
+#   auto_cli.sh and built into a library sourced by bin/w
 #
-# libraries
-#
-# shellcheck disable=SC1090
-source "$(dirname "$0")"/lib/auto_cli.sh
-source "$(dirname "$0")"/lib/common.sh
+#   All the intermediary functions are produced by auto_cli.sh
 
-[[ -f ~/cribshome/scripts/work_wizard ]] \
-  && source ~/cribshome/scripts/work_wizard
-
-
-#
-# globals
-#
-readonly PLATFORM=$(uname)
 __name=""
 
-
-#
-# commands
-#
 which ffmpeg >/dev/null &&
 wizard_do_transcode_movies() {
   #
@@ -33,7 +18,7 @@ wizard_do_transcode_movies() {
     ffmpeg -hide_banner -i "$file" \
       -c:v libx264 -crf 19 -preset "$preset" -strict -2 \
       -c:a aac -b:a 192k -ac 2 "${file%.*}.mp4" \
-      || _error "failed on \"$file\". Giving up"
+      || common::error "failed on \"$file\". Giving up"
 
     echo "Waiting..."; sleep 5
     rm "$file"
@@ -42,9 +27,14 @@ wizard_do_transcode_movies() {
   return $#
 }
 
+wizard_do_pin-to-home() {
+
+  [[ ! -z "$*" ]] && ln -s "$@" ~/;
+}
+
 wizard_show_largest-packages() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   list all packages installed, sorted by size
   "
@@ -55,7 +45,7 @@ wizard_show_largest-packages() {
 
 wizard_show_progress() {
 
-  _help "$1" "
+  common::required_help "$1" "
 
   run a command repeatedly, clear the screen between runs
   "
@@ -72,7 +62,7 @@ wizard_show_progress() {
 wizard_show_history() {
   #
 
-  _help "$1" "[amount] [range]
+  common::required_help "$1" "[amount] [range]
 
   show the <amount> of the most frequently run commands
   "
@@ -93,7 +83,7 @@ wizard_show_history() {
 }
 
 wizard_show_disk() {
-  _help "$1" "
+  common::optional_help "$1" "
 
   show disk and partition usage
   "
@@ -103,11 +93,13 @@ wizard_show_disk() {
 
 wizard_show_weather() {
   curl http://wttr.in/~"${1:-Seattle}";
+  return $#
 }
 
-wizard_do_http-server() {
+wizard_start_http-server() {
 
   python -m SimpleHTTPServer
+  return $#
 }
 
 wizard_do_first-time-install_small() {
@@ -148,7 +140,7 @@ fi
 
 wizard_do_frequencies() {
 
-  _help "$1" "$__name [amount]"
+  common::required_help "$1" "$__name [amount]"
 
   sort | uniq -c | sort -nr | head -n "$1";
   return 1
@@ -156,7 +148,7 @@ wizard_do_frequencies() {
 
 wizard_do_ratio() {
 
-  _help "$1" "[amount]
+  common::required_help "$1" "[amount]
 
   count the occurances of each input line, produce ratio data
   "
@@ -178,7 +170,7 @@ wizard_do_parse_json() {
 
 wizard_do_parse_xml() {
 
-  _help "$1" "< file.xml
+  common::required_help "$1" "< file.xml
 
   pipe in a file an pretty print XML
   "
@@ -211,7 +203,7 @@ wizard_add_configs () {
 
 wizard_clean_boot() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   safely cleans up old Linux kernel versions from /boot
   "
@@ -280,7 +272,7 @@ wizard_clean_files() {
 
 if which tmux >/dev/null; then
   wizard_make_session() {
-    __help "$1" "[name]
+    common::optional_help "$1" "[name]
 
   create a new tmux session and move to it
     "
@@ -409,7 +401,7 @@ wizard_update_platform() {
 
 wizard_update_apt() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   update all apt packages
   "
@@ -420,7 +412,7 @@ wizard_update_apt() {
 
 wizard_update_pip() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   update all python packages installed by pip
   "
@@ -468,7 +460,7 @@ wizard_build_vim () {
 }
 
 wizard_install_apt() {
-  _help "$1" "
+  common::required_help "$1" "
 
   install distribution packages
   "
@@ -486,9 +478,16 @@ wizard_install_apt() {
   return $#
 }
 
+wizard_install_git() {
+
+  chk sudo add-apt-repository ppa:git-core/ppa -y
+  chk sudo apt-get update
+  chk sudo apt-get install git -y
+}
+
 wizard_install_vnc() {
 
-  _help "$1" "
+  common::optional_help "$1" "
 
   install and start a VNC server
   "
@@ -507,7 +506,7 @@ EOF
 
 wizard_install_java() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   install the Oracle JDK
   "
@@ -518,7 +517,7 @@ wizard_install_java() {
 
 wizard_install_shellcheck() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   download and install the latest shellcheck
   "
@@ -532,7 +531,7 @@ wizard_install_shellcheck() {
 
 wizard_install_lua() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   compile and install lua 5.3.3
   "
@@ -552,7 +551,7 @@ wizard_install_lua() {
 
 wizard_install_docker() {
 
-  __help "$1" "
+  common::optional_help "$1" "
 
   install the dependencies and kernel headers for docker-ce
   "
@@ -602,7 +601,7 @@ wizard_find() {
       --text-only
       --file-only
   "
-  _help "$1" "$usage"
+  common::required_help "$1" "$usage"
 
   while [[ $1 ]]; do
     case $1 in
@@ -637,6 +636,11 @@ wizard_find() {
 
 wizard_open() {
 
+  common::required_help "$1" "
+
+  open a file based on it's type and available programs
+  "
+
   for target in "$@"; do
 
     if [[ $(file -b "$target") =~ 'ASCII text' ]]; then
@@ -656,20 +660,23 @@ wizard_open() {
   return $#
 }
 
+wizard_start_sshd() {
+
+  sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd
+}
+
 # shellcheck disable=SC2034,SC2154,SC2016
 {
 meta_head[wizard_make_file]='
-[[ $2 ]] || _error "$__name [language] [file name]
+[[ $2 ]] || common::error "
+$__name [language] [file name]
 $__usage
 "
 '
 meta_head[wizard_make_project]='
-[[ $2 ]] || _error "$__name [language] [project name]
+[[ $2 ]] || common::error "
+$__name [language] [project name]
 $__usage
 "
 '
 }
-
-make_reflective_functions
-wizard "$@"
-exit 0

@@ -1,21 +1,19 @@
 #!/bin/bash
 
+# auto_cli
+#   generates intermediate functions for cli scripts
+#   see bin/w and lib/wizard.sh for example usage
+
+# shellcheck disable=SC1090,SC1091
+
 set -o pipefail
 
-DEBUG=${DEBUG:-0}
+root="$(dirname "$0")"/..
+source "${root}/lib/common.sh"
 
 declare -A meta_head meta_body
 
-_return() {
-  return "$1"
-}
-
-_debug() {
-  (( "$DEBUG" )) \
-    && eval "$*"
-}
-
-make_reflective_functions() {
+autocli::make_reflective_functions() {
   #
   #
 
@@ -35,7 +33,7 @@ make_reflective_functions() {
     local base=${commands[0]}
 
     for ((j=1; j < len; j++)); do
-      _debug echo "assign meta_functions[$base] += ${commands[$j]}"
+      common::debug echo "assign meta_functions[$base] += ${commands[$j]}"
 
       if ! [[ ${meta_functions[$base]} =~ .*${commands[$j]}.* ]]; then
         meta_functions[$base]+="${commands[$j]} "
@@ -45,15 +43,15 @@ make_reflective_functions() {
     done
   done
 
-  _debug declare -p meta_functions
-  _debug echo "keys ${!meta_functions[*]}"
+  common::debug declare -p meta_functions
+  common::debug echo "keys ${!meta_functions[*]}"
 
   local existing_functions
   existing_functions=( $(declare -F | cut -d ' ' -f 3) )
 
   # define each meta function
   for meta_func in "${!meta_functions[@]}"; do
-    _debug echo "meta_func: $meta_func, ${meta_functions[$meta_func]}"
+    common::debug echo "meta_func: $meta_func, ${meta_functions[$meta_func]}"
 
     if [[ ${existing_functions[*]} =~ .*$meta_func\ .* ]]; then
       echo "looks like $meta_func already exists! check your definitions"
@@ -117,5 +115,5 @@ make_reflective_functions() {
     "
   done
 
-  _debug declare -f
+  common::debug declare -f
 }
