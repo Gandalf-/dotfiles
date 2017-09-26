@@ -214,6 +214,21 @@ wizard_clean_boot() {
     | sort -V \
     | sed -n '/'"$(uname -r)"'/q;p' \
     | xargs sudo apt-get -y purge
+
+  return $#
+}
+
+wizard_clean_apt() {
+
+  common::optional_help "$1" "
+
+  force purge removed apt packages
+  "
+  dpkg --list \
+    | grep "^rc" \
+    | cut -d " " -f 3 \
+    | xargs sudo dpkg --purge \
+    || common::color_error "Looks like there's nothing to clean!"
 }
 
 wizard_clean_files() {
@@ -226,7 +241,7 @@ wizard_clean_files() {
     -d|--dry)
       dry=1 ;;
     *)
-      error "$usage" ;;
+      common::error "$usage" ;;
   esac
 
   while read -r file; do
@@ -471,7 +486,7 @@ wizard_install_apt() {
       fi
       ;;
     *)
-      error "Unsupported platform \"$PLATFORM\""
+      common::error "Unsupported platform \"$PLATFORM\""
       ;;
   esac
 
