@@ -11,11 +11,12 @@ sources=(
   "${root}/lib/autocli.sh"
   "${root}/lib/common.sh"
   "${root}/lib/wizard.sh"
+  "$HOME/scripity-scripts/lib/work_wizard.sh"
 )
 
 wizard_lib="/tmp/.wizard_generated"
 recompile=0
-now="$(date +%s -r "$wizard_lib")"
+now="$(date +%s -r "$wizard_lib" 2>/dev/null)"
 
 for source in "${sources[@]}"; do
   if [[ -f "$source" ]]; then
