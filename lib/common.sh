@@ -15,7 +15,7 @@ common::required_help() {
   # produce help message when $1 is required
 
   caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
-  case $1 in ""|-h|--help) _error "
+  case $1 in ""|-h|--help) common::error "
 ${caller} ${*:2}";; esac
 }
 
@@ -23,7 +23,7 @@ common::optional_help() {
   # produce help message when $1 may be nothing
 
   caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
-  case $1 in -h|--help) _error "
+  case $1 in -h|--help) common::error "
 ${caller} ${*:2}";; esac
 }
 

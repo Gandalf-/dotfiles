@@ -94,6 +94,8 @@ if test $at_work
   set     scripts  ~/cribshome/DotFiles
   set -gx DIFFDIR  ~/cribshome/diffs/
 
+  set PATH ~/scripity-scripts/bin $PATH
+
   function fl
     if echo (pwd) | grep -q "onefs";
       cd (echo (pwd) | sed -e "s/onefs/twofs/")
