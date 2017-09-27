@@ -7,6 +7,32 @@ _confirm ()
     shift;
     confirm "$val" "${@/ \"\"/}" && eval "${@/ \"\"/}"
 }
+autocli::create () 
+{ 
+    auto_lib="$1";
+    sources=("${@:2}");
+    recompile=0;
+    now="$(date +%s -r "$auto_lib" 2>/dev/null)";
+    for source in "${sources[@]}";
+    do
+        [[ -f "$source" && $now -lt "$(date +%s -r "$source")" ]] && recompile=1;
+    done;
+    if (( recompile )) || [[ ! -f "$auto_lib" ]]; then
+        declare -A meta_head meta_body;
+        for source in "${sources[@]}";
+        do
+            [[ -f "$source" ]] && source "$source";
+        done;
+        autocli::make_reflective_functions;
+        { 
+            echo '#!/bin/bash
+# this is an auto generated file. do not edit manually
+      ';
+            declare -f -p
+        } > "$auto_lib";
+    fi;
+    source "$auto_lib"
+}
 autocli::make () 
 { 
     [[ -n $1 ]] || "${FUNCNAME[0]}" --help;
@@ -153,32 +179,6 @@ autocli::make_reflective_functions ()
     ";
     done;
     common::debug declare -f
-}
-autocli::runner () 
-{ 
-    auto_lib="$1";
-    sources=("${@:2}");
-    recompile=0;
-    now="$(date +%s -r "$auto_lib" 2>/dev/null)";
-    for source in "${sources[@]}";
-    do
-        [[ -f "$source" && $now -lt "$(date +%s -r "$source")" ]] && recompile=1;
-    done;
-    if (( recompile )) || [[ ! -f "$auto_lib" ]]; then
-        declare -A meta_head meta_body;
-        for source in "${sources[@]}";
-        do
-            [[ -f "$source" ]] && source "$source";
-        done;
-        autocli::make_reflective_functions;
-        { 
-            echo '#!/bin/bash
-# this is an auto generated file. do not edit manually
-      ';
-            declare -f -p
-        } > "$auto_lib";
-    fi;
-    source "$auto_lib"
 }
 common::color () 
 { 
@@ -356,8 +356,7 @@ wizard ()
   start ...
   update ...";
     local __name="wizard";
-    usage="
-$__name (-q | -s)
+    common::required_help "$1" "(-q | -s)
 $__usage
 ";
     while [[ -n $1 ]]; do

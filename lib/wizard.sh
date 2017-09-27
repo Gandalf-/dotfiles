@@ -440,6 +440,8 @@ wizard_update_pip() {
     | grep -v '^\-e' \
     | cut -d = -f 1  \
     | xargs -n1 sudo -H pip install -U
+
+  return 1
 }
 
 wizard_build_vim () {
@@ -679,20 +681,17 @@ wizard_start_sshd() {
 # shellcheck disable=SC2034,SC2154,SC2016
 {
 meta_head[wizard_make_file]='
-[[ $2 ]] || common::error "
-$__name [language] [file name]
+common::required_help "$1" "[language] [file name]
 $__usage
 "
 '
 meta_head[wizard_make_project]='
-[[ $2 ]] || common::error "
-$__name [language] [project name]
+common::required_help "$1" "[language] [project name]
 $__usage
 "
 '
 meta_head[wizard]='
-usage="
-$__name (-q | -s)
+common::required_help "$1" "(-q | -s)
 $__usage
 "
 '
