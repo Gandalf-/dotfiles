@@ -381,14 +381,14 @@ EOF
 wizard_make_project_python() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard_make_file python "$1"
+  wizard make file python "$1"
   return 1
 }
 
 wizard_make_project_c() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard_make_file c "$1"
+  wizard make file c "$1"
   touch "$1".h
   mmake -l c -o "$1"
 }
@@ -396,7 +396,7 @@ wizard_make_project_c() {
 wizard_make_project_cpp() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard_make_file cpp "$1"
+  wizard make file cpp "$1"
   touch "$1".h
   mmake -l cpp -o "$1"
 }
@@ -404,7 +404,7 @@ wizard_make_project_cpp() {
 wizard_make_project_java() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard_make_file java "$1"
+  wizard make file java "$1"
   mmake -l java -o "$1"
 }
 
