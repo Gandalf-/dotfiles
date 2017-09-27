@@ -62,7 +62,7 @@ wizard_show_progress() {
 wizard_show_history() {
   #
 
-  common::required_help "$1" "[amount] [range]
+  common::optional_help "$1" "(amount) (range)
 
   show the <amount> of the most frequently run commands
   "
@@ -179,6 +179,11 @@ wizard_do_parse_xml() {
 }
 
 wizard_add_user () {
+
+  common::required_help "$1" "[user name]
+
+  add a new sudo user to the system
+  "
   user="$1"
 
   common::do adduser "$user"
@@ -482,7 +487,7 @@ wizard_install_apt() {
   case $PLATFORM in
     Linux)
       if which apt >/dev/null; then
-        sudo apt install "$@"
+        common::sudo apt install "$@"
       fi
       ;;
     *)
@@ -495,6 +500,10 @@ wizard_install_apt() {
 
 wizard_install_git() {
 
+  common::optional_help "$1" "
+
+  install the newest git version
+  "
   common::sudo add-apt-repository ppa:git-core/ppa -y
   common::sudo apt-get update
   common::sudo apt-get install git -y
@@ -504,11 +513,10 @@ wizard_install_vnc() {
 
   common::optional_help "$1" "
 
-  install and start a VNC server
+  install xfce4 and start a VNC server. for droplets
   "
   common::sudo apt update
-  common::sudo apt \
-    install xfce4 xfce4-goodies tightvncserver
+  common::sudo apt install xfce4 xfce4-goodies tightvncserver
   common::sudo vncserver
   common::sudo vncserver -kill :1
   cat > "$HOME"/.vnc/xstartup << EOF
@@ -551,6 +559,12 @@ wizard_install_lua() {
   compile and install lua 5.3.3
   "
 
+  # shellcheck disable=SC2076
+  if [[ $(lua -v) =~ "Lua 5.3.3" ]]; then
+    echo "Lua already installed"
+    return
+  fi
+
   echo "installing lua"
   common::do cd /tmp/
 
@@ -579,44 +593,18 @@ wizard_install_docker() {
   common::sudo apt-get install -y docker-ce
 }
 
-# shellcheck disable=SC2016
-wizard_do_export() {
-
-  echo '#!/bin/bash
-
-# usage
-#   sh prepare.sh (username)
-
-# shellcheck disable=SC1090
-source "$(dirname "$0")"/lib/reflection.sh
-
-readonly green="\033[01;32m"
-readonly normal="\033[00m"
-readonly PLATFORM=$(uname)
-QUIET=0
-__name=""
-'
-  declare -f -p
-
-  echo '
-wizard "$@"
-exit 0
-'
-}
-
 wizard_find() {
   # find by file name or contents
 
   local fuzzy=1 file=1 text=1 args=1 prog=1
-  local usage="
-  $__name [option] [object]
+
+  common::required_help "$1" "(option) [object]
 
     option
       --exact
       --text-only
       --file-only
   "
-  common::required_help "$1" "$usage"
 
   while [[ $1 ]]; do
     case $1 in
@@ -677,9 +665,17 @@ wizard_open() {
 
 wizard_start_sshd() {
 
-  sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd
+  common::optional_help "$1" "
+
+  start sshd on Chrome OS
+  "
+
+  common::sudo mkdir -p -m0755 /var/run/sshd
+  common::sudo /usr/sbin/sshd
 }
 
+# this is where we can inject code into the generated functions
+#
 # shellcheck disable=SC2034,SC2154,SC2016
 {
 meta_head[wizard_make_file]='
@@ -693,5 +689,15 @@ meta_head[wizard_make_project]='
 $__name [language] [project name]
 $__usage
 "
+'
+meta_head[wizard]='
+usage="
+$__name (-q | -s)
+$__usage
+"
+'
+meta_body[wizard]='
+-q|--quiet)  QUIET=1  ;;
+-s|--silent) SILENT=1 ;;
 '
 }

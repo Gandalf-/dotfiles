@@ -169,6 +169,7 @@ function f
       if string match -q -r '.*t.*' $argv[1]; set notimeout "yes"; end
       if string match -q -r '.*a.*' $argv[1]; set grepper   "yes"; end
       if string match -q    '-'     $argv[1]; cd -; return; end
+
       set --erase argv[1]
       set has_flag "yes"
     end

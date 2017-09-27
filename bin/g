@@ -5,7 +5,7 @@
 
 # shellcheck disable=SC1090
 
-root="$(dirname "$0")"/..
+root="$(dirname "${BASH_SOURCE[0]}")"/..
 source "${root}/lib/common.sh"
 
 [[ -z $1 ]] && { g --help; exit 1; }

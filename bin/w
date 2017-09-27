@@ -6,7 +6,7 @@
 
 # shellcheck disable=SC1090,SC1091
 
-root="$(dirname "$BASH_SOURCE")"/..
+root="$(dirname "${BASH_SOURCE[0]}")"/..
 sources=(
   "${root}/lib/autocli.sh"
   "${root}/lib/common.sh"
@@ -14,7 +14,7 @@ sources=(
   "$HOME/scripity-scripts/lib/work_wizard.sh"
 )
 
-wizard_lib="/tmp/.wizard_generated"
+wizard_lib="${root}/tmp/wizard_generated"
 recompile=0
 now="$(date +%s -r "$wizard_lib" 2>/dev/null)"
 

@@ -6,6 +6,9 @@
 DEBUG=${DEBUG:-0}
 green="\033[01;32m"
 normal="\033[00m"
+PLATFORM="$(uname)"
+
+export PLATFORM
 
 common::debug() {
   (( "$DEBUG" )) && eval "$*"
@@ -42,10 +45,18 @@ common::color_error() {
 }
 
 common::do() {
+  # print what we're about to do, then do it
+
   printf "%b%s%b\n" "$green" "$*" "$normal"
+
   if (( QUIET )); then
     eval "$@" >/dev/null \
       || common::color_error "error running \"$*\""
+
+  elif (( SILENT )); then
+    eval "$@" >/dev/null 2>/dev/null \
+      || common::color_error "error running \"$*\""
+
   else
     eval "$@" \
       || common::color_error "error running \"$*\""
@@ -53,14 +64,9 @@ common::do() {
 }
 
 common::sudo() {
-  printf "%b%s%b\n" "$green" "sudo $*" "$normal"
-  if (( QUIET )); then
-    eval sudo "$@" >/dev/null \
-      || common::color_error "error running \"$*\""
-  else
-    eval sudo "$@" \
-      || common::color_error "error running \"$*\""
-  fi
+  # print what we're about to do, then sudo do it
+
+  common::do "sudo" "$@"
 }
 
 confirm() {

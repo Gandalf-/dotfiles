@@ -8,7 +8,7 @@
 
 set -o pipefail
 
-root="$(dirname "$BASH_SOURCE")"/..
+root="$(dirname "${BASH_SOURCE[0]}")"/..
 source "${root}/lib/common.sh"
 
 declare -A meta_head meta_body
