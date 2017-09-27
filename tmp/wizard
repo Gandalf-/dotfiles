@@ -1,3 +1,6 @@
+#!/bin/bash
+# this is an auto generated file. do not edit manually
+      
 _confirm () 
 { 
     val=$1;
@@ -66,7 +69,7 @@ autocli::make_reflective ()
 }
 autocli::make_reflective_functions () 
 { 
-    declare -A meta_functions;
+    declare -A __meta_functions;
     local i j sub_commands=();
     while read -r func; do
         sub_commands+=("${func//_/ }");
@@ -78,20 +81,20 @@ autocli::make_reflective_functions ()
         local base=${commands[0]};
         for ((j=1; j < len; j++))
         do
-            common::debug echo "assign meta_functions[$base] += ${commands[$j]}";
-            if ! [[ ${meta_functions[$base]} =~ .*${commands[$j]}.* ]]; then
-                meta_functions[$base]+="${commands[$j]} ";
+            common::debug echo "assign __meta_functions[$base] += ${commands[$j]}";
+            if ! [[ ${__meta_functions[$base]} =~ .*${commands[$j]}.* ]]; then
+                __meta_functions[$base]+="${commands[$j]} ";
             fi;
             base+="_${commands[$j]}";
         done;
     done;
-    common::debug declare -p meta_functions;
-    common::debug echo "keys ${!meta_functions[*]}";
+    common::debug declare -p __meta_functions;
+    common::debug echo "keys ${!__meta_functions[*]}";
     local existing_functions;
     existing_functions=($(declare -F | cut -d ' ' -f 3));
-    for meta_func in "${!meta_functions[@]}";
+    for meta_func in "${!__meta_functions[@]}";
     do
-        common::debug echo "meta_func: $meta_func, ${meta_functions[$meta_func]}";
+        common::debug echo "meta_func: $meta_func, ${__meta_functions[$meta_func]}";
         if [[ ${existing_functions[*]} =~ .*$meta_func\ .* ]]; then
             echo "looks like $meta_func already exists! check your definitions";
             exit 1;
@@ -100,7 +103,7 @@ autocli::make_reflective_functions ()
         auto_name="$(tr '_' ' ' <<< "$meta_func")";
         local auto_usage="";
         local function_body="";
-        for sub_func in ${meta_functions[$meta_func]};
+        for sub_func in ${__meta_functions[$meta_func]};
         do
             local cases="\"${sub_func:0:1}\"";
             for ((i=2; i < $(( ${#sub_func} + 1)); i++))
@@ -110,7 +113,7 @@ autocli::make_reflective_functions ()
             function_body+="
         $cases)
           ${meta_func}_$sub_func \"\${@:2}\";; ";
-            if [[ -n ${meta_functions[${meta_func}_$sub_func]} ]]; then
+            if [[ -n ${__meta_functions[${meta_func}_$sub_func]} ]]; then
                 auto_usage+="
   $sub_func ...";
             else
@@ -150,6 +153,32 @@ autocli::make_reflective_functions ()
     ";
     done;
     common::debug declare -f
+}
+autocli::runner () 
+{ 
+    auto_lib="$1";
+    sources=("${@:2}");
+    recompile=0;
+    now="$(date +%s -r "$auto_lib" 2>/dev/null)";
+    for source in "${sources[@]}";
+    do
+        [[ -f "$source" && $now -lt "$(date +%s -r "$source")" ]] && recompile=1;
+    done;
+    if (( recompile )) || [[ ! -f "$auto_lib" ]]; then
+        declare -A meta_head meta_body;
+        for source in "${sources[@]}";
+        do
+            [[ -f "$source" ]] && source "$source";
+        done;
+        autocli::make_reflective_functions;
+        { 
+            echo '#!/bin/bash
+# this is an auto generated file. do not edit manually
+      ';
+            declare -f -p
+        } > "$auto_lib";
+    fi;
+    source "$auto_lib"
 }
 common::color () 
 { 

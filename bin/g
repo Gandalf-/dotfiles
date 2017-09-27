@@ -58,24 +58,24 @@ while [[ $1 ]]; do
         git log --graph --pretty=format:"$fmt" --abbrev-commit  ;;
 
     d)  if [[ -f $2 ]]; then
-            confirm "$cnfrm" "git diff --full-index > $2"
-            git diff --full-index > "$2"
+            confirm "$cnfrm" "git diff > $2"
+            git diff > "$2"
             shift
 
           else
-            confirm "$cnfrm" "git diff --full-index"
-            git diff --full-index
+            confirm "$cnfrm" "git diff"
+            git diff
           fi
       ;;
 
     dc)  if [[ -f $2 ]]; then
-            confirm "$cnfrm" "git diff --cached --full-index > $2"
-            git diff --full-index > "$2"
+            confirm "$cnfrm" "git diff --cached > $2"
+            git diff > "$2"
             shift
 
           else
-            confirm "$cnfrm" "git diff --cached --full-index"
-            git diff --full-index
+            confirm "$cnfrm" "git diff --cached"
+            git diff
           fi
       ;;
 
@@ -86,13 +86,13 @@ while [[ $1 ]]; do
           fi
 
           if [[ -f "$3" ]]; then
-            confirm "$cnfrm" "git diff --full-index HEAD~$commits > $3"
-            git diff --full-index HEAD~"$commits" > "$3"
+            confirm "$cnfrm" "git diff HEAD~$commits > $3"
+            git diff HEAD~"$commits" > "$3"
             shift
 
           else
-            confirm "$cnfrm" "git diff --full-index HEAD~$commits"
-            git diff --full-index HEAD~"$commits"
+            confirm "$cnfrm" "git diff HEAD~$commits"
+            git diff HEAD~"$commits"
           fi
           shift
       ;;

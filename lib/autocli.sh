@@ -11,13 +11,54 @@ set -o pipefail
 root="$(dirname "${BASH_SOURCE[0]}")"/..
 source "${root}/lib/common.sh"
 
-declare -A meta_head meta_body
+
+autocli::create() {
+  # location of generated file, source, source ... -> none
+  #
+  # regenerate output file if the sources have changed
+
+  auto_lib="$1"
+  sources=( "${@:2}" )
+  recompile=0
+  now="$(date +%s -r "$auto_lib" 2>/dev/null)"
+
+  # check if each file has been modified more recently than the output file
+  for source in "${sources[@]}"; do
+    [[ -f "$source" && $now -lt "$(date +%s -r "$source")" ]] \
+      && recompile=1
+  done
+
+  # regenerate all intermediary functions, rewrite the output file
+  if (( recompile )) || [[ ! -f "$auto_lib" ]]; then
+
+    declare -A meta_head meta_body    # these are accessible to the caller
+
+    # pull in all the sources since we need them now
+    for source in "${sources[@]}"; do
+      [[ -f "$source" ]] \
+        && source "$source"
+    done
+
+    autocli::make_reflective_functions
+
+    {
+      echo '#!/bin/bash
+# this is an auto generated file. do not edit manually
+      '
+      declare -f -p
+    } > "$auto_lib"
+  fi
+
+  # source the output file, done
+  source "$auto_lib"
+}
+
 
 autocli::make_reflective_functions() {
-  #
+  # none -> none
   #
 
-  declare -A meta_functions
+  declare -A __meta_functions
   local i j sub_commands=()
 
   # read in all functions declared thus far, split them on '_'
@@ -33,25 +74,25 @@ autocli::make_reflective_functions() {
     local base=${commands[0]}
 
     for ((j=1; j < len; j++)); do
-      common::debug echo "assign meta_functions[$base] += ${commands[$j]}"
+      common::debug echo "assign __meta_functions[$base] += ${commands[$j]}"
 
-      if ! [[ ${meta_functions[$base]} =~ .*${commands[$j]}.* ]]; then
-        meta_functions[$base]+="${commands[$j]} "
+      if ! [[ ${__meta_functions[$base]} =~ .*${commands[$j]}.* ]]; then
+        __meta_functions[$base]+="${commands[$j]} "
       fi
 
       base+="_${commands[$j]}"
     done
   done
 
-  common::debug declare -p meta_functions
-  common::debug echo "keys ${!meta_functions[*]}"
+  common::debug declare -p __meta_functions
+  common::debug echo "keys ${!__meta_functions[*]}"
 
   local existing_functions
   existing_functions=( $(declare -F | cut -d ' ' -f 3) )
 
   # define each meta function
-  for meta_func in "${!meta_functions[@]}"; do
-    common::debug echo "meta_func: $meta_func, ${meta_functions[$meta_func]}"
+  for meta_func in "${!__meta_functions[@]}"; do
+    common::debug echo "meta_func: $meta_func, ${__meta_functions[$meta_func]}"
 
     if [[ ${existing_functions[*]} =~ .*$meta_func\ .* ]]; then
       echo "looks like $meta_func already exists! check your definitions"
@@ -62,7 +103,7 @@ autocli::make_reflective_functions() {
     local auto_usage=""
     local function_body=""
 
-    for sub_func in ${meta_functions[$meta_func]}; do
+    for sub_func in ${__meta_functions[$meta_func]}; do
 
       # allow all sub strings of function name
       local cases="\"${sub_func:0:1}\""
@@ -74,7 +115,7 @@ autocli::make_reflective_functions() {
         $cases)
           ${meta_func}_$sub_func \"\${@:2}\";; "
 
-      if [[ ${meta_functions[${meta_func}_$sub_func]} ]]; then
+      if [[ ${__meta_functions[${meta_func}_$sub_func]} ]]; then
         auto_usage+="
   $sub_func ..."
       else

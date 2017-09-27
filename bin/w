@@ -7,36 +7,11 @@
 # shellcheck disable=SC1090,SC1091
 
 root="$(dirname "${BASH_SOURCE[0]}")"/..
-sources=(
-  "${root}/lib/autocli.sh"
-  "${root}/lib/common.sh"
-  "${root}/lib/wizard.sh"
+source "${root}/lib/autocli.sh"
+
+autocli::create "${root}/tmp/wizard" \
+  "${root}/lib/wizard.sh" \
   "$HOME/scripity-scripts/lib/work_wizard.sh"
-)
-
-wizard_lib="${root}/tmp/wizard_generated"
-recompile=0
-now="$(date +%s -r "$wizard_lib" 2>/dev/null)"
-
-for source in "${sources[@]}"; do
-  if [[ -f "$source" ]]; then
-    source "$source"
-
-    if [[ $now -lt $(date +%s -r "$source") ]]; then
-      recompile=1
-    fi
-  fi
-done
-
-if (( recompile )) || [[ ! -f "$wizard_lib" ]]; then
-
-  autocli::make_reflective_functions
-  declare -f -p > "$wizard_lib"
-  source "$wizard_lib"
-
-else
-  source "$wizard_lib"
-fi
 
 wizard "$@"
 true
