@@ -8,19 +8,22 @@
 
 set -o pipefail
 
-root="$(dirname "${BASH_SOURCE[0]}")"/..
-source "${root}/lib/common.sh"
-
 
 autocli::create() {
   # location of generated file, source, source ... -> none
   #
   # regenerate output file if the sources have changed
 
-  auto_lib="$1"
-  sources=( "${@:2}" )
+  local root="$(dirname "${BASH_SOURCE[0]}")"/..
+  source "${root}/lib/common.sh"
+
+  name="$1"
+  location="$2"
+  sources=( "${@:3}" )
+  output="${location}/${name}"
+
   recompile=0
-  now="$(date +%s -r "$auto_lib" 2>/dev/null)"
+  now="$(date +%s -r "$output" 2>/dev/null)"
 
   # check if each file has been modified more recently than the output file
   for source in "${sources[@]}"; do
@@ -29,7 +32,7 @@ autocli::create() {
   done
 
   # regenerate all intermediary functions, rewrite the output file
-  if (( recompile )) || [[ ! -f "$auto_lib" ]]; then
+  if (( recompile )) || [[ ! -f "$output" ]]; then
 
     declare -A meta_head meta_body    # these are accessible to the caller
 
@@ -46,11 +49,15 @@ autocli::create() {
 # this is an auto generated file. do not edit manually
       '
       declare -f -p
-    } > "$auto_lib"
-  fi
 
-  # source the output file, done
-  source "$auto_lib"
+      echo "
+$name \"\$@\"
+true
+"
+    } > "$output"
+
+    chmod +x "$output"
+  fi
 }
 
 

@@ -40,20 +40,25 @@ common::error() {
 }
 
 common::color_error() {
+  local green="\033[01;32m" normal="\033[00m"
   printf "%b%s%b\n" "$green" "$*" "$normal"
   exit 1
 }
 
 common::do() {
   # print what we're about to do, then do it
+  local green="\033[01;32m" normal="\033[00m"
 
   printf "%b%s%b\n" "$green" "$*" "$normal"
 
-  if (( QUIET )); then
+  if (( "$ECHO" )); then
+    true
+
+  elif (( "$QUIET" )); then
     eval "$@" >/dev/null \
       || common::color_error "error running \"$*\""
 
-  elif (( SILENT )); then
+  elif (( "$SILENT" )); then
     eval "$@" >/dev/null 2>/dev/null \
       || common::color_error "error running \"$*\""
 
@@ -70,6 +75,8 @@ common::sudo() {
 }
 
 confirm() {
+  local green="\033[01;32m" normal="\033[00m"
+
   if [[ "$1" != 0 ]]; then
     shift
     printf "%b%s%b " "$green" "$@" "$normal"
