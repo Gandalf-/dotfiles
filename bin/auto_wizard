@@ -9,7 +9,7 @@
 root="$(dirname "${BASH_SOURCE[0]}")"/..
 source "${root}/lib/autocli.sh"
 
-name="w"
+name="wizard"
 location="${root}/bin/"
 sources=( "${root}/lib/wizard.sh" "$HOME/scripity-scripts/lib/work_wizard.sh" )
 
