@@ -39,6 +39,7 @@ wizard_show_largest-packages() {
   list all packages installed, sorted by size
   "
 
+  # shellcheck disable=SC2016
   dpkg-query -Wf '${Installed-Size}\t${Package}\n' \
     | sort -n
 }
@@ -648,6 +649,7 @@ wizard_open() {
 
   for target in "$@"; do
 
+    # shellcheck disable=SC2076
     if [[ $(file -b "$target") =~ 'ASCII text' ]]; then
       vim "$target"
 

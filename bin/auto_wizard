@@ -9,9 +9,11 @@
 root="$(dirname "${BASH_SOURCE[0]}")"/..
 source "${root}/lib/autocli.sh"
 
-autocli::create "${root}/tmp/wizard" \
-  "${root}/lib/wizard.sh" \
-  "$HOME/scripity-scripts/lib/work_wizard.sh"
+name="w"
+location="${root}/bin/"
+sources=( "${root}/lib/wizard.sh" "$HOME/scripity-scripts/lib/work_wizard.sh" )
 
-wizard "$@"
-true
+autocli::create \
+  "$name" \
+  "$location" \
+  "${sources[@]}"
