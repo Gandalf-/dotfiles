@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# w
-#   regenerates a library if other libraries have changed
-#   heavily leverages lib/auto_cli.sh
-
 # shellcheck disable=SC1090,SC1091
+
+# auto_wizard
+#
+#   regenerates wizard workstation script. you may have to update the sources
+#   locations based on where you cloned this
 
 root="$(dirname "${BASH_SOURCE[0]}")"/..
 source "${root}/lib/autocli.sh"
