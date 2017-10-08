@@ -1211,8 +1211,7 @@ wizard_make_file ()
   python
   shell";
     local __name="wizard make file";
-    [[ -n $2 ]] || common::error "
-$__name [language] [file name]
+    common::required_help "$1" "[language] [file name]
 $__usage
 ";
     while [[ -n $1 ]]; do
@@ -1294,13 +1293,15 @@ wizard_make_file_python ()
 
 import sys
 
-def main(args):
-  ''' list of strings -> none
-  '''
-  pass
+
+def main(_):
+    ''' list of strings -> none
+    '''
+    pass
+
 
 if __name__ == '__main__':
-  main(sys.argv)
+    main(sys.argv)
 EOF
 
 }
@@ -1328,8 +1329,7 @@ wizard_make_project ()
   java
   python";
     local __name="wizard make project";
-    [[ -n $2 ]] || common::error "
-$__name [language] [project name]
+    common::required_help "$1" "[language] [project name]
 $__usage
 ";
     while [[ -n $1 ]]; do
@@ -1368,7 +1368,7 @@ wizard_make_project_c ()
 { 
     common::do mkdir "$1";
     common::do cd "$1";
-    wizard_make_file c "$1";
+    wizard make file c "$1";
     touch "$1".h;
     mmake -l c -o "$1"
 }
@@ -1376,7 +1376,7 @@ wizard_make_project_cpp ()
 { 
     common::do mkdir "$1";
     common::do cd "$1";
-    wizard_make_file cpp "$1";
+    wizard make file cpp "$1";
     touch "$1".h;
     mmake -l cpp -o "$1"
 }
@@ -1384,14 +1384,14 @@ wizard_make_project_java ()
 { 
     common::do mkdir "$1";
     common::do cd "$1";
-    wizard_make_file java "$1";
+    wizard make file java "$1";
     mmake -l java -o "$1"
 }
 wizard_make_project_python () 
 { 
     common::do mkdir "$1";
     common::do cd "$1";
-    wizard_make_file python "$1";
+    wizard make file python "$1";
     return 1
 }
 wizard_make_session () 
@@ -1622,7 +1622,8 @@ wizard_update_pip ()
 
   update all python packages installed by pip
   ";
-    sudo -H pip freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 sudo -H pip install -U
+    sudo -H pip freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 sudo -H pip install -U;
+    return 1
 }
 wizard_update_platform () 
 { 

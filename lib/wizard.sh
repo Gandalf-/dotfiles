@@ -334,13 +334,15 @@ wizard_make_file_python() {
 
 import sys
 
-def main(args):
-  ''' list of strings -> none
-  '''
-  pass
+
+def main(_):
+    ''' list of strings -> none
+    '''
+    pass
+
 
 if __name__ == '__main__':
-  main(sys.argv)
+    main(sys.argv)
 EOF
 }
 

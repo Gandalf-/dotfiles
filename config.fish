@@ -114,6 +114,11 @@ else if test -d /tmp/DotFiles
   set scripts /tmp/DotFiles
 end
 
+# rust
+if test -d ~/.cargo/bin/
+  set PATH ~/.cargo/bin/ $PATH
+end
+
 # Fish Functions
 #===========================
 
