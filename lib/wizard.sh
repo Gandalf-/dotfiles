@@ -8,7 +8,7 @@
 
 __name=""
 
-which ffmpeg >/dev/null &&
+common::program-exists 'ffmpeg' &&
 wizard_do_transcode_movies() {
   #
   local preset=slow
@@ -93,14 +93,16 @@ wizard_show_disk() {
 }
 
 wizard_show_weather() {
+
   curl http://wttr.in/~"${1:-Seattle}";
-  return $#
+  [[ $1 ]] && return 1
+  return 0
 }
 
 wizard_start_http-server() {
 
   python -m SimpleHTTPServer
-  return $#
+  return 0
 }
 
 wizard_do_first-time-install_small() {
@@ -115,7 +117,7 @@ wizard_do_first-time-install_small() {
     silversearcher-ag
 }
 
-if which insync-headless >/dev/null; then
+if common::program-exists 'insync-headless'; then
   wizard_do_insync_start() {
     insync-headless start
   }
@@ -197,16 +199,6 @@ wizard_add_user () {
   return 1
 }
 
-wizard_add_configs () {
-
-  common::do git clone https://github.com/Gandalf-/DotFiles.git /tmp/DotFiles
-  common::do mkdir -p "$HOME"/.config/fish
-  common::do ln -sf /tmp/DotFiles/config.fish  "$HOME"/.config/fish/config.fish
-  common::do ln -sf /tmp/DotFiles/vimrc        "$HOME"/.vimrc
-  common::do ln -sf /tmp/DotFiles/tmux.conf    "$HOME"/.tmux.conf
-  common::do ln -sf /tmp/DotFiles/bashrc       "$HOME"/.bashrc
-}
-
 wizard_clean_boot() {
 
   common::optional_help "$1" "
@@ -241,13 +233,12 @@ wizard_clean_files() {
 
   local fixed dry=0 counter=0 usage="
   $__name [-d|--dry]
-    smart remove duplicate file names and intermediary file types
+
+  smart remove duplicate file names and intermediary file types
   "
   case "$1" in
-    -d|--dry)
-      dry=1 ;;
-    *)
-      common::error "$usage" ;;
+    -d|--dry) dry=1 ;;
+    *)        common::error "$usage" ;;
   esac
 
   while read -r file; do
@@ -291,7 +282,7 @@ wizard_clean_files() {
   return 1
 }
 
-if which tmux >/dev/null; then
+if common::program-exists 'tmux'; then
   wizard_make_session() {
     common::optional_help "$1" "[name]
 
@@ -335,19 +326,21 @@ wizard_make_file_python() {
 
 import sys
 
-def main(args):
-  ''' list of strings -> none
-  '''
-  pass
+
+def main(_):
+    ''' list of strings -> none
+    '''
+    pass
+
 
 if __name__ == '__main__':
-  main(sys.argv)
+    main(sys.argv)
 EOF
 }
 
 wizard_make_file_c() {
   cat > "$1".c << EOF
-#include "$name.h"
+#include <stdio.h>
 
 int main(int argc, char *argv[]) {
 
@@ -358,7 +351,7 @@ EOF
 
 wizard_make_file_cpp() {
   cat > "$1".cpp << EOF
-#include "$name.h"
+#include <iostream>
 
 int main(int argc, char const *argv[]) {
 
@@ -382,14 +375,14 @@ EOF
 wizard_make_project_python() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard make file python "$1"
+  wizard_make_file_python "$1"
   return 1
 }
 
 wizard_make_project_c() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard make file c "$1"
+  wizard_make_file_c "$1"
   touch "$1".h
   mmake -l c -o "$1"
 }
@@ -397,7 +390,7 @@ wizard_make_project_c() {
 wizard_make_project_cpp() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard make file cpp "$1"
+  wizard_make_file_cpp "$1"
   touch "$1".h
   mmake -l cpp -o "$1"
 }
@@ -405,7 +398,7 @@ wizard_make_project_cpp() {
 wizard_make_project_java() {
   common::do mkdir "$1"
   common::do cd "$1"
-  wizard make file java "$1"
+  wizard_make_file_java "$1"
   mmake -l java -o "$1"
 }
 
@@ -441,8 +434,6 @@ wizard_update_pip() {
     | grep -v '^\-e' \
     | cut -d = -f 1  \
     | xargs -n1 sudo -H pip install -U
-
-  return 1
 }
 
 wizard_build_vim () {
@@ -482,180 +473,25 @@ wizard_build_vim () {
   echo "done"
 }
 
-wizard_install_apt() {
-  common::required_help "$1" "
-
-  install distribution packages
-  "
-  case $PLATFORM in
-    Linux)
-      if which apt >/dev/null; then
-        common::sudo apt install "$@"
-      fi
-      ;;
-    *)
-      common::error "Unsupported platform \"$PLATFORM\""
-      ;;
-  esac
-
-  return $#
-}
-
-wizard_install_git() {
-
-  common::optional_help "$1" "
-
-  install the newest git version
-  "
-  common::sudo add-apt-repository ppa:git-core/ppa -y
-  common::sudo apt-get update
-  common::sudo apt-get install git -y
-}
-
-wizard_install_vnc() {
-
-  common::optional_help "$1" "
-
-  install xfce4 and start a VNC server. for droplets
-  "
-  common::sudo apt update
-  common::sudo apt install xfce4 xfce4-goodies tightvncserver
-  common::sudo vncserver
-  common::sudo vncserver -kill :1
-  cat > "$HOME"/.vnc/xstartup << EOF
-#!/bin/bash
-xrdb \$HOME/.Xresources
-startxfce4 &
-EOF
-  common::do chmod +x "$HOME"/.vnc/xstartup
-}
-
-wizard_install_java() {
-
-  common::optional_help "$1" "
-
-  install the Oracle JDK
-  "
-  common::sudo add-apt-repository ppa:webupd8team/java
-  common::sudo apt update
-  common::sudo apt install oracle-java8-installer
-}
-
-wizard_install_shellcheck() {
-
-  common::optional_help "$1" "
-
-  download and install the latest shellcheck
-  "
-  common::do cd /tmp/
-  common::do wget \
-    'http://ftp.us.debian.org/debian/pool/main/s/shellcheck/shellcheck_0.4.6-1_i386.deb'
-  common::sudo dpkg -i shellcheck_*.deb || true
-  common::sudo apt-get install -f
-  common::do cd -
-}
-
-wizard_install_lua() {
-
-  common::optional_help "$1" "
-
-  compile and install lua 5.3.3
-  "
-
-  # shellcheck disable=SC2076
-  if [[ $(lua -v) =~ "Lua 5.3.3" ]]; then
-    echo "Lua already installed"
-    return
-  fi
-
-  echo "installing lua"
-  common::do cd /tmp/
-
-  common::do wget 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
-  common::do tar zxvf lua-5.3.3.tar.gz
-  common::do cd lua-5.3.3
-  common::do make linux
-  common::sudo make install
-
-  common::do cd -
-  echo "done"
-}
-
-wizard_install_docker() {
-
-  common::optional_help "$1" "
-
-  install the dependencies and kernel headers for docker-ce
-  "
-  common::do curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
-    | sudo apt-key add -
-  common::sudo add-apt-repository \
-    "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
-  common::sudo apt-get update
-  common::do apt-cache policy docker-ce
-  common::sudo apt-get install -y docker-ce
-}
-
-wizard_find() {
-  # find by file name or contents
-
-  local fuzzy=1 file=1 text=1 args=1 prog=1
-
-  common::required_help "$1" "(option) [object]
-
-    option
-      --exact
-      --text-only
-      --file-only
-  "
-
-  while [[ $1 ]]; do
-    case $1 in
-      -e|--exact)     fuzzy=0 ;;
-      -t|--text-only) file=0; prog=0 ;;
-      -f|--file-only) text=0; prog=0 ;;
-      -p|--prog-only) file=0; text=0 ;;
-      *) break ;;
-    esac
-    shift; let args++
-  done
-
-  local ag_options="-lS $1"
-  local find_options=". -iname $1"
-  local which_options="$1"
-
-  if (( fuzzy )); then
-    ag_options="-lS $1"
-    find_options=". -iname *$1*"
-    which_options="$1"
-  fi
-
-  # shellcheck disable=SC2086
-  {
-    (( text )) && { ag --nocolor $ag_options; echo; }
-    (( file )) && { find $find_options;       echo; }
-    (( prog )) && { which $which_options;     echo; }
-  }
-
-  return $args
-}
-
 wizard_open() {
 
   common::required_help "$1" "
 
   open a file based on it's type and available programs
   "
+  local filetype
 
   for target in "$@"; do
 
     # shellcheck disable=SC2076
-    if [[ $(file -b "$target") =~ 'ASCII text' ]]; then
+    filetype="$(file -b "$target")"
+
+    if common::contains "$filetype" 'ASCII text'; then
       vim "$target"
 
-    elif which xdg-open >/dev/null; then
+    elif common::program-exists 'xdg-open'; then
 
-      if which xiwit >/dev/null; then
+      if common::program-exists 'xiwit'; then
         xiwit xdg-open "$target"
 
       else
@@ -665,6 +501,49 @@ wizard_open() {
 
   done
   return $#
+}
+
+wizard_bookmark() {
+
+  common::required_help "$1" "[+]
+
+  bookmark current directory
+  "
+  local conf="$HOME/.bookmarks"
+
+  case $1 in
+    +) pwd >> "$conf" ;;
+    -) grep -wv "^$(pwd)$" "$conf" > "$conf.swap" && mv "$conf.swap" "$conf";;
+
+    -h|--help) echo "$usage" ;;
+
+    *)
+      if [[ $1 ]]; then
+        files=( $(grep -i -- "$1" "$conf") )
+      else
+        files=( $(cat "$conf") )
+      fi
+
+      case ${#files[@]} in
+        0) exit 0   ;;
+        1) choice=0 ;;
+        *)
+          let i=0
+          sort <<< "${files[@]}" | tr ' ' '\n' | while read -r file; do
+            printf "(%d) %s\n" "$i" "$file"
+            let i++
+          done
+
+          read -p '? ' -r choice
+          (( choice < 0 || choice > ${#files[@]} )) && exit 0
+          ;;
+      esac
+
+      line="$(grep -nw -- "^${files[$choice]}$" "$conf" | cut -d ':' -f 1)"
+      #shellcheck disable=SC2086
+      exit $line
+      ;;
+  esac
 }
 
 wizard_start_sshd() {
@@ -677,6 +556,42 @@ wizard_start_sshd() {
   common::sudo mkdir -p -m0755 /var/run/sshd
   common::sudo /usr/sbin/sshd
 }
+
+wizard_quick_shell() {
+
+  common::optional "$1" "
+
+  open a throw away shell file
+  "
+  common::do cd /tmp/
+  wizard_make_file_shell quick
+  vim quick.sh
+}
+
+wizard_quick_python() {
+
+  common::optional "$1" "
+
+  open a throw away python file
+  "
+  common::do cd /tmp/
+  wizard_make_file_python quick
+  vim quick.py
+  common::do cd -
+}
+
+wizard_quick_c()
+{
+  common::optional_help "$1" "
+
+  open a throw away c file
+  "
+  common::do cd /tmp/
+  wizard_make_file_c quick
+  vim quick.c
+  common::do cd -
+}
+
 
 # this is where we can inject code into the generated functions
 #

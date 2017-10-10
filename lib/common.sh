@@ -10,6 +10,15 @@ PLATFORM="$(uname)"
 
 export PLATFORM
 
+common::program-exists() {
+
+  which "$1" >/dev/null
+}
+
+common::contains() {
+  [[ $1 =~ $2 ]]
+}
+
 common::debug() {
   (( "$DEBUG" )) && eval "$*"
 }
