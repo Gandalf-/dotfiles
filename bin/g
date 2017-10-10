@@ -57,27 +57,9 @@ while [[ $1 ]]; do
     ll) confirm "$cnfrm" "git log --graph"
         git log --graph --pretty=format:"$fmt" --abbrev-commit  ;;
 
-    d)  if [[ -f $2 ]]; then
-            confirm "$cnfrm" "git diff > $2"
-            git diff > "$2"
-            shift
+    d) confirm "$cnfrm" "git diff"; git diff                    ;;
 
-          else
-            confirm "$cnfrm" "git diff"
-            git diff
-          fi
-      ;;
-
-    dc)  if [[ -f $2 ]]; then
-            confirm "$cnfrm" "git diff --cached > $2"
-            git diff > "$2"
-            shift
-
-          else
-            confirm "$cnfrm" "git diff --cached"
-            git diff
-          fi
-      ;;
+    dc) confirm "$cnfrm" "git diff --cached"; git diff --cached ;;
 
     dh) if [ "$2" -eq "$2" ] 2>/dev/null ; then
             commits="$2"

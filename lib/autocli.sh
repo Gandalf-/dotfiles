@@ -14,7 +14,8 @@ autocli::create() {
   #
   # regenerate output file if the sources have changed
 
-  local root="$(dirname "${BASH_SOURCE[0]}")"/..
+  local root name location sources output
+  root="$(dirname "${BASH_SOURCE[0]}")"/..
   source "${root}/lib/common.sh"
 
   name="$1"
@@ -22,42 +23,28 @@ autocli::create() {
   sources=( "${@:3}" )
   output="${location}/${name}"
 
-  recompile=0
-  now="$(date +%s -r "$output" 2>/dev/null)"
+  declare -A meta_head meta_body    # these are accessible to the caller
 
-  # check if each file has been modified more recently than the output file
+  # pull in all the sources since we need them now
   for source in "${sources[@]}"; do
-    [[ -f "$source" && $now -lt "$(date +%s -r "$source")" ]] \
-      && recompile=1
+    [[ -f "$source" ]] && source "$source"
   done
 
-  # regenerate all intermediary functions, rewrite the output file
-  if (( recompile )) || [[ ! -f "$output" ]]; then
+  autocli::make_reflective_functions
 
-    declare -A meta_head meta_body    # these are accessible to the caller
-
-    # pull in all the sources since we need them now
-    for source in "${sources[@]}"; do
-      [[ -f "$source" ]] \
-        && source "$source"
-    done
-
-    autocli::make_reflective_functions
-
-    {
-      echo '#!/bin/bash
+  {
+    echo '#!/bin/bash
 # this is an auto generated file. do not edit manually
-      '
-      declare -f -p
+    '
+    declare -f -p
 
-      echo "
+    echo "
 $name \"\$@\"
 true
 "
-    } > "$output"
+  } > "$output"
 
-    chmod +x "$output"
-  fi
+  chmod +x "$output"
 }
 
 

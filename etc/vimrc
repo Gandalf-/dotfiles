@@ -146,20 +146,21 @@
     endif
 
   " neosnippet 
-    if exists("*neosnippet")
-      imap <C-j> <Plug>(neosnippet_expand_or_jump)
-      smap <C-j> <Plug>(neosnippet_expand_or_jump)
-      xmap <C-j> <Plug>(neosnippet_expand_target)
+    imap <C-l> <Plug>(neosnippet_expand_or_jump)
+    smap <C-l> <Plug>(neosnippet_expand_or_jump)
+    xmap <C-l> <Plug>(neosnippet_expand_target)
 
-      imap <expr><TAB>
-       \ pumvisible() ? "\<C-n>" :
-       \ neosnippet#expandable_or_jumpable() ?
-       \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+    imap <C-j> <Plug>(neosnippet_jump)
+    smap <C-j> <Plug>(neosnippet_jump)
 
-      let g:neosnippet#snippets_directory = "~/.vim/bundle/neosnippet-snippets/neosnippets/"
-      if has('conceal')
-        set conceallevel=2 concealcursor=i
-      endif
+    imap <expr><TAB>
+     \ pumvisible() ? "\<C-n>" :
+     \ neosnippet#expandable_or_jumpable() ?
+     \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+
+    let g:neosnippet#snippets_directory = "~/.vim/bundle/neosnippet-snippets/neosnippets/"
+    if has('conceal')
+      set conceallevel=2 concealcursor=i
     endif
 
 
