@@ -93,6 +93,7 @@ if test $at_work
   set     wiki_loc ~/cribshome/wiki/index.md
   set     scripts  ~/cribshome/DotFiles
   set -gx DIFFDIR  ~/cribshome/diffs/
+  set -gx SCRIPITY /mnt/ssd/
 
   set PATH ~/scripity-scripts/bin $PATH
 
