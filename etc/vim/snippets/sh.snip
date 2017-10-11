@@ -1,0 +1,41 @@
+
+snippet if
+	if ${1:#:condition}; then
+		${0:TARGET}
+	fi
+
+snippet function
+alias func def
+abbr function name() { ... }
+options head
+	${1:#:name}() {
+		# none -> none
+
+		${0:TARGET}
+	}
+
+snippet $
+  "${${1}}"
+
+snippet local
+  local ${1:variable}="${2:value}"
+
+snippet root
+  root="$(dirname "${BASH_SOURCE[0]}")"/..
+
+snippet main
+  #!/bin/bash
+
+  main() {
+    ${1}
+  }
+
+  main "$@"
+
+snippet whiler
+  while read -r line; do
+    ${1:TARGET}
+  done < <(${0})
+
+snippet =$(
+  ${1}="$(${2})"

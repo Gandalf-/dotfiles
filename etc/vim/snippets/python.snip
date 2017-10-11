@@ -1,0 +1,34 @@
+
+snippet     class
+abbr        class Class(...): "..."
+options     head
+  class ${1:#:name}(${2:object}):
+      ''' ${3:placeholder} '''
+
+	    def __init__(self):
+	        ''' ${4:placeholder} -> $1
+	        '''
+	        ${0:pass}
+
+snippet     def
+abbr        def function(...): '''...'''
+options     head
+  def ${1:#:name}(${2}):
+	    ''' ${3:function documentation -> none}
+	    '''
+	    ${0:pass}
+
+snippet     exception
+abbr        class Custom(Exception):
+options     head
+  class ${1:CustomException}(Exception):
+	    pass
+
+snippet super
+abbr    super(self.__class__, self).__init__()
+options head
+  super(self.__class__, self).__init__()
+
+snippet self
+abbr    self.var = var
+  self.${1:variable} = $1

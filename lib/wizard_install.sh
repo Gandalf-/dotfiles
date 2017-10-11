@@ -1,3 +1,4 @@
+#!/bin/bash
 
 wizard_install_dot-files() {
 
@@ -8,6 +9,7 @@ wizard_install_dot-files() {
   common::do ln -sf "${root}"/etc/vimrc        "$HOME"/.vimrc
   common::do ln -sf "${root}"/etc/tmux.conf    "$HOME"/.tmux.conf
   common::do ln -sf "${root}"/etc/bashrc       "$HOME"/.bashrc
+  common::do ln -sf "${root}"/etc/vim/snippets "$HOME"/.vim/snippets
 }
 
 wizard_install_apt() {
