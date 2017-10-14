@@ -57,6 +57,7 @@
         Plugin 'Shougo/neosnippet-snippets'
         Plugin 'Shougo/neoinclude.vim'
         Plugin 'vim-syntastic/syntastic'
+        Plugin 'mbbill/undotree'
 
         if has_vundle == 0
           :PluginInstall

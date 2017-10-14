@@ -11,12 +11,21 @@ options     head
 	        ${0:pass}
 
 snippet     def
-abbr        def function(...): '''...'''
+abbr        def function(...): "..."
 options     head
   def ${1:#:name}(${2}):
 	    ''' ${3:function documentation -> none}
 	    '''
 	    ${0:pass}
+
+snippet     defm
+abbr        def method(self, ...): "..."
+options     head
+  def ${1:#:name}(self, ${2}):
+	    ''' ${3:function documentation -> none}
+	    '''
+	    ${0:pass}
+
 
 snippet     exception
 abbr        class Custom(Exception):

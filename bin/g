@@ -10,74 +10,60 @@ source "${root}/lib/common.sh"
 
 [[ -z $1 ]] && { g --help; exit 1; }
 
-cnfrm=0
+export CONFIRM=0
+export AUTO=1
 fmt="\
 %Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
 
 while [[ $1 ]]; do
   case "$1" in
-    !)  cnfrm=$(( ! cnfrm ))              ;;
-    a)  _confirm "$cnfrm" "git add -A :/" ;;
-    bv) _confirm "$cnfrm" "git branch -vv" ;;
-    rv) _confirm "$cnfrm" "git remote -vv" ;;
-    f)  _confirm "$cnfrm" "git fetch" ;;
+    !)  CONFIRM=1; AUTO=0 ;;
+    a)  common::do "git add -A :/" ;;
+    bv) common::do "git branch -vv" ;;
+    rv) common::do "git remote -vv" ;;
+    f)  common::do "git fetch" ;;
 
-    c)  _confirm "$cnfrm" "git commit" ;;
-    ca) _confirm "$cnfrm" "git commit --amend" ;;
-    cn) _confirm "$cnfrm" "git commit --amend --no-edit" ;;
+    c)  common::do "git commit" ;;
+    ca) common::do "git commit --amend" ;;
+    cn) common::do "git commit --amend --no-edit" ;;
 
-    co) _confirm "$cnfrm" "git checkout \"$2\""; shift ;;
-    cb) _confirm "$cnfrm" "git checkout -b \"$2\""; shift ;;
-    s)  _confirm "$cnfrm" "git status" ;;
+    co) common::do "git checkout \"$2\""; shift ;;
+    cb) common::do "git checkout -b \"$2\""; shift ;;
+    s)  common::do "git status" ;;
 
-    ri) _confirm "$cnfrm" "git rebase -i \"$2\""; shift ;;
-    cm) _confirm "$cnfrm" "git commit -m \"$2\""; shift ;;
-    m)  _confirm "$cnfrm" "git merge \"$2\""    ; shift ;;
+    ri) common::do "git rebase -i \"$2\""; shift ;;
+    cm) common::do "git commit -m \"$2\""; shift ;;
+    m)  common::do "git merge \"$2\""    ; shift ;;
 
-    pm) _confirm "$cnfrm" "git pull \"${2%.}\""          ; shift ;;
-    pl) _confirm "$cnfrm" "git pull --no-edit \"${2%.}\""; shift ;;
+    pm) common::do "git pull \"${2%.}\""          ; shift ;;
+    pl) common::do "git pull --no-edit \"${2%.}\""; shift ;;
 
-    ph) _confirm "$cnfrm" "git push \"${2%.}\""; shift ;;
-    pf) _confirm "$cnfrm" "git push --force \"${2%.}\""; shift ;;
+    ph) common::do "git push \"${2%.}\""; shift ;;
+    pf) common::do "git push --force \"${2%.}\""; shift ;;
 
-    cc) _confirm "$cnfrm" "git clean -nfd"
-        confirm "$cnfrm" "Continue?"
-        git clean -fd                                           ;;
+    cc) common::do "git clean -nfd"
+        common::confirm "Continue?"
+        common::do "git clean -fd"
+        ;;
 
-    cs) branch=$(git branch -q | grep -i "$2" | xargs | cut -f1 -d' ')
-        confirm "cnfrm" "git checkout $branch"
-        git checkout "$branch"; shift                           ;;
-
-    l)  confirm "$cnfrm" "git log"
-        git log --color=always | head -n 20                     ;;
-
-    lo) confirm "$cnfrm" "git log --oneline"
-        git log --oneline --color=always | head -n 10           ;;
-
-    ll) confirm "$cnfrm" "git log --graph"
-        git log --graph --pretty=format:"$fmt" --abbrev-commit  ;;
-
-    d) confirm "$cnfrm" "git diff"; git diff                    ;;
-
-    dc) confirm "$cnfrm" "git diff --cached"; git diff --cached ;;
-
-    dh) if [ "$2" -eq "$2" ] 2>/dev/null ; then
-            commits="$2"
-          else
-            commits="1"
-          fi
-
-          if [[ -f "$3" ]]; then
-            confirm "$cnfrm" "git diff HEAD~$commits > $3"
-            git diff HEAD~"$commits" > "$3"
-            shift
-
-          else
-            confirm "$cnfrm" "git diff HEAD~$commits"
-            git diff HEAD~"$commits"
-          fi
-          shift
+    cs)
+      branch="$(
+        git branch -q \
+          | grep -i "$2" \
+          | xargs \
+          | cut -f1 -d' ')"
+      common::required_help "$branch" "g cs [branch]"
+      common::do git checkout "$branch"; shift
       ;;
+
+    l)  common::do git log --color=always \| head -n 20 ;;
+    lo) common::do git log --oneline \| head -n 10 ;;
+    ll) common::do git log --graph --pretty=format:"$fmt" --abbrev-commit ;;
+
+    d)  common::do git diff --ws-error-highlight=all ;;
+    dc) common::do git diff --ws-error-highlight=all --cached ;;
+    dw) common::do git diff --ignore-space-at-eol ;;
+    dh) common::do git diff --ws-error-highlight=all HEAD~"${2:-1}" ;;
 
     ds) [[ -z "$DIFFDIR" ]] && {
             echo "error: smart diff not available"
@@ -87,23 +73,16 @@ while [[ $1 ]]; do
           diff="$DIFFDIR/${branch}.diff"
 
           if [ "$2" -eq "$2" ] 2>/dev/null ; then # checks if $2 is a number
-            confirm "$cnfrm" "git diff --full-index HEAD~$2 > $diff"
-            git diff --full-index HEAD~"$2" > "$diff"
+            common::do "git diff --full-index HEAD~$2 > $diff"
             shift
 
           else
-            confirm "$cnfrm" "git diff --full-index HEAD~1 > $diff"
-            git diff --full-index HEAD~1 > "$diff"
+            common::do "git diff --full-index HEAD~1 > $diff"
             shift
           fi
       ;;
 
-    bn) confirm "$cnfrm" "git checkout $remote_branch -b $new_branch_name"
-          remote_branch="$2"
-          new_branch_name="$3"
-          git checkout "$remote_branch" -b "$new_branch_name"
-          shift; shift
-      ;;
+    bn) common::do "git checkout $2 -b $3"; shift; shift ;;
 
     *)
       echo "
@@ -144,6 +123,4 @@ while [[ $1 ]]; do
   #shellcheck disable=SC2181
   (( $? )) && { confirm 0 "Detected failure, not continuing"; exit 1; }
   shift
-
-  [[ -z "$1" ]] || echo
 done
