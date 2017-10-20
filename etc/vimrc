@@ -259,6 +259,9 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Miscellaneous
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  " help
+    autocmd FileType python set iskeyword+=.
+
   " Strip whitespaces on save
     fun! <SID>StripTrailingWhitespaces()
         let l = line(".")
@@ -441,9 +444,9 @@
           \  : clear highlighting        \n
           \+ : toggle dictionary         \n
           \1 : jump to tab number        \n
-          \A :                           \| a :                           \n
+          \A :                           \| a : jump to next error        \n
           \B :                           \| b : toggle mouse              \n
-          \C : syntastic reset           \| c : syntastic Check           \n
+          \C :                           \| c :                           \n
           \D :                           \| d : file explorer             \n
           \E :                           \| e : open in new buffer        \n
           \F :                           \| f : rewrap paragraph          \n
@@ -460,10 +463,10 @@
           \Q : close all windows         \| q : close window              \n
           \R : toggle relative numbering \| r : run buffer                \n
           \S : global substitute         \| s : line substitute           \n
-          \T : toggle syntastic mode     \| t : tab current buffer        \n
+          \T :                           \| t : tab current buffer        \n
           \U : source vimrc              \| u : open vimrc                \n
           \V : vertical split            \| v : visual block              \n
-          \W : sudo save                 \| w :                           \n
+          \W : sudo save                 \| w : close window              \n
           \X :                           \| x : close buffer              \n
           \Y :                           \| y : run in right pane         \n
           \Z :                           \| z : toggle spell check        \n
@@ -472,6 +475,9 @@
   " fzf
     nnoremap <leader>[ :Buffers<CR>
     nnoremap <leader>] :Files<CR>
+
+  " ale
+    nnoremap <leader>a :ALENextWrap<CR>
 
   " clear highlighting
     nnoremap <silent> <leader><Space> :nohl<CR>
