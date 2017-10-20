@@ -21,22 +21,25 @@ while [[ $1 ]]; do
     a)  common::do "git add -A :/" ;;
     bv) common::do "git branch -vv" ;;
     rv) common::do "git remote -vv" ;;
-    f)  common::do "git fetch" ;;
+    f)  common::do "git fetch --all" ;;
+    s)  common::do "git status" ;;
 
     c)  common::do "git commit" ;;
     ca) common::do "git commit --amend" ;;
     cn) common::do "git commit --amend --no-edit" ;;
 
     co) common::do "git checkout \"$2\""; shift ;;
-    cb) common::do "git checkout -b \"$2\""; shift ;;
-    s)  common::do "git status" ;;
+    cb) common::do "git checkout -b \"${2:?g cb [branch]}\""; shift ;;
+    cn) common::do \
+      "git checkout ${2:?g cn [remote] [local]} -b ${3:?g cn [remote] [local]}"
+      shift; shift ;;
 
     ri) common::do "git rebase -i \"$2\""; shift ;;
-    cm) common::do "git commit -m \"$2\""; shift ;;
-    m)  common::do "git merge \"$2\""    ; shift ;;
+    cm) common::do "git commit -m \"${2:?g cm [message]}\""; shift ;;
+    m)  common::do "git merge \"${2%-}\""    ; shift ;;
 
-    pm) common::do "git pull \"${2%.}\""          ; shift ;;
-    pl) common::do "git pull --no-edit \"${2%.}\""; shift ;;
+    pm) common::do "git pull \"${2%-}\""          ; shift ;;
+    pl) common::do "git pull --no-edit \"${2%-}\""; shift ;;
 
     ph) common::do "git push \"${2%.}\""; shift ;;
     pf) common::do "git push --force \"${2%.}\""; shift ;;
@@ -82,20 +85,18 @@ while [[ $1 ]]; do
           fi
       ;;
 
-    bn) common::do "git checkout $2 -b $3"; shift; shift ;;
-
     *)
       echo "
   g - super git wrapper
     !  : toggle confirmation
     a  : add everything
     bv : branch -vv
-    bn : checkout (remote branch) -b (local branch)
     cc : clean -nfd, confirm, clean -fd
     c  : commit
     ca : commit --amend
     cn : commit --amend --no-edit
     cb : checkout -b (branch)
+    cn : checkout (remote branch) -b (local branch)
     cs : attempt to checkout branch by bug name [work only]
     cm : commit -m (message)
     co : checkout (file)

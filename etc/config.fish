@@ -120,6 +120,35 @@ if test -d ~/.cargo/bin/
   set PATH ~/.cargo/bin/ $PATH
 end
 
+# go
+if test -d /usr/local/go/bin/
+  set PATH /usr/local/go/bin/ $PATH
+  set -gx GOPATH ~/google_drive/code/go
+end
+
+# fzf
+if test -d ~/.vim/bundle/fzf/bin
+  set PATH ~/.vim/bundle/fzf/bin $PATH
+  source ~/.vim/bundle/fzf/shell/key-bindings.fish
+
+  set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
+  set -gx FZF_DEFAULT_OPTS '--height 40% --border'
+end
+
+function c
+  fzf | read -l result
+  # pwd | awk -v RS=/ '/\n/ {exit} {p=p $0 "/"; print p}' | tac | eval (fzf) +m --select-1 --exit-0 $FZF_BCD_OPTS | read -l result
+  [ "$result" ]; and cd (dirname $result)
+  commandline -f repaint
+  ls --color=auto
+end
+
+function k
+  fzf | read -l result
+  [ "$result" ]; and vim "$result"
+  commandline -f repaint
+end
+
 # Fish Functions
 #===========================
 
@@ -131,19 +160,6 @@ end
 if test "$wiki_loc"
   function vws; v "$wiki_loc" +"VimwikiSearch $argv"; end
   alias vw="v $wiki_loc"
-end
-
-function m
-  # interact with the bookmark script
-
-  bookmark "$argv"
-  set line "$status"
-
-  if test $line -gt 0
-    set choice (sed -n "$line{p;q}" "$HOME/.bookmarks")
-    echo $choice
-    cd $choice
-  end
 end
 
 function f
