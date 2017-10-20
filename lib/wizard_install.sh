@@ -78,7 +78,7 @@ wizard_install_shellcheck() {
   download and install the latest shellcheck
   "
   common::do cd /tmp/
-  common::do wget \
+  common::do wget -N \
     'http://ftp.us.debian.org/debian/pool/main/s/shellcheck/shellcheck_0.4.6-1_i386.deb'
   common::sudo dpkg -i shellcheck_*.deb || true
   common::sudo apt-get install -f
@@ -92,16 +92,10 @@ wizard_install_lua() {
   compile and install lua 5.3.3
   "
 
-  # shellcheck disable=SC2076
-  if [[ $(lua -v) =~ "Lua 5.3.3" ]]; then
-    echo "Lua already installed"
-    return
-  fi
-
   echo "installing lua"
   common::do cd /tmp/
 
-  common::do wget 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
+  common::do wget -N 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
   common::do tar zxvf lua-5.3.3.tar.gz
   common::do cd lua-5.3.3
   common::do make linux

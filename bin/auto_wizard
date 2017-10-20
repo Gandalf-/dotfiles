@@ -15,7 +15,7 @@ location="${root}/bin/"
 sources=(
   "${root}/lib/wizard.sh"
   "${root}/lib/wizard_install.sh"
-  "/tmp/work_wizard.sh"
+  "$HOME/scripity-scripts/lib/work_wizard.sh"
   )
 
 autocli::create \
