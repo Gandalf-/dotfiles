@@ -1,15 +1,26 @@
 #!/bin/bash
 
+
 wizard_install_dot-files() {
 
   local root
   root="$(dirname "${BASH_SOURCE[0]}")"/..
 
-  common::do ln -sf "${root}"/etc/config.fish  "$HOME"/.config/fish/config.fish
-  common::do ln -sf "${root}"/etc/vimrc        "$HOME"/.vimrc
-  common::do ln -sf "${root}"/etc/tmux.conf    "$HOME"/.tmux.conf
-  common::do ln -sf "${root}"/etc/bashrc       "$HOME"/.bashrc
-  common::do ln -sf "${root}"/etc/vim/snippets "$HOME"/.vim/snippets
+  common::do mkdir -p "$HOME"/.vim
+  common::do mkdir -p "$HOME"/.config/fish
+
+  copy() {
+    common::do ln -sf "${root}/$1" "${HOME}/$2"
+  }
+
+  copy etc/config.fish         .config/fish/config.fish
+  copy etc/vimrc               .vimrc
+  copy etc/tmux.conf           .tmux.conf
+  copy etc/bashrc              .bashrc
+  copy etc/vim/snippets        .vim/
+  copy etc/gitconfig           .gitconfig
+  copy etc/gitignore_global    .gitignore_global
+  copy etc/pylintrc            .pylintrc
 }
 
 wizard_install_apt() {

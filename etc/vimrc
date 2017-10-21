@@ -552,8 +552,8 @@
     vnoremap <silent> <leader>T :!column -te<cr>
 
   " open buffer, open tab, reload, save, sudo save current file
-    nnoremap <leader>E :e
-    nnoremap <leader>e :tabe
+    nnoremap <leader>E :e<space>
+    nnoremap <leader>e :tabe<space>
     nnoremap <leader>l :e % <cr>zz
     nnoremap <leader>k :w<CR>
 
