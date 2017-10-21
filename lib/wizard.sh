@@ -449,13 +449,14 @@ wizard_build_vim () {
 		libcairo2-dev libx11-dev libxpm-dev libxt-dev
 
   common::do cd /tmp/
-  common::do wget 'https://github.com/vim/vim/archive/master.zip'
+  common::do wget -N 'https://github.com/vim/vim/archive/master.zip'
   common::do unzip master.zip
   common::do cd vim-master
 
 	common::do ./configure \
     --with-features=huge \
     --with-lua-prefix=/usr/local \
+    --with-lua-jit=yes \
     --enable-multibyte \
     --enable-rubyinterp=yes \
     --enable-pythoninterp=yes \
