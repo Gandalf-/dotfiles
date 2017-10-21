@@ -132,7 +132,7 @@ if test -d ~/.vim/bundle/fzf/bin
   source ~/.vim/bundle/fzf/shell/key-bindings.fish
 
   set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-  set -gx FZF_DEFAULT_OPTS '--height 40% --border'
+  set -gx FZF_DEFAULT_OPTS '--height 40% --border --preview="file {}" --preview-window=up:30%:wrap'
 end
 
 function c
