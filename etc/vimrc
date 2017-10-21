@@ -3,7 +3,7 @@
 "" + Description:        Vim startup settings
 "" + Author:             leaf
 "" ============================================================================
- 
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -35,11 +35,11 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Plugins
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  " Vundle 
+  " Vundle
     let has_vundle=1
     let vundle_url='https://github.com/VundleVim/Vundle.vim'
 
-    if !filereadable(expand('~/.vim/bundle/Vundle.vim/README.md')) 
+    if !filereadable(expand('~/.vim/bundle/Vundle.vim/README.md'))
       silent !mkdir -p ~/.vim/bundle
       silent exe "!git clone " . g:vundle_url . " ~/.vim/bundle/Vundle.vim"
       let has_vundle=0
@@ -50,8 +50,8 @@
 
     try
       call vundle#begin()
-        Plugin 'vimwiki/vimwiki'
         Plugin 'VundleVim/Vundle.vim'
+        Plugin 'vimwiki/vimwiki'
         Plugin 'Shougo/neocomplete.vim'
         Plugin 'Shougo/neosnippet.vim'
         Plugin 'Shougo/neosnippet-snippets'
@@ -59,6 +59,8 @@
         Plugin 'w0rp/ale'
         Plugin 'junegunn/fzf'
         Plugin 'junegunn/fzf.vim'
+        Plugin 'christoomey/vim-tmux-navigator'
+        Plugin 'benmills/vimux'
 
         if has_vundle == 0
           :PluginInstall
@@ -67,6 +69,10 @@
     catch
     endtry
     filetype plugin indent on
+
+  " vimux
+    let g:VimuxOrientation = "h"
+    let g:VimuxHeight = "50"
 
   " fzf
     " Customize fzf colors to match your color scheme
@@ -94,18 +100,18 @@
     if hostname == "wkstn-avoecks"
       let g:vimwiki_root = '~/vimwiki'
       let g:vimwiki_list = [{
-            \ 'path': '~/vimwiki/', 
+            \ 'path': '~/vimwiki/',
             \ 'syntax': 'markdown',
             \ 'ext': '.md'}]
 
     else
       let g:vimwiki_root = '~/google_drive'
       let g:vimwiki_list = [{
-            \ "path": '~/google_drive/', 
-            \ "path_html": '/tmp/html/', 
-            \ "syntax": 'markdown', 
-            \ "ext": '.md', 
-            \ "css_file": '~/.vim/bundle/vimwiki/autoload/vimwiki/style.css', 
+            \ "path": '~/google_drive/',
+            \ "path_html": '/tmp/html/',
+            \ "syntax": 'markdown',
+            \ "ext": '.md',
+            \ "css_file": '~/.vim/bundle/vimwiki/autoload/vimwiki/style.css',
             \ "custom_wiki2html": '~/google_drive/code/shell/wiki2html.sh', }]
     endif
     nmap <Leader>wn <Plug>VimwikiNextLink
@@ -131,7 +137,7 @@
       endif
     endfunction
 
-  " neocomplete 
+  " neocomplete
     if v:version >= 704 && has("lua")
       "let g:acp_enableAtStartup = 0
       let g:neocomplete#enable_at_startup = 1
@@ -164,7 +170,7 @@
       autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     endif
 
-  " neosnippet 
+  " neosnippet
     imap <C-l> <Plug>(neosnippet_expand_or_jump)
     smap <C-l> <Plug>(neosnippet_expand_or_jump)
     xmap <C-l> <Plug>(neosnippet_expand_target)
@@ -214,7 +220,7 @@
   " Be as wild as possible
     set wildmode=full wildmenu
     set wildignore=*.o,*~,*.pyc,/usr/include/*,*.class,*.bak,
-    set wildignore+=.git\*,.svn\* 
+    set wildignore+=.git\*,.svn\*
     set wildignorecase
 
   " Performance!?
@@ -269,8 +275,8 @@
         %s/\s\+$//e
         call cursor(l, c)
     endfun
-    autocmd FileType tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
-  " File specific 
+    autocmd FileType vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+  " File specific
     autocmd FileType make setlocal noexpandtab
 
   " Avoid dumb markdown extension
@@ -333,7 +339,7 @@
       let fillcharcount = winwd - len(line) - len(fdnfo)
       return line . repeat(" ",fillcharcount) . fdnfo
     endfunction
-    set foldmethod=indent   
+    set foldmethod=indent
     set foldnestmax=10
     set nofoldenable
     set foldlevel=2
@@ -373,8 +379,7 @@
   " Clear junk before running commands
     noremap :! :!clear;
     noremap :make :!clear; make
-    noremap <silent> <c-l> :nohlsearch<cr>
-  
+
   " Make pylint happy
     autocmd BufNewFile,BufRead *.py setlocal tabstop=4
 
@@ -402,7 +407,7 @@
   set expandtab smarttab
   set autoindent smartindent nocindent
   set showmatch                    " Show matched brackets
-  
+
   "set completeopt=menu,menuone
   "set pumheight=3
   "
@@ -476,6 +481,10 @@
     nnoremap <leader>[ :Buffers<CR>
     nnoremap <leader>] :Files<CR>
 
+  " vimux
+    nnoremap <C-i> :VimuxPromptCommand<CR>
+    nnoremap <C-b> :VimuxRunLastCommand<CR>
+
   " ale
     nnoremap <leader>a :ALENextWrap<CR>
 
@@ -543,8 +552,8 @@
     vnoremap <silent> <leader>T :!column -te<cr>
 
   " open buffer, open tab, reload, save, sudo save current file
-    nnoremap <leader>E :e 
-    nnoremap <leader>e :tabe 
+    nnoremap <leader>E :e
+    nnoremap <leader>e :tabe
     nnoremap <leader>l :e % <cr>zz
     nnoremap <leader>k :w<CR>
 
@@ -553,7 +562,7 @@
     nnoremap <silent> <leader>o o<Esc>
 
   " make
-    nnoremap <silent> <leader>M :!tmux send-keys -t right 
+    nnoremap <silent> <leader>M :!tmux send-keys -t right
           \ 'make' C-m<cr><cr>
     nnoremap <silent> <leader>m :!clear;make<CR>
 
@@ -595,24 +604,24 @@
         execute "!" . a:compile_command . " " . bufname("%")
       endif
     endfunction
-    
+
     autocmd FileType python  nmap <leader>r :!clear;python %<cr>
     autocmd FileType scheme  nmap <leader>r :!clear;racket %<cr>
     autocmd FileType sh      nmap <leader>r :!clear;bash %<cr>
     autocmd FileType perl    nmap <leader>r :!clear;perl %<cr>
     autocmd FileType haskell nmap <leader>r :!clear;runhaskell %<cr>
-    
-    autocmd FileType java    nmap <leader>r 
+
+    autocmd FileType java    nmap <leader>r
           \ :silent call Compile("javac")<cr> <bar>:!clear;java %:r<cr>
-    autocmd FileType c       nmap <leader>r 
+    autocmd FileType c       nmap <leader>r
           \ :silent call Compile("gcc")  <cr> <bar>:!clear;./a.out <cr>
 
   " Run program in pane to the right
-    autocmd FileType python 
-          \ nnoremap <leader>y :!tmux send-keys -t right 
+    autocmd FileType python
+          \ nnoremap <leader>y :!tmux send-keys -t right
           \ 'python %' C-m <cr><cr>
     autocmd FileType sh
-          \ nnoremap <leader>y :!tmux send-keys -t right 
+          \ nnoremap <leader>y :!tmux send-keys -t right
           \ 'bash %' C-m<cr><cr>
 
   " Experiment
@@ -636,8 +645,8 @@
     endfunction
 
     command! -nargs=+ GrepBufs call GrepBuffers(<q-args>)
-    nnoremap <leader>/ :GrepBufs 
-    nnoremap <leader>* 
+    nnoremap <leader>/ :GrepBufs
+    nnoremap <leader>*
           \ :call GrepBuffers("<C-R><C-W>")<CR> <bar> :copen 7<cr>
 
   " Where are we?
