@@ -132,12 +132,20 @@ if test -d ~/.vim/bundle/fzf/bin
   source ~/.vim/bundle/fzf/shell/key-bindings.fish
 
   set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-  set -gx FZF_DEFAULT_OPTS '--height 40% --border'
+  set -gx FZF_DEFAULT_OPTS '--height 40% --border --preview="file {}" --preview-window=up:30%'
 end
 
 function c
+  # cd
   fzf | read -l result
-  # pwd | awk -v RS=/ '/\n/ {exit} {p=p $0 "/"; print p}' | tac | eval (fzf) +m --select-1 --exit-0 $FZF_BCD_OPTS | read -l result
+  [ "$result" ]; and cd (dirname $result)
+  commandline -f repaint
+  ls --color=auto
+end
+
+function cb
+  # cd backwards
+  pwd | awk -v RS=/ '/\n/ {exit} {p=p $0 "/"; print p}' | tac | fzf | read -l result
   [ "$result" ]; and cd (dirname $result)
   commandline -f repaint
   ls --color=auto
