@@ -289,10 +289,10 @@ if common::program-exists 'tmux'; then
   create a new tmux session and move to it
     "
 
-    name=${1:-$RANDOM}
+    name="${*:-$RANDOM}"
     tmux new -d -s "$name"
     tmux switch-client -t "$name"
-    return 1
+    return $#
   }
 
   wizard_do_layout_vertical() {

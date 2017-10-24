@@ -30,7 +30,7 @@ while [[ $1 ]]; do
 
     co) common::do "git checkout \"$2\""; shift ;;
     cb) common::do "git checkout -b \"${2:?g cb [branch]}\""; shift ;;
-    cn) common::do \
+    cl) common::do \
       "git checkout ${2:?g cn [remote] [local]} -b ${3:?g cn [remote] [local]}"
       shift; shift ;;
 
@@ -96,7 +96,7 @@ while [[ $1 ]]; do
     ca : commit --amend
     cn : commit --amend --no-edit
     cb : checkout -b (branch)
-    cn : checkout (remote branch) -b (local branch)
+    cl : checkout (remote branch) -b (local branch)
     cs : attempt to checkout branch by bug name [work only]
     cm : commit -m (message)
     co : checkout (file)
