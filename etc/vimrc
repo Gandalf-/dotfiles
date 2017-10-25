@@ -72,7 +72,7 @@
 
   " vimux
     let g:VimuxOrientation = "h"
-    let g:VimuxHeight = "33"
+    let g:VimuxHeight = "50"
 
   " fzf
     " Customize fzf colors to match your color scheme
@@ -266,7 +266,7 @@
 " => Miscellaneous
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   " help
-    " autocmd FileType python set iskeyword+=.
+    autocmd FileType python set iskeyword+=.
 
   " Strip whitespaces on save
     fun! <SID>StripTrailingWhitespaces()

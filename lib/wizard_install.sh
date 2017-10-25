@@ -9,18 +9,20 @@ wizard_install_dot-files() {
   common::do mkdir -p "$HOME"/.vim
   common::do mkdir -p "$HOME"/.config/fish
 
-  copy() {
+  link() {
     common::do ln -sf "${root}/$1" "${HOME}/$2"
   }
 
-  copy etc/config.fish         .config/fish/config.fish
-  copy etc/vimrc               .vimrc
-  copy etc/tmux.conf           .tmux.conf
-  copy etc/bashrc              .bashrc
-  copy etc/vim/snippets        .vim/
-  copy etc/gitconfig           .gitconfig
-  copy etc/gitignore_global    .gitignore_global
-  copy etc/pylintrc            .pylintrc
+  link etc/config.fish         .config/fish/config.fish
+  link etc/vimrc               .vimrc
+  link etc/tmux.conf           .tmux.conf
+  link etc/bashrc              .bashrc
+  link etc/gitconfig           .gitconfig
+  link etc/gitignore_global    .gitignore_global
+  link etc/pylintrc            .pylintrc
+
+  link etc/vim/snippets        .vim/
+  link lib/fish                .config/fish/functions
 }
 
 wizard_install_apt() {
