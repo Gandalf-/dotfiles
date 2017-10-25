@@ -10,34 +10,6 @@ set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
 test (hostname) = 'wkstn-avoecks'; and set at_work yes
 set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 
-function fish_prompt
-
-  if test $status -ne 0
-    set_color bryellow
-  else
-    set_color normal
-  end
-
-  echo -n (whoami)"@$__HOST__"
-
-  set_color $fish_color_cwd
-  echo -n ' '(prompt_pwd)
-
-  set_color normal
-  printf '%s' (__fish_git_prompt)
-
-  set_color normal
-  echo '> '
-
-end
-
-function fish_greeting
-  ls --color=auto
-end
-
-# PATH
-set -gx TMP /tmp
-
 # Abbreviations
 if status --is-interactive
 
@@ -54,47 +26,11 @@ function    ..; builtin cd ../;      command ls --color=auto ; end
 function   ...; builtin cd ../../;   command ls --color=auto ; end
 function  ....; builtin cd ../../../;command ls --color=auto ; end
 
-# Vim mode
-#===========================
-function fish_mode_prompt --description 'Displays the current mode'
-
-	if test "$fish_key_bindings" = "fish_vi_key_bindings"
-		switch $fish_bind_mode
-      case default; set_color --bold red;   echo N
-      case insert;  set_color --bold green; echo I
-      case visual;  set_color --bold blue;  echo V
-		end
-
-		set_color normal; printf " "
-	end
-end
-
-# Key bindings
-function fish_user_key_bindings
-  bind \e. 'history-token-search-backward'
-  bind \co 'history-search-forward'
-  bind \cb 'commandline -i "bash -c \'";commandline -a "\'"'
-
-  fish_default_key_bindings -M insert
-  fish_vi_key_bindings insert
-
-  bind -M insert \cf forward-char
-  bind -M insert \ce end-of-line
-  bind -M insert \ca beginning-of-line
-
-  bind -M default E end-of-line
-  bind -M default B beginning-of-line
-
-  bind -M insert \ci fzf-file-widget
-  bind -M insert \cr fzf-history-widget
-  bind -M insert \ec fzf-cd-widget
-end
-
 # Location
 #===========================
 
 # workstation
-if test $at_work
+if test "$at_work"
   set     wiki_loc ~/cribshome/wiki/index.md
   set     scripts  ~/cribshome/DotFiles
   set -gx DIFFDIR  ~/cribshome/diffs/
@@ -120,6 +56,9 @@ else if test -d /tmp/DotFiles
   set scripts /tmp/DotFiles
 end
 
+# Languages
+#===========================
+
 # rust
 if test -d ~/.cargo/bin/
   set PATH ~/.cargo/bin/ $PATH
@@ -131,6 +70,11 @@ if test -d /usr/local/go/bin/
   set -gx GOPATH ~/google_drive/code/go
 end
 
+# Other executables
+#===========================
+
+set -gx TMP /tmp
+
 # fzf
 if test -d ~/.vim/bundle/fzf/bin
   set PATH ~/.vim/bundle/fzf/bin $PATH
@@ -140,31 +84,12 @@ if test -d ~/.vim/bundle/fzf/bin
   set -gx FZF_DEFAULT_OPTS '--height 40% --border'
 end
 
-function c
-  # cd
-  fzf | read -l result
-  [ "$result" ]; and cd (dirname $result)
-  commandline -f repaint
-  ls --color=auto
+# autojump
+if test -f ~/.autojump/share/autojump/autojump.fish
+  . ~/.autojump/share/autojump/autojump.fish
 end
 
-function cb
-  # cd backwards
-  pwd | awk -v RS=/ '/\n/ {exit} {p=p $0 "/"; print p}' | tac | fzf | read -l result
-  [ "$result" ]; and cd (dirname $result)
-  commandline -f repaint
-  ls --color=auto
-end
-
-function k
-  fzf | read -l result
-  [ "$result" ]; and vim "$result"
-  commandline -f repaint
-end
-
-# Fish Functions
-#===========================
-
+# DotFiles scripts
 if test "$scripts"
   set PATH $scripts/bin $PATH
 end
@@ -173,24 +98,6 @@ end
 if test "$wiki_loc"
   function vws; v "$wiki_loc" +"VimwikiSearch $argv"; end
   alias vw="v $wiki_loc"
-end
-
-# autojump
-#===========================
-if test -f ~/.autojump/share/autojump/autojump.fish
-  . ~/.autojump/share/autojump/autojump.fish
-end
-
-function j
-  set new_path (autojump $argv)
-
-  if test -d "$new_path" -a "$new_path" != "."
-    printf "%s\n\n" $new_path
-    cd "$new_path"; ls --color=auto
-  else
-    echo "autojump: directory '$argv' not found" >&2
-    false
-  end
 end
 
 # Fish git prompt and colors
