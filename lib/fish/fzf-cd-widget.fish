@@ -21,6 +21,6 @@ function fzf-cd-widget -d "Change directory"
     end
   end
 
-  # commandline -f repaint
+  commandline -f repaint
 end
 

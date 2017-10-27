@@ -14,9 +14,9 @@ function fzf-history-widget -d "Show command history"
       history -z | eval (__fzfcmd) --read0 -q '(commandline)' | perl -pe 'chomp if eof' | read -lz result
       and commandline -- $result
     else
-      history | eval (__fzfcmd) -q '(commandline)' | read -l result
+      history | uniq | eval (__fzfcmd) -q '(commandline)' | read -l result
       and commandline -- $result
     end
   end
-  # commandline -f repaint
+  commandline -f repaint
 end

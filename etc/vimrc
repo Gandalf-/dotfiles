@@ -72,7 +72,7 @@
 
   " vimux
     let g:VimuxOrientation = "h"
-    let g:VimuxHeight = "50"
+    let g:VimuxHeight = "33"
 
   " fzf
     " Customize fzf colors to match your color scheme
