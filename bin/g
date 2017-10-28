@@ -49,6 +49,14 @@ while [[ $1 ]]; do
         common::do "git clean -fd"
         ;;
 
+    cf)
+      branch="$(
+        git branch -q \
+          | fzf)"
+      common::required_help "$branch" "g cf [branch]"
+      common::do git checkout "$branch"; shift
+      ;;
+
     cs)
       branch="$(
         git branch -q \
@@ -97,7 +105,8 @@ while [[ $1 ]]; do
     cn : commit --amend --no-edit
     cb : checkout -b (branch)
     cl : checkout (remote branch) -b (local branch)
-    cs : attempt to checkout branch by bug name [work only]
+    cf : attempt to checkout branch by bug name using fzf
+    cs : attempt to checkout branch by bug name
     cm : commit -m (message)
     co : checkout (file)
     d  : diff changes [output_file]

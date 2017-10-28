@@ -19,7 +19,7 @@ function fzf-file-widget -d "List files and folders"
     eval "$FZF_CTRL_T_COMMAND | "(__fzfcmd)' -m --query "'$fzf_query'"' | while read -l r; set result $result $r; end
   end
   if [ -z "$result" ]
-    # commandline -f repaint
+    commandline -f repaint
     return
   else
     # Remove last token from commandline.
@@ -29,6 +29,6 @@ function fzf-file-widget -d "List files and folders"
     commandline -it -- (string escape $i)
     commandline -it -- ' '
   end
-  # commandline -f repaint
+  commandline -f repaint
 end
 
