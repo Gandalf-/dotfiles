@@ -1,2 +1,2 @@
 #!/bin/sh
-tmux attach || tmux
+tmux attach || tmux new -s main
