@@ -13,7 +13,7 @@ set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 # Abbreviations
 if status --is-interactive
 
-  if test $fish_version -ge 220; 
+  if test $fish_version -ge 220;
     set -g fish_user_abbreviations
     abbr --add bash b
     abbr --add ls   l
@@ -49,12 +49,13 @@ if test "$at_work"
   end
 
 # local personal
-else if test -d ~/Documents/DotFiles
-  set scripts ~/Documents/DotFiles
+else if test -d /usr/local/tmp/DotFiles
+  set scripts /usr/local/tmp/DotFiles
+  set -gx PAGER /usr/local/bin/less
 
 # personal
 else if test -d ~/google_drive
-  set wiki_loc ~/google_drive/index.md 
+  set wiki_loc ~/google_drive/index.md
   set scripts  ~/google_drive/personal/share/Public/DotFiles
 
 # temporary
@@ -133,10 +134,10 @@ set __fish_git_prompt_char_upstream_ahead '+'
 set __fish_git_prompt_char_upstream_behind '-'
 
 # colorful man pages
-set -x LESS_TERMCAP_mb (printf "\033[01;31m")  
-set -x LESS_TERMCAP_md (printf "\033[01;31m")  
-set -x LESS_TERMCAP_me (printf "\033[0m")  
-set -x LESS_TERMCAP_se (printf "\033[0m")  
-set -x LESS_TERMCAP_so (printf "\033[01;44;33m")  
-set -x LESS_TERMCAP_ue (printf "\033[0m")  
-set -x LESS_TERMCAP_us (printf "\033[01;32m") 
+set -x LESS_TERMCAP_mb (printf "\033[01;31m")
+set -x LESS_TERMCAP_md (printf "\033[01;31m")
+set -x LESS_TERMCAP_me (printf "\033[0m")
+set -x LESS_TERMCAP_se (printf "\033[0m")
+set -x LESS_TERMCAP_so (printf "\033[01;44;33m")
+set -x LESS_TERMCAP_ue (printf "\033[0m")
+set -x LESS_TERMCAP_us (printf "\033[01;32m")

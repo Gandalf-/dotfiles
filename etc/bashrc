@@ -214,3 +214,5 @@ EOF
 			j "$(pwd) ${*}"
 		fi
 	}
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
