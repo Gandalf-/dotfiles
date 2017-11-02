@@ -104,6 +104,7 @@ wizard_install_lua() {
 
   compile and install lua 5.3.3
   "
+  common::sudo apt install gcc build-essential libreadline-dev
 
   echo "installing lua"
   common::do cd /tmp/
@@ -116,6 +117,18 @@ wizard_install_lua() {
 
   common::do cd -
   echo "done"
+}
+
+wizard_install_fish() {
+
+  common::optional_help "$1" "
+
+  install fish from the official repository so we get the most recent version
+  "
+
+  common::sudo apt-add-repository ppa:fish-shell/release-2
+  common::sudo apt-get update
+  common::sudo apt-get install -y fish
 }
 
 wizard_install_docker() {

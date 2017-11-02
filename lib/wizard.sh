@@ -27,9 +27,44 @@ wizard_do_transcode_movies() {
   return $#
 }
 
+wizard_do_dev-configure() {
+
+  common::sudo apt update
+  common::sudo apt upgrade
+  common::sudo apt install htop git python-pip tmux silversearcher-ag
+
+  wizard_install_fish
+  wizard_install_git
+  wizard_build_vim
+
+}
+
+wizard_do_sync-time() {
+
+  sudo service ntp stop
+  sudo ntpd -gq
+  sudo service ntp start
+}
+
 wizard_do_pin-to-home() {
 
   [[ ! -z "$*" ]] && ln -s "$@" ~/;
+}
+
+wizard_do_chromebook_swap-search-escape() {
+
+  if common::program-exists xcape; then
+    common::do xcape -e 'Super_L:Escape'
+
+  else
+    common::do cd /tmp/
+    ! [[ -d /tmp/xcape ]] \
+      && common::do git clone https://github.com/alols/xcape
+    common::do cd -
+    common::do cd /tmp/xcape
+    common::do make
+    common::sudo make install
+  fi
 }
 
 wizard_show_largest-packages() {
@@ -442,18 +477,21 @@ wizard_build_vim () {
   echo "installing vim"
   wizard install lua
 
-	common::sudo apt-get build-dep vim-gnome
-	common::sudo apt-get install \
+  common::sudo apt-get build-dep vim-gnome
+  common::sudo apt-get install \
     libncurses5-dev libgnome2-dev libgnomeui-dev \
-		libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
-		libcairo2-dev libx11-dev libxpm-dev libxt-dev
+    libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
+    libcairo2-dev libx11-dev libxpm-dev libxt-dev \
+    silversearcher-ag python-pip
+
+  common::sudo -H pip install pylint flake8
 
   common::do cd /tmp/
   common::do wget -N 'https://github.com/vim/vim/archive/master.zip'
   common::do unzip master.zip
   common::do cd vim-master
 
-	common::do ./configure \
+  common::do ./configure \
     --with-features=huge \
     --with-lua-prefix=/usr/local \
     --with-lua-jit=yes \
@@ -469,8 +507,8 @@ wizard_build_vim () {
     --enable-cscope \
     --prefix=/usr
 
-	common::do make -j 4
-	common::sudo make install
+  common::do make -j 4
+  common::sudo make install
   echo "done"
 }
 
