@@ -10,7 +10,7 @@ wizard_install_dot-files() {
   common::do mkdir -p "$HOME"/.config/fish
 
   link() {
-    common::do ln -sf "${root}/$1" "${HOME}/$2"
+    common::do ln -sf "$(readlink -e "${root}/$1")" "${HOME}/$2"
   }
 
   link etc/config.fish         .config/fish/config.fish
