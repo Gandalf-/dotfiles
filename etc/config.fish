@@ -47,7 +47,7 @@ if test "$at_work"
 
 # chrome os native
 else if test "$at_cros"
-  set scripts /usr/local/tmp/DotFiles
+  set scripts /usr/local/home/DotFiles
   set -gx PAGER /usr/local/bin/less
   set -gx TERM  screen
 
