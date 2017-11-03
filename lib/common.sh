@@ -23,6 +23,17 @@ common::debug() {
   (( "$DEBUG" )) && eval "$*"
 }
 
+common::clone() {
+
+  common::required_help "$2" "[target] [location]"
+
+  local target="$1"
+  local location="$2"
+
+  [[ -d "$location" ]] || \
+    common::do git clone --depth 1 "$target" "$location"
+}
+
 common::required_help() {
   # produce help message when $1 is required
 

@@ -44,6 +44,19 @@ wizard_install_apt() {
   return $#
 }
 
+wizard_install_autojump() {
+
+  common::optional_help "$1" "
+
+  install autojump
+  "
+  common::clone git://github.com/joelthelion/autojump.git /tmp/autojump
+
+  common::do cd /tmp/autojump
+  common::do ./install.py
+  common::do cd -
+}
+
 wizard_install_git() {
 
   common::optional_help "$1" "

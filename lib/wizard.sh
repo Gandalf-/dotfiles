@@ -61,13 +61,12 @@ wizard_do_chromebook_swap-search-escape() {
     common::do xcape -e 'Super_L:Escape'
 
   else
-    common::do cd /tmp/
-    ! [[ -d /tmp/xcape ]] \
-      && common::do git clone https://github.com/alols/xcape
-    common::do cd -
+    common::clone https://github.com/alols/xcape /tmp/xcape
+
     common::do cd /tmp/xcape
     common::do make
     common::sudo make install
+    common::do cd -
   fi
 }
 
@@ -157,25 +156,31 @@ wizard_do_first-time-install_small() {
 }
 
 if common::program-exists 'insync-headless'; then
-  wizard_do_insync_start() {
+  wizard_insync_start() {
     insync-headless start
   }
-  wizard_do_insync_pause-syncing() {
+  wizard_insync_manage-selective-sync() {
+    insync-headless manage_selective_sync austin.voecks@gmail.com
+  }
+  wizard_insync_reject-all-new-shares() {
+    insync-headless reject_all_new_shares austin.voecks@gmail.com
+  }
+  wizard_insync_pause-syncing() {
     insync-headless pause_syncing
   }
-  wizard_do_insync_resume-syncing() {
+  wizard_insync_resume-syncing() {
     insync-headless resume_syncing
   }
-  wizard_do_insync_retry-errors() {
+  wizard_insync_retry-errors() {
     insync-headless retry_errors
   }
-  wizard_do_insync_status() {
+  wizard_insync_status() {
     insync-headless get_status
   }
-  wizard_do_insync_errors() {
+  wizard_insync_errors() {
     insync-headless get_errors
   }
-  wizard_do_insync_sync-progress() {
+  wizard_insync_sync-progress() {
     insync-headless get_sync_progress
   }
 fi
