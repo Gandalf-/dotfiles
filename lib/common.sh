@@ -12,7 +12,7 @@ export PLATFORM
 
 common::program-exists() {
 
-  which "$1" >/dev/null
+  which "$1" >/dev/null 2>/dev/null
 }
 
 common::contains() {
@@ -88,6 +88,12 @@ common::sudo() {
   # print what we're about to do, then sudo do it
 
   common::do "sudo" "$@"
+}
+
+common::echo() {
+  local green="\033[01;32m" normal="\033[00m"
+
+  printf "%b%s%b\n" "$green" "$@" "$normal"
 }
 
 common::confirm() {

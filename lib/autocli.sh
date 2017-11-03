@@ -120,11 +120,13 @@ autocli::make_reflective_functions() {
     function_body+="*)
       if [[ \$usage ]]; then
         echo \"\$usage\"
+        exit 0
       else
         echo
         echo \"\$__name\"
         echo \"\$__usage\"
         echo
+        exit 0
       fi
       ;;
     "

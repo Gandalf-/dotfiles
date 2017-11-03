@@ -15,13 +15,13 @@ wizard_do_transcode_movies() {
 
   echo "Processing: $*"
   for file in "$@"; do
-    ffmpeg -hide_banner -i "$file" \
+    common::do ffmpeg -hide_banner -i "$file" \
       -c:v libx264 -crf 19 -preset "$preset" -strict -2 \
       -c:a aac -b:a 192k -ac 2 "${file%.*}.mp4" \
       || common::error "failed on \"$file\". Giving up"
 
-    echo "Waiting..."; sleep 5
-    rm "$file"
+    common::echo "Waiting..."; sleep 5
+    common::do rm "$file"
   done
 
   return $#
@@ -29,26 +29,30 @@ wizard_do_transcode_movies() {
 
 wizard_do_dev-configure() {
 
-  common::sudo apt update
-  common::sudo apt upgrade
-  common::sudo apt install htop git python-pip tmux silversearcher-ag
+  if common::program-exists 'apt'; then
+    common::sudo apt update
+    common::sudo apt upgrade
+    common::sudo apt install htop python-pip tmux silversearcher-ag
 
-  wizard_install_fish
-  wizard_install_git
-  wizard_build_vim
+    wizard_install_git
+    wizard_install_fish
+    wizard_build_vim
 
+  else
+    common::echo "Can't find apt!"
+  fi
 }
 
 wizard_do_sync-time() {
 
-  sudo service ntp stop
-  sudo ntpd -gq
-  sudo service ntp start
+  common::sudo service ntp stop
+  common::sudo ntpd -gq
+  common::sudo service ntp start
 }
 
 wizard_do_pin-to-home() {
 
-  [[ ! -z "$*" ]] && ln -s "$@" ~/;
+  [[ ! -z "$*" ]] && common::do ln -s "$@" ~/;
 }
 
 wizard_do_chromebook_swap-search-escape() {
@@ -647,12 +651,13 @@ $__usage
 "
 '
 meta_head[wizard]='
-common::required_help "$1" "(-q | -s)
+common::required_help "$1" "(-q | -s | -e)
 $__usage
 "
 '
 meta_body[wizard]='
 -q|--quiet)  QUIET=1  ;;
 -s|--silent) SILENT=1 ;;
+-e|--echo)   ECHO=1 ;;
 '
 }

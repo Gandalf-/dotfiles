@@ -8,6 +8,7 @@ set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
 
 # where are we?
 test (hostname) = 'wkstn-avoecks'; and set at_work yes
+test (whoami)   = 'chronos';       and set at_cros yes
 set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 
 # Abbreviations
@@ -39,19 +40,16 @@ if test "$at_work"
   set PATH ~/scripity-scripts/bin $PATH
 
   function fl
-    if echo (pwd) | grep -q "onefs";
-      cd (echo (pwd) | sed -e "s/onefs/twofs/")
-
-    else if echo (pwd) | grep -q "twofs"
-      cd (echo (pwd) | sed -e "s/twofs/onefs/")
+    if      echo (pwd) | grep -q "onefs"; cd (echo (pwd) | sed -e "s/onefs/twofs/")
+    else if echo (pwd) | grep -q "twofs"; cd (echo (pwd) | sed -e "s/twofs/onefs/")
     end
-
   end
 
-# local personal
-else if test -d /usr/local/tmp/DotFiles
+# chrome os native
+else if test "$at_cros"
   set scripts /usr/local/tmp/DotFiles
   set -gx PAGER /usr/local/bin/less
+  set -gx TERM  screen
 
 # personal
 else if test -d ~/google_drive
