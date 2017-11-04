@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function fzf-history-widget -d "Show command history"
   set -q FZF_TMUX_HEIGHT; or set FZF_TMUX_HEIGHT 40%

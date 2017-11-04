@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function __fzfcmd
   set -q FZF_TMUX; or set FZF_TMUX 0

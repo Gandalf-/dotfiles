@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function fish_user_key_bindings
   bind \e. 'history-token-search-backward'
@@ -14,7 +15,8 @@ function fish_user_key_bindings
   bind -M default E end-of-line
   bind -M default B beginning-of-line
 
-  bind -M insert \ci fzf-file-widget
+  bind -M insert \ci fzf-complete
+  bind -M insert \ei fzf-file-widget
   bind -M insert \cr fzf-history-widget
   bind -M insert \ec fzf-cd-widget
   bind -M insert \eb cb

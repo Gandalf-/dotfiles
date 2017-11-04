@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function j
   set new_path (autojump $argv)

@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function k
   fzf | read -l result

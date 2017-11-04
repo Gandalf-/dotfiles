@@ -30,8 +30,8 @@ wizard_do_transcode_movies() {
 wizard_do_dev-configure() {
 
   if common::program-exists 'apt'; then
-    common::sudo apt update
-    common::sudo apt upgrade
+    common::sudo apt update -y
+    common::sudo apt upgrade -y
     common::sudo apt install htop python-pip tmux silversearcher-ag
 
     wizard_install_git
@@ -64,7 +64,7 @@ wizard_do_chromebook_swap-search-escape() {
     common::clone https://github.com/alols/xcape /tmp/xcape
 
     common::do cd /tmp/xcape
-    common::do make
+    common::do make -j $NUM_CPUS
     common::sudo make install
     common::do cd -
   fi
@@ -486,12 +486,12 @@ wizard_build_vim () {
   echo "installing vim"
   wizard install lua
 
-  common::sudo apt-get build-dep vim-gnome
+  # common::sudo apt-get build-dep vim-gnome
   common::sudo apt-get install \
     libncurses5-dev libgnome2-dev libgnomeui-dev \
     libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
     libcairo2-dev libx11-dev libxpm-dev libxt-dev \
-    silversearcher-ag python-pip
+    silversearcher-ag python-pip unzip
 
   common::sudo -H pip install pylint flake8
 
@@ -516,7 +516,7 @@ wizard_build_vim () {
     --enable-cscope \
     --prefix=/usr
 
-  common::do make -j 4
+  common::do make -j $NUM_CPUS
   common::sudo make install
   echo "done"
 }
@@ -664,5 +664,7 @@ meta_body[wizard]='
 -q|--quiet)  QUIET=1  ;;
 -s|--silent) SILENT=1 ;;
 -e|--echo)   ECHO=1 ;;
+
+NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
 '
 }

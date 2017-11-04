@@ -265,8 +265,6 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Miscellaneous
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  " help
-    autocmd FileType python set iskeyword+=.
 
   " Strip whitespaces on save
     fun! <SID>StripTrailingWhitespaces()

@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function __fzf_get_dir -d 'Find the longest existing filepath from input string'
   set dir $argv

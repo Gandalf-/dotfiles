@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function cb
   # cd backwards

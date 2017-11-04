@@ -1,3 +1,4 @@
+# vim: set syntax=bash
 
 function fzf-cd-widget -d "Change directory"
   set -l commandline (__fzf_parse_commandline)

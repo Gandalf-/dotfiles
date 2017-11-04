@@ -25,23 +25,17 @@ wizard_install_dot-files() {
   link lib/fish                .config/fish/functions
 }
 
-wizard_install_apt() {
-  common::required_help "$1" "
+wizard_pkg_install() {
 
-  install distribution packages
-  "
-  case $PLATFORM in
-    Linux)
-      if which apt >/dev/null; then
-        common::sudo apt install "$@"
-      fi
-      ;;
-    *)
-      common::error "Unsupported platform \"$PLATFORM\""
-      ;;
-  esac
+  if common::program-exists apt; then
+    common::sudo apt install -y "$@"
 
-  return $#
+  elif common::program-exists crew; then
+    common::do crew install "$@"
+
+  else
+    common::error "Don't know how to install packages on this system"
+  fi
 }
 
 wizard_install_autojump() {
@@ -92,7 +86,7 @@ wizard_install_java() {
 
   install the Oracle JDK
   "
-  common::sudo add-apt-repository ppa:webupd8team/java
+  common::sudo add-apt-repository -y ppa:webupd8team/java
   common::sudo apt update
   common::sudo apt install oracle-java8-installer
 }
@@ -125,7 +119,7 @@ wizard_install_lua() {
   common::do wget -N 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
   common::do tar zxvf lua-5.3.3.tar.gz
   common::do cd lua-5.3.3
-  common::do make linux
+  common::do make -j $NUM_CPUS linux
   common::sudo make install
 
   common::do cd -
@@ -139,7 +133,7 @@ wizard_install_fish() {
   install fish from the official repository so we get the most recent version
   "
 
-  common::sudo apt-add-repository ppa:fish-shell/release-2
+  common::sudo apt-add-repository -y ppa:fish-shell/release-2
   common::sudo apt-get update
   common::sudo apt-get install -y fish
 }
@@ -152,7 +146,7 @@ wizard_install_docker() {
   "
   common::do curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
     | sudo apt-key add -
-  common::sudo add-apt-repository \
+  common::sudo add-apt-repository -y \
     "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
   common::sudo apt-get update
   common::do apt-cache policy docker-ce
