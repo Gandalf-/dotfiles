@@ -658,13 +658,13 @@ $__usage
 meta_head[wizard]='
 common::required_help "$1" "(-q | -s | -e)
 $__usage
+
+NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
 "
 '
 meta_body[wizard]='
 -q|--quiet)  QUIET=1  ;;
 -s|--silent) SILENT=1 ;;
 -e|--echo)   ECHO=1 ;;
-
-NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
 '
 }
