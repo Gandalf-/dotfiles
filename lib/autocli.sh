@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 # auto_cli
 #   generates intermediate functions for cli scripts
@@ -27,7 +27,11 @@ autocli::create() {
 
   # pull in all the sources since we need them now
   for source in "${sources[@]}"; do
-    [[ -f "$source" ]] && source "$source"
+    if [[ -f "$source" ]]; then
+      source "$source"
+    else
+      echo "warn: $source not found"
+    fi
   done
 
   autocli::make_reflective_functions

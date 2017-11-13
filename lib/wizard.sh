@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 # wizard
 #   The main wizard library. Functions are defined here, processed by
@@ -8,7 +8,8 @@
 
 __name=""
 
-common::program-exists 'ffmpeg' &&
+
+common::require 'ffmpeg' &&
 wizard_do_transcode_movies() {
   #
   local preset=slow
@@ -27,33 +28,44 @@ wizard_do_transcode_movies() {
   return $#
 }
 
+
+common::require "apt" &&
 wizard_do_dev-configure() {
 
-  if common::program-exists 'apt'; then
-    common::sudo apt update -y
-    common::sudo apt upgrade -y
-    common::sudo apt install htop python-pip tmux silversearcher-ag
+  common::sudo apt update -y
+  common::sudo apt upgrade -y
+  common::sudo apt install htop python-pip tmux silversearcher-ag
 
-    wizard_install_git
-    wizard_install_fish
-    wizard_build_vim
-
-  else
-    common::echo "Can't find apt!"
-  fi
+  wizard_install_git
+  wizard_install_fish
+  wizard_build_vim
 }
 
+
+common::require 'service' 'ntpd' &&
 wizard_do_sync-time() {
+
+  common::optional_help "$1" "
+
+  synchonrize the system clock with NTP
+  "
 
   common::sudo service ntp stop
   common::sudo ntpd -gq
   common::sudo service ntp start
 }
 
+
 wizard_do_pin-to-home() {
 
-  [[ ! -z "$*" ]] && common::do ln -s "$@" ~/;
+  common::required_help "$1" "[target]
+
+  create a symbolic link in the home directory to [target]
+  "
+
+  [[ $1 ]] && common::do ln -s "$1" ~/;
 }
+
 
 wizard_do_chromebook_swap-search-escape() {
 
@@ -70,6 +82,8 @@ wizard_do_chromebook_swap-search-escape() {
   fi
 }
 
+
+common::require 'dpkg' &&
 wizard_show_largest-packages() {
 
   common::optional_help "$1" "
@@ -81,6 +95,7 @@ wizard_show_largest-packages() {
   dpkg-query -Wf '${Installed-Size}\t${Package}\n' \
     | sort -n
 }
+
 
 wizard_show_progress() {
 
@@ -98,8 +113,8 @@ wizard_show_progress() {
   return $#
 }
 
+
 wizard_show_history() {
-  #
 
   common::optional_help "$1" "(amount) (range)
 
@@ -121,7 +136,9 @@ wizard_show_history() {
   return 0
 }
 
+
 wizard_show_disk() {
+
   common::optional_help "$1" "
 
   show disk and partition usage
@@ -130,6 +147,7 @@ wizard_show_disk() {
   df -h
 }
 
+
 wizard_show_weather() {
 
   curl http://wttr.in/~"${1:-Seattle}";
@@ -137,12 +155,15 @@ wizard_show_weather() {
   return 0
 }
 
+
 wizard_start_http-server() {
 
   python -m SimpleHTTPServer
   return 0
 }
 
+
+common::require "apt" &&
 wizard_do_first-time-install_small() {
   # install basic programs
 
@@ -155,7 +176,8 @@ wizard_do_first-time-install_small() {
     silversearcher-ag
 }
 
-if common::program-exists 'insync-headless'; then
+
+if common::require 'insync-headless'; then
   wizard_insync_start() {
     insync-headless start
   }
@@ -185,6 +207,7 @@ if common::program-exists 'insync-headless'; then
   }
 fi
 
+
 wizard_do_frequencies() {
 
   common::required_help "$1" "$__name [amount]"
@@ -192,6 +215,7 @@ wizard_do_frequencies() {
   sort | uniq -c | sort -nr | head -n "$1";
   return 1
 }
+
 
 wizard_do_ratio() {
 
@@ -210,11 +234,14 @@ wizard_do_ratio() {
   return 1
 }
 
+
 wizard_do_parse_json() {
 
   python -m json.tool
 }
 
+
+common::require "xmllint" &&
 wizard_do_parse_xml() {
 
   common::required_help "$1" "< file.xml
@@ -224,6 +251,7 @@ wizard_do_parse_xml() {
 
   xmllint --format -
 }
+
 
 wizard_add_user () {
 
@@ -243,6 +271,8 @@ wizard_add_user () {
   return 1
 }
 
+
+common::require 'dpkg' &&
 wizard_clean_boot() {
 
   common::optional_help "$1" "
@@ -260,6 +290,8 @@ wizard_clean_boot() {
   return $#
 }
 
+
+common::require 'dpkg' &&
 wizard_clean_apt() {
 
   common::optional_help "$1" "
@@ -272,6 +304,7 @@ wizard_clean_apt() {
     | xargs sudo dpkg --purge \
     || common::color_error "Looks like there's nothing to clean!"
 }
+
 
 wizard_clean_files() {
 
@@ -326,125 +359,6 @@ wizard_clean_files() {
   return 1
 }
 
-if common::program-exists 'tmux'; then
-  wizard_make_session() {
-    common::optional_help "$1" "[name]
-
-  create a new tmux session and move to it
-    "
-
-    name="${*:-$RANDOM}"
-    tmux new -d -s "$name"
-    tmux switch-client -t "$name"
-    return $#
-  }
-
-  wizard_do_layout_vertical() {
-    tmux select-layout even-vertical
-  }
-  wizard_do_layout_horizontal() {
-    tmux select-layout even-horizontal
-  }
-  wizard_do_layout_tiled() {
-    tmux select-layout tiled
-  }
-fi
-
-wizard_make_file_shell() {
-  cat > "$1".sh << EOF
-#!/bin/bash
-
-main() {
-
-  exit 0
-}
-
-main "\$@"
-EOF
-}
-
-
-wizard_make_file_python() {
-  cat > "$1.py" << EOF
-#!/usr/bin/python
-
-import sys
-
-
-def main(_):
-    ''' list of strings -> none
-    '''
-    pass
-
-
-if __name__ == '__main__':
-    main(sys.argv)
-EOF
-}
-
-wizard_make_file_c() {
-  cat > "$1".c << EOF
-#include <stdio.h>
-
-int main(int argc, char *argv[]) {
-
-  return 0;
-}
-EOF
-}
-
-wizard_make_file_cpp() {
-  cat > "$1".cpp << EOF
-#include <iostream>
-
-int main(int argc, char const *argv[]) {
-
-  return 0;
-}
-EOF
-}
-
-wizard_make_file_java() {
-  cat > "$1".java << EOF
-public class $1 {
-
-  public static void main(String[] argv) {
-
-    System.out.println("Hello world");
-  }
-}
-EOF
-}
-
-wizard_make_project_python() {
-  common::do mkdir "$1"
-  common::do cd "$1"
-  wizard_make_file_python "$1"
-  return 1
-}
-
-wizard_make_project_c() {
-  common::do mkdir "$1"
-  common::do cd "$1"
-  wizard_make_file_c "$1"
-  touch "$1".h
-  mmake -l c -o "$1"
-}
-
-wizard_make_project_cpp() {
-  common::do mkdir "$1"
-  common::do cd "$1"
-  wizard_make_file_cpp "$1"
-  touch "$1".h
-  mmake -l cpp -o "$1"
-}
-
-wizard_make_project_java() {
-  common::do mkdir "$1"
-  common::do cd "$1"
-  wizard_make_file_java "$1"
-  mmake -l java -o "$1"
-}
 
 wizard_update_platform() {
   # update everything, whatever that means
@@ -457,6 +371,7 @@ wizard_update_platform() {
   esac
 }
 
+common::require "apt" &&
 wizard_update_apt() {
 
   common::optional_help "$1" "
@@ -468,6 +383,8 @@ wizard_update_apt() {
   common::sudo apt-get autoremove
 }
 
+
+common::require "pip" &&
 wizard_update_pip() {
 
   common::optional_help "$1" "
@@ -480,11 +397,13 @@ wizard_update_pip() {
     | xargs -n1 sudo -H pip install -U
 }
 
+
+common::require "wget" "pip" "apt" &&
 wizard_build_vim () {
-  # compile and install the lastest vim
+  # compile and install the latest vim
 
   echo "installing vim"
-  wizard install lua
+  wizard_install_lua
 
   # common::sudo apt-get build-dep vim-gnome
   common::sudo apt-get install \
@@ -521,6 +440,7 @@ wizard_build_vim () {
   echo "done"
 }
 
+
 wizard_open() {
 
   common::required_help "$1" "
@@ -550,6 +470,7 @@ wizard_open() {
   done
   return $#
 }
+
 
 wizard_bookmark() {
 
@@ -594,6 +515,8 @@ wizard_bookmark() {
   esac
 }
 
+
+common::require "sshd" &&
 wizard_start_sshd() {
 
   common::optional_help "$1" "
@@ -605,9 +528,10 @@ wizard_start_sshd() {
   common::sudo /usr/sbin/sshd
 }
 
+
 wizard_quick_shell() {
 
-  common::optional "$1" "
+  common::optional_help "$1" "
 
   open a throw away shell file
   "
@@ -616,9 +540,10 @@ wizard_quick_shell() {
   vim quick.sh
 }
 
+
 wizard_quick_python() {
 
-  common::optional "$1" "
+  common::optional_help "$1" "
 
   open a throw away python file
   "
@@ -627,6 +552,7 @@ wizard_quick_python() {
   vim quick.py
   common::do cd -
 }
+
 
 wizard_quick_c()
 {
@@ -658,9 +584,9 @@ $__usage
 meta_head[wizard]='
 common::required_help "$1" "(-q | -s | -e)
 $__usage
+"
 
 NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
-"
 '
 meta_body[wizard]='
 -q|--quiet)  QUIET=1  ;;

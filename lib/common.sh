@@ -10,6 +10,25 @@ PLATFORM="$(uname)"
 
 export PLATFORM
 
+common::require() {
+
+  # string, ... -> bool
+
+  while [[ $1 ]]; do
+    case $1 in
+
+      *)
+        if ! common::program-exists "$1"; then
+          return 1
+        fi
+        ;;
+    esac
+    shift
+  done
+
+  return 0
+}
+
 common::program-exists() {
 
   which "$1" >/dev/null 2>/dev/null
