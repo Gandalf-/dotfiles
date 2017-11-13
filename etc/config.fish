@@ -32,33 +32,31 @@ function  ....; builtin cd ../../../;command ls --color=auto ; end
 
 # workstation
 if test "$at_work"
-  set     wiki_loc ~/cribshome/wiki/index.md
-  set     scripts  ~/cribshome/DotFiles
-  set -gx DIFFDIR  ~/cribshome/diffs/
-  set -gx SCRIPITY /mnt/ssd/
+  set     wiki_loc  ~/cribshome/wiki/index.md
+  set     scripts   ~/cribshome/DotFiles
+  set -gx DIFFDIR   ~/cribshome/diffs/
+  set -gx SCRIPITY  /mnt/ssd/
+  set -gx DIMENSION work
 
   set PATH ~/scripity-scripts/bin $PATH
-
-  function fl
-    if      echo (pwd) | grep -q "onefs"; cd (echo (pwd) | sed -e "s/onefs/twofs/")
-    else if echo (pwd) | grep -q "twofs"; cd (echo (pwd) | sed -e "s/twofs/onefs/")
-    end
-  end
 
 # chrome os native
 else if test "$at_cros"
   set scripts /usr/local/home/DotFiles
   set -gx PAGER /usr/local/bin/less
   set -gx TERM  screen
+  set -gx DIMENSION cros
 
 # personal
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/index.md
   set scripts  ~/google_drive/personal/share/Public/DotFiles
+  set -gx DIMENSION ubuntu
 
 # temporary
 else if test -d /tmp/DotFiles
-  set scripts /tmp/DotFiles
+  set -gx DIMENSION unknown
+
 end
 
 # Languages

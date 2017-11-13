@@ -581,6 +581,7 @@ common::required_help "$1" "[language] [project name]
 $__usage
 "
 '
+
 meta_head[wizard]='
 common::required_help "$1" "(-q | -s | -e)
 $__usage
@@ -588,6 +589,7 @@ $__usage
 
 NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
 '
+
 meta_body[wizard]='
 -q|--quiet)  QUIET=1  ;;
 -s|--silent) SILENT=1 ;;

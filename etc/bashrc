@@ -1,18 +1,37 @@
 #~/.bashrc: executed by bash(1) for non-login shells.
 
-# If not running interactively, don't do anything
-case $- in *i*) ;; *) return;; esac
-
 # where are we?
-at_work=0; [[ $(hostname) == 'wkstn-avoecks' ]] && at_work=1
+if [[ $(hostname) == 'wkstn-avoecks' ]]; then
+  export DIMENSION=work
 
-if (( at_work )); then
 	export QA=/usr/local/qa
 	export TOOLS=/usr/local/tools
 	export QALIB=$QA/lib
 	export PERL5LIB=$QA/lib
 	export PATH=$QA/bin:$QA/tests:$QA/linux/bin:$TOOLS:$PATH
+
+  scripts=~/cribshome/DotFiles/
+
+elif [[ $(whoami) == 'chronos' ]]; then
+  export DIMENSION=cros
+
+  scripts=/usr/local/home/DotFiles/bin/
+
+elif [[ -d ~/google_drive ]]; then
+  export DIMENSION=ubuntu
+
+  scripts=~/google_drive/personal/share/Public/DotFiles/
+
+else
+  export DIMENSION=unknown
+
 fi
+
+[[ $scripts ]] && \
+  set PATH ~/scripity-scripts/bin $PATH
+
+# If not running interactively, don't do anything else
+case $- in *i*) ;; *) return;; esac
 
 # colored man pages!
   export LESS_TERMCAP_mb=$'\E[01;31m'
@@ -43,21 +62,6 @@ fi
   export PROMPT_DIRTRIM=5
   bind '"\e[A": history-search-backward'
   bind '"\e[B": history-search-forward'
-
-# scripts.sh
-  if (( at_work )); then
-    scripts=~/cribshome/DotFiles
-
-  elif [[ -d ~/google_drive ]]; then
-    scripts=~/google_drive/personal/share/Public/DotFiles/
-
-  else
-    scripts=/tmp/DotFiles
-  fi
-
-  if [[ ! -z "$scripts" ]]; then
-		export PATH=$scripts/bin:"${PATH}"
-  fi
 
 # functions
 _prompt() {

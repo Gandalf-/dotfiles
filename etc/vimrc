@@ -31,6 +31,7 @@
   let g:tex_conceal = ""  " Don't hide LaTeX symbols
   nnoremap <SPACE> <Nop>
   let g:mapleader = " "
+  let dimension=$DIMENSION
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Plugins
@@ -97,23 +98,28 @@
     let g:vimwiki_global_ext     = 0
     let g:vimwiki_folding        = 'custom'
 
-    if hostname == "wkstn-avoecks"
+    if dimension == "work"
       let g:vimwiki_root = '~/vimwiki'
       let g:vimwiki_list = [{
             \ 'path': '~/vimwiki/',
             \ 'syntax': 'markdown',
             \ 'ext': '.md'}]
 
-    else
+    elseif dimension == "ubuntu"
       let g:vimwiki_root = '~/google_drive'
       let g:vimwiki_list = [{
             \ "path": '~/google_drive/',
-            \ "path_html": '/tmp/html/',
             \ "syntax": 'markdown',
-            \ "ext": '.md',
-            \ "css_file": '~/.vim/bundle/vimwiki/autoload/vimwiki/style.css',
-            \ "custom_wiki2html": '~/google_drive/code/shell/wiki2html.sh', }]
+            \ "ext": '.md',}]
+
+    elseif dimension == "cros"
+      let g:vimwiki_root = '/usr/local/home/google_drive'
+      let g:vimwiki_list = [{
+            \ "path": '/usr/local/home/google_drive/',
+            \ "syntax": 'markdown',
+            \ "ext": '.md',}]
     endif
+
     nmap <Leader>wn <Plug>VimwikiNextLink
     nmap <Leader>wp <Plug>VimwikiPrevLink
 
