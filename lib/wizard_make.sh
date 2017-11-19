@@ -24,10 +24,13 @@ wizard_make_tmpfs() {
 
   local target="$1"
 
+  common::do mkdir -p "$target"
   common::sudo \
     mount -t tmpfs \
     -o size=4G,nr_inodes=10k,mode=700,uid=1000,gid=1000 \
     tmpfs_"$(basename $target)" "$target"
+
+  return $#
 }
 
 

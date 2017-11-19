@@ -113,9 +113,9 @@
             \ "ext": '.md',}]
 
     elseif dimension == "cros"
-      let g:vimwiki_root = '/usr/local/home/google_drive'
+      let g:vimwiki_root = '/usr/local/home/google_drive/personal/wiki/'
       let g:vimwiki_list = [{
-            \ "path": '/usr/local/home/google_drive/',
+            \ "path": '/usr/local/home/google_drive/personal/wiki/',
             \ "syntax": 'markdown',
             \ "ext": '.md',}]
     endif

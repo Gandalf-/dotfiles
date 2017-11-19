@@ -34,6 +34,7 @@ function  ....; builtin cd ../../../;command ls --color=auto ; end
 if test "$at_work"
   set     wiki_loc  ~/cribshome/wiki/index.md
   set     scripts   ~/cribshome/DotFiles
+
   set -gx DIFFDIR   ~/cribshome/diffs/
   set -gx SCRIPITY  /mnt/ssd/
   set -gx DIMENSION work
@@ -43,6 +44,8 @@ if test "$at_work"
 # chrome os native
 else if test "$at_cros"
   set scripts /usr/local/home/DotFiles
+  set wiki_loc  /usr/local/home/google_drive/personal/wiki/index.md
+
   set -gx PAGER /usr/local/bin/less
   set -gx TERM  screen
   set -gx DIMENSION cros
@@ -51,6 +54,7 @@ else if test "$at_cros"
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/index.md
   set scripts  ~/google_drive/personal/share/Public/DotFiles
+
   set -gx DIMENSION ubuntu
 
 # temporary
@@ -79,13 +83,13 @@ end
 set -gx TMP /tmp
 
 # fzf
-if test -d ~/.vim/bundle/fzf/bin
-  set PATH ~/.vim/bundle/fzf/bin $PATH
-  source ~/.vim/bundle/fzf/shell/key-bindings.fish
-
-  set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-  set -gx FZF_DEFAULT_OPTS '--height 40% --border'
+if test -d ~/.vim/bundle/fzf.vim/bin
+  set PATH ~/.vim/bundle/fzf.vim/bin $PATH
+  # source ~/.vim/bundle/fzf.vim/shell/key-bindings.fish
 end
+
+set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
+set -gx FZF_DEFAULT_OPTS '--height 40% --border'
 
 # autojump
 if test -f ~/.autojump/share/autojump/autojump.fish

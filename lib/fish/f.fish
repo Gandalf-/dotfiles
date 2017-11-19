@@ -9,7 +9,7 @@ function f
   # f name  -> autojump name
 
   if test -z "$argv"; cd; return; end
-  
+
   set files
   set fuzzy
   set grepper
@@ -79,7 +79,7 @@ function f
 
     end
   end
-  
+
   # open, print accrued files, if any
   if test "$files"
     if test "$locate"
@@ -90,7 +90,7 @@ function f
       ls --color=auto
 
     else
-      v $files $vim_opt
+      vim $files $vim_opt
     end
   end
 end

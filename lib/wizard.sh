@@ -29,6 +29,54 @@ wizard_do_transcode_movies() {
 }
 
 
+common::require "rsync" &&
+wizard_mirror_push() {
+
+  common::optional_help "$1" "
+
+  push /usr/local changes to archive
+  "
+
+  common::do \
+    rsync --archive --update --progress \
+    /usr/local/ ~/Downloads/local
+}
+
+
+wizard_mirror_diff() {
+
+  common::optional_help "$1" "
+
+  show what would be pushed and pulled by a mirror command
+  "
+
+  common::echo "push..."
+  common::do \
+    rsync --dry-run --archive --update --verbose \
+    /usr/local/ ~/Downloads/local
+
+  common::echo ""
+  common::echo "pull..."
+  common::do \
+    rsync --dry-run --archive --update --verbose \
+    ~/Downloads/local/ /usr/local
+}
+
+
+common::require "rsync" &&
+wizard_mirror_pull() {
+
+  common::optional_help "$1" "
+
+  pull archive into /usr/local
+  "
+
+  common::do \
+    rsync --archive --update --progress \
+    ~/Downloads/local/ /usr/local
+}
+
+
 common::require "apt" &&
 wizard_do_dev-configure() {
 
