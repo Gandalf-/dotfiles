@@ -14,14 +14,6 @@ servers = (
     tls_verify = "yes";
   },
   {
-    address = "chat.freenode.net";
-    chatnet = "Freenode";
-    port = "6697";
-    use_tls = "yes";
-    tls_verify = "yes";
-    autoconnect = "yes";
-  },
-  {
     address = "irc.gamesurge.net";
     chatnet = "GameSurge";
     port = "6667";
@@ -159,7 +151,9 @@ channels = (
   { name = "#netfuze"; chatnet = "NetFuze"; autojoin = "No"; },
   { name = "#oftc"; chatnet = "OFTC"; autojoin = "No"; },
   { name = "silc"; chatnet = "SILC"; autojoin = "No"; },
-  { name = "#linux"; chatnet = "freenode"; autojoin = "yes"; },
+  { name = "##linux"; chatnet = "freenode"; autojoin = "yes"; },
+  { name = "#lesswrong"; chatnet = "freenode"; autojoin = "yes"; },
+  { name = "##security"; chatnet = "freenode"; autojoin = "yes"; },
   { name = "#bash"; chatnet = "freenode"; autojoin = "yes"; }
 );
 
