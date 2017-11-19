@@ -38,7 +38,7 @@ wizard_mirror_push() {
   "
 
   common::do \
-    rsync --archive --update --progress \
+    rsync --delete --human-readable --archive --update --progress \
     /usr/local/ ~/Downloads/local
 }
 
@@ -52,13 +52,13 @@ wizard_mirror_diff() {
 
   common::echo "push..."
   common::do \
-    rsync --dry-run --archive --update --verbose \
+    rsync --human-readable --dry-run --archive --update --verbose \
     /usr/local/ ~/Downloads/local
 
   common::echo ""
   common::echo "pull..."
   common::do \
-    rsync --dry-run --archive --update --verbose \
+    rsync --human-readable --dry-run --archive --update --verbose \
     ~/Downloads/local/ /usr/local
 }
 
@@ -72,7 +72,7 @@ wizard_mirror_pull() {
   "
 
   common::do \
-    rsync --archive --update --progress \
+    rsync --delete --human-readable --archive --update --progress \
     ~/Downloads/local/ /usr/local
 }
 

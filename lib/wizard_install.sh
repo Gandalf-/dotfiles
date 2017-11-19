@@ -22,6 +22,7 @@ wizard_install_dot-files() {
   link etc/pylintrc            .pylintrc
 
   link etc/vim/snippets        .vim/
+  link etc/irssi               .irssi
   link lib/fish                .config/fish/functions
 }
 
