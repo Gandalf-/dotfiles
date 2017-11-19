@@ -1,46 +1,81 @@
 # DotFiles
-My personal configuration files!
+
+- configuration files for *vim*, *tmux*, *bash*, *irssi*, *fish*, *pylint*, *git*. 
+- a number of scripts, described below
 
 ## g
-Super *git* wrapper.
 
-Any number of commands can be chained together, making your git workflow much
-simpler. For example, `g s d a cm 'Updating readme.md  ph`, would run the
-following commands in order, pausing for input and confirmation at each step
-
-- git status
-- git diff 
-- git add -A
-- git commit -m 'Updating readme.md'
-- git push
-
+Examples
 ```
-  g
+$ g s
+$ g dh 2
+$ g s d a cm 'Update readme' f pl - ph
+```
+
+Usage
+```
+  g - super git wrapper
     !  : toggle confirmation
     a  : add everything
     bv : branch -vv
-    bn : checkout (remote branch) -b (local branch)
+    cc : clean -nfd, confirm, clean -fd
     c  : commit
-    ca : commit amend
+    ca : commit --amend
+    cn : commit --amend --no-edit
     cb : checkout -b (branch)
-    cs : attempt to checkout branch by bug name [work only]
+    cl : checkout (remote branch) -b (local branch)
+    cf : attempt to checkout branch by bug name using fzf
+    cs : attempt to checkout branch by bug name
     cm : commit -m (message)
     co : checkout (file)
     d  : diff changes [output_file]
+    dc : diff cached changes [output_file]
     dh : diff commits [number of commits] [output_file]
     ds : diff commits [number of commits] - auto names diff [work only]
     f  : fetch
     l  : log
     ll : log graph
+    m  : merge (branch)
     s  : status
     rv : remote -vv
     ri : interactive rebase
     p  : pause
-    pl : pull [branch]
+    pl : pull --no-edit [branch]
+    pm : pull [branch]
     ph : push [branch]
     pf : push --force [branch]
 ```
 
+
+## wizard
+
+Examples
+```
+$ wizard show disk --help
+$ w s d
+$ wizard update pip --help
+$ w u p
+```
+
+Usage
+```
+wizard (-q | -s | -e)                       
+
+  add ...                                   
+  bookmark                                  
+  clean ...                                 
+  do ...                                    
+  install ...                               
+  insync ...                                
+  make ...                                  
+  mirror ...                                
+  open                                      
+  pkg ...                                   
+  quick ...                                 
+  show ...                                  
+  start ...                                 
+  update ... 
+```
 
 ## qcrypt
 Full featured command line encryption with OpenSSL
@@ -81,19 +116,3 @@ however this action is not disallowed. Likewise, attempted decryption of an
 archive without a qcrypt file extension will produce a warning but is allowed.
 This allows the user to rename archives and remove the qcrypt file extension if
 so desired. 
-
-
-## cleanup
-Smart remove duplicate and temporary file names
-
-Suppose you have the following directory structure,
-```
-$ ls -l directory
-file (1).txt
-file.txt
-data (1).csv
-program.pyc
-```
-**cleanup** will remove `file (1).txt` and `program.pyc` and rename 
-`data (1).csv` to `data.csv`. `file (1).txt ` is removed because `file.txt`
-exists.
