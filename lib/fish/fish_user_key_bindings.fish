@@ -17,6 +17,7 @@ function fish_user_key_bindings
 
   bind -M insert \ci fzf-complete
   bind -M insert \ei fzf-file-widget
+  bind -M insert \eo fzf-contents-widget
   bind -M insert \cr fzf-history-widget
   bind -M insert \ec fzf-cd-widget
   bind -M insert \eb cb
