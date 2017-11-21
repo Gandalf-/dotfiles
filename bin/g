@@ -34,6 +34,7 @@ while [[ $1 ]]; do
       "git checkout ${2:?g cn [remote] [local]} -b ${3:?g cn [remote] [local]}"
       shift; shift ;;
 
+    rh) common::do "git reset --hard HEAD" ;;
     ri) common::do "git rebase -i \"$2\""; shift ;;
     rc) common::do "git rebase --continue"; shift ;;
     cm) common::do "git commit -m \"${2:?g cm [message]}\""; shift ;;
@@ -120,6 +121,7 @@ while [[ $1 ]]; do
     m  : merge (branch)
     s  : status
     rv : remote -vv
+    rh : reset --hard HEAD
     ri : interactive rebase
     p  : pause
     pl : pull --no-edit [branch]

@@ -1,6 +1,6 @@
 [user]
-	email = austin.voecks@gmail.com
-	name = Gandalf-
+	email = austin.voecks@isilon.com
+	name = avoecks
 
 [credential]
 	helper = cache --timeout=3600

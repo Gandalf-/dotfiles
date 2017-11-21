@@ -506,7 +506,8 @@ wizard_build_vim () {
     --enable-cscope \
     --prefix=/usr
 
-  common::do make -j $NUM_CPUS
+  common::do \
+    make -j "$(getconf _NPROCESSORS_ONLN)" CFLAGS='"-oFast -march=native"'
   common::sudo make install
   echo "done"
 }
