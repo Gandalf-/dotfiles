@@ -456,7 +456,7 @@
           \A :                           \| a : jump to next error        \n
           \B :                           \| b : toggle mouse              \n
           \C :                           \| c :                           \n
-          \D :                           \| d : file explorer             \n
+          \D : git buffer with orig file \| d : file explorer             \n
           \E :                           \| e : open in new buffer        \n
           \F :                           \| f : rewrap paragraph          \n
           \G :                           \| g :                           \n
@@ -491,6 +491,9 @@
 
   " ale
     nnoremap <leader>a :ALENextWrap<CR>
+
+  " diff buffer with original file
+    nnoremap <leader>D :w !git diff % -<CR>
 
   " clear highlighting
     nnoremap <silent> <leader><Space> :nohl<CR>
