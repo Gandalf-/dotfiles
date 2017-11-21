@@ -7,6 +7,8 @@ function fzf-contents-widget -d "List contents of files"
   set -l fzf_query $commandline[2]
 
   command ag --nobreak --nonumbers --noheading . \
+    | sort \
+    | uniq \
     | fzf --multi \
     | cut -f 1 -d : \
     | while read -l r

@@ -29,6 +29,21 @@ wizard_do_transcode_movies() {
 }
 
 
+wizard_remove-trailing-whitespace() {
+
+  common::required_help "$1" "[file ...]
+
+  remove trailing whitespace in the target files
+  "
+  while [[ $1 ]]; do
+    common::do sed -i 's/[ \t]*$//' "$1"
+    shift
+  done
+
+  return $#
+}
+
+
 common::require "rsync" &&
 wizard_mirror_push() {
 

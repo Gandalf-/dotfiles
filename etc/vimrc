@@ -279,7 +279,7 @@
         %s/\s\+$//e
         call cursor(l, c)
     endfun
-    autocmd FileType conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+    autocmd FileType vimwiki,markdown,conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
   " File specific
     autocmd FileType make setlocal noexpandtab
 
