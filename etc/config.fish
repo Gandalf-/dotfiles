@@ -43,7 +43,7 @@ if test "$at_work"
 
 # chrome os native
 else if test "$at_cros"
-  set scripts /usr/local/home/DotFiles
+  set scripts   /usr/local/home/DotFiles
   set wiki_loc  /usr/local/home/google_drive/personal/wiki/index.md
 
   set -gx PAGER /usr/local/bin/less
@@ -89,7 +89,7 @@ if test -d ~/.vim/bundle/fzf.vim/bin
 end
 
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-set -gx FZF_DEFAULT_OPTS '--height 40% --border'
+set -gx FZF_DEFAULT_OPTS '--height 50% --border'
 
 # autojump
 if test -f ~/.autojump/share/autojump/autojump.fish

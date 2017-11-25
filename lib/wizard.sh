@@ -36,10 +36,17 @@ wizard_mirror_push() {
 
   push /usr/local changes to archive
   "
+  case $1 in
+    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
+    ''|--local) remote=~/Downloads/local ;;
+  esac
+
+  [[ $remote ]] || \
+      common::error "Unrecongized remote \"$remote\""
 
   common::do \
     rsync --delete --human-readable --archive --update --progress \
-    /usr/local/ ~/Downloads/local
+    /usr/local/ "$remote"
 }
 
 
@@ -49,17 +56,26 @@ wizard_mirror_diff() {
 
   show what would be pushed and pulled by a mirror command
   "
+  case $1 in
+    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
+    ''|--local) remote=~/Downloads/local ;;
+  esac
+
+  [[ $remote ]] || \
+      common::error "Unrecongized remote \"$remote\""
 
   common::echo "push..."
   common::do \
     rsync --human-readable --dry-run --archive --update --verbose \
-    /usr/local/ ~/Downloads/local
+    /usr/local/ "$remote"
 
   common::echo ""
   common::echo "pull..."
   common::do \
     rsync --human-readable --dry-run --archive --update --verbose \
-    ~/Downloads/local/ /usr/local
+    "$remote"/ /usr/local
+
+  return $#
 }
 
 
@@ -70,10 +86,17 @@ wizard_mirror_pull() {
 
   pull archive into /usr/local
   "
+  case $1 in
+    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
+    ''|--local) remote=~/Downloads/local ;;
+  esac
+
+  [[ $remote ]] || \
+      common::error "Unrecongized remote \"$remote\""
 
   common::do \
     rsync --delete --human-readable --archive --update --progress \
-    ~/Downloads/local/ /usr/local
+    "$remote"/ /usr/local
 }
 
 
