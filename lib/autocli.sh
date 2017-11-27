@@ -43,7 +43,7 @@ autocli::create() {
     declare -f -p
 
     echo "
-$name \"\$@\"
+[[ "\${BASH_SOURCE[0]}" == "\${0}" ]] && $name \"\$@\"
 true
 "
   } > "$output"

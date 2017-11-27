@@ -23,3 +23,5 @@ autocli::create \
   "$name" \
   "$location" \
   "${sources[@]}"
+
+bash "${root}/lib/complete_wizard.sh"
