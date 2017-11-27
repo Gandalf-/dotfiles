@@ -23,7 +23,8 @@ wizard_install_dot-files() {
 
   link etc/vim/snippets        .vim/
   link etc/irssi               .irssi
-  link lib/fish                .config/fish/functions
+  link lib/fish/functions      .config/fish/
+  link lib/fish/completions    .config/fish/
 }
 
 wizard_pkg_install() {
