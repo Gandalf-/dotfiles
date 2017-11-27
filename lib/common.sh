@@ -10,6 +10,12 @@ PLATFORM="$(uname)"
 
 export PLATFORM
 
+common::open-link() {
+
+  google-chrome "$1" 2>/dev/null >/dev/null &
+}
+
+
 common::require() {
 
   # string, ... -> bool
