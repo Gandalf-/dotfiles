@@ -25,6 +25,8 @@ wizard_install_dot-files() {
   link etc/irssi               .irssi
   link lib/fish/functions      .config/fish/
   link lib/fish/completions    .config/fish/
+
+  common::do rm "$root"/etc/irssi/irssi
 }
 
 wizard_pkg_install() {

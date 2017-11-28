@@ -464,7 +464,7 @@
           \I :                           \| i : paste result of command   \n
           \J : scroll to bottom of screen\| j : jump to last buffer       \n
           \K : auto scroll down          \| k : save                      \n
-          \L :                           \| l : reload file               \n
+          \L : list!                     \| l : reload file               \n
           \M : make in pane              \| m : make                      \n
           \N : print pwd                 \| n : cycle windows             \n
           \O : insert line above         \| o : insert line below         \n
@@ -535,6 +535,7 @@
     endfunction
 
   " toggling
+    nnoremap <silent> <leader>L :set list!<CR>
     nnoremap <silent> <leader>z :set spell!<CR>
     nnoremap <silent> <leader>R :set relativenumber!<CR>
     function! SmartPaste()

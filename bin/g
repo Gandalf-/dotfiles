@@ -44,8 +44,13 @@ while [[ $1 ]]; do
     pl) common::do "git pull --no-edit \"${2%-}\""; shift ;;
 
     ph) common::do "git push \"${2%.}\""; shift ;;
+    pu) common::do "git push -u \"${2:?g pu [remote]}\""; shift ;;
     pf) common::do "git push --force \"${2%.}\""; shift ;;
 
+    su)
+      common::do git branch --set-upstream-to="${1:?g su [remote/branch]}"
+      shift
+      ;;
     cc) common::do "git clean -nfd"
         common::confirm "Continue?"
         common::do "git clean -fd"
@@ -128,6 +133,7 @@ while [[ $1 ]]; do
     pm : pull [branch]
     ph : push [branch]
     pf : push --force [branch]
+    su : branch --set-upstream-to=[remote/branch]
       "
       exit 1
       ;;
