@@ -51,6 +51,7 @@ while [[ $1 ]]; do
       common::do git branch --set-upstream-to="${1:?g su [remote/branch]}"
       shift
       ;;
+    sc) common::do git diff --name-only --diff-filter=U;;
     cc) common::do "git clean -nfd"
         common::confirm "Continue?"
         common::do "git clean -fd"
@@ -134,6 +135,7 @@ while [[ $1 ]]; do
     ph : push [branch]
     pf : push --force [branch]
     su : branch --set-upstream-to=[remote/branch]
+    sc : show conflicting files
       "
       exit 1
       ;;
