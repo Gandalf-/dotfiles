@@ -11,7 +11,7 @@ __name=""
 
 wizard_regenerate() {
 
-  auto_wizard | grep -v 'work_wizard'
+  auto_wizard | grep -v 'work_wizard' # don't care that work_wizard not found
   echo 'done'
 }
 
@@ -23,6 +23,7 @@ wizard_transcode_movies() {
 
   echo "Processing: $*"
   for file in "$@"; do
+
     common::do ffmpeg -hide_banner -i "$file" \
       -c:v libx264 -crf 19 -preset "$preset" -strict -2 \
       -c:a aac -b:a 192k -ac 2 "${file%.*}.mp4" \
@@ -48,90 +49,6 @@ wizard_file_remove-trailing-whitespace() {
   done
 
   return $#
-}
-
-
-common::require "rsync" &&
-wizard_mirror_push() {
-
-  common::optional_help "$1" "
-
-  push /usr/local changes to archive
-  "
-  case $1 in
-    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
-    ''|--local) remote=~/Downloads/local ;;
-  esac
-
-  [[ $remote ]] || \
-      common::error "Unrecongized remote \"$remote\""
-
-  common::do \
-    rsync --delete --human-readable --archive --update --progress \
-    /usr/local/ "$remote"
-}
-
-
-wizard_mirror_diff() {
-
-  common::optional_help "$1" "
-
-  show what would be pushed and pulled by a mirror command
-  "
-  case $1 in
-    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
-    ''|--local) remote=~/Downloads/local ;;
-  esac
-
-  [[ $remote ]] || \
-      common::error "Unrecongized remote \"$remote\""
-
-  common::echo "push..."
-  common::do \
-    rsync --human-readable --dry-run --archive --update --verbose \
-    /usr/local/ "$remote"
-
-  common::echo ""
-  common::echo "pull..."
-  common::do \
-    rsync --human-readable --dry-run --archive --update --verbose \
-    "$remote"/ /usr/local
-
-  return $#
-}
-
-
-common::require "rsync" &&
-wizard_mirror_pull() {
-
-  common::optional_help "$1" "
-
-  pull archive into /usr/local
-  "
-  case $1 in
-    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
-    ''|--local) remote=~/Downloads/local ;;
-  esac
-
-  [[ $remote ]] || \
-      common::error "Unrecongized remote \"$remote\""
-
-  common::do \
-    rsync --delete --human-readable --archive --update --progress \
-    "$remote"/ /usr/local
-}
-
-
-common::require "apt" &&
-wizard_configure_ubuntu_developement() {
-
-  common::sudo apt update -y
-  common::sudo apt upgrade -y
-  common::sudo apt install htop python-pip tmux silversearcher-ag
-
-  wizard_install_git
-  wizard_install_fish
-  wizard_build_vim
 }
 
 
@@ -181,83 +98,10 @@ wizard_show_largest-packages() {
 }
 
 
-wizard_show_progress() {
-
-  common::required_help "$1" "
-
-  run a command repeatedly, clear the screen between runs
-  "
-
-  while :; do
-    eval "$@"
-    sleep 1
-    clear
-  done
-
-  return $#
-}
-
-
-wizard_show_history() {
-
-  common::optional_help "$1" "(amount) (range)
-
-  show the <amount> of the most frequently run commands
-  "
-
-  local amount=${1:-25}
-  local range=${2:-1}
-
-  fish -c history \
-    | cut -f "$range" -d' ' \
-    | sort \
-    | uniq -c \
-    | sort -nr \
-    | head -n "$amount"
-
-  [[ $1 && $2 ]] && return 2
-  [[ $1 ]] && return 1
-  return 0
-}
-
-
-wizard_show_disk() {
-
-  common::optional_help "$1" "
-
-  show disk and partition usage
-  "
-
-  df -h
-}
-
-
-wizard_show_weather() {
-
-  curl http://wttr.in/~"${1:-Seattle}";
-  [[ $1 ]] && return 1
-  return 0
-}
-
-
 wizard_start_http-server() {
 
   python -m SimpleHTTPServer
   return 0
-}
-
-
-common::require "apt" &&
-wizard_configure_ubuntu_small() {
-  # install basic programs
-
-  common::sudo apt-add-repository ppa:fish-shell/release-2
-  common::sudo apt update
-  common::sudo apt upgrade
-  common::sudo apt install \
-    make gcc libreadline-dev build-essential cmake \
-    tmux fish vim git ipython python-pip \
-    silversearcher-ag
 }
 
 
@@ -319,7 +163,13 @@ wizard_ratio() {
 }
 
 
+common::require 'python' &&
 wizard_parse_json() {
+
+  common::optional_help "$1" "
+
+  pipe in json and pretty print it
+  "
 
   python -m json.tool
 }
@@ -334,25 +184,6 @@ wizard_parse_xml() {
   "
 
   xmllint --format -
-}
-
-
-wizard_configure_add-user () {
-
-  common::required_help "$1" "[user name]
-
-  add a new sudo user to the system
-  "
-  user="$1"
-
-  common::do adduser "$user"
-  common::do usermod -aG sudo "$user"
-  common::do chsh -s /usr/bin/fish "$user"
-  common::do mkdir -p /home/"$user"/.ssh/
-  common::do cp -r /root/.ssh/ /home/"$user"/
-
-  common::do chown -R "$user:$user" /home/"$user"/
-  return 1
 }
 
 
@@ -382,6 +213,7 @@ wizard_clean_apt() {
 
   force purge removed apt packages
   "
+
   dpkg --list \
     | grep "^rc" \
     | cut -d " " -f 3 \
@@ -397,6 +229,7 @@ wizard_clean_files() {
 
   smart remove duplicate file names and intermediary file types
   "
+
   case "$1" in
     -d|--dry) dry=1 ;;
     *)        common::error "$usage" ;;
@@ -567,44 +400,6 @@ wizard_start_sshd() {
 
   common::sudo mkdir -p -m0755 /var/run/sshd
   common::sudo /usr/sbin/sshd
-}
-
-
-wizard_quick_shell() {
-
-  common::optional_help "$1" "
-
-  open a throw away shell file
-  "
-  common::do cd /tmp/
-  wizard_make_file_shell quick
-  vim quick.sh
-}
-
-
-wizard_quick_python() {
-
-  common::optional_help "$1" "
-
-  open a throw away python file
-  "
-  common::do cd /tmp/
-  wizard_make_file_python quick
-  vim quick.py
-  common::do cd -
-}
-
-
-wizard_quick_c()
-{
-  common::optional_help "$1" "
-
-  open a throw away c file
-  "
-  common::do cd /tmp/
-  wizard_make_file_c quick
-  vim quick.c
-  common::do cd -
 }
 
 
