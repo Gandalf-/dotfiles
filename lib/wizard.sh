@@ -9,8 +9,15 @@
 __name=""
 
 
+wizard_regenerate() {
+
+  auto_wizard | grep -v 'work_wizard'
+  echo 'done'
+}
+
+
 common::require 'ffmpeg' &&
-wizard_do_transcode_movies() {
+wizard_transcode_movies() {
   #
   local preset=slow
 
@@ -29,7 +36,7 @@ wizard_do_transcode_movies() {
 }
 
 
-wizard_remove-trailing-whitespace() {
+wizard_file_remove-trailing-whitespace() {
 
   common::required_help "$1" "[file ...]
 
@@ -116,7 +123,7 @@ wizard_mirror_pull() {
 
 
 common::require "apt" &&
-wizard_do_dev-configure() {
+wizard_configure_ubuntu_developement() {
 
   common::sudo apt update -y
   common::sudo apt upgrade -y
@@ -129,7 +136,7 @@ wizard_do_dev-configure() {
 
 
 common::require 'service' 'ntpd' &&
-wizard_do_sync-time() {
+wizard_sync_time() {
 
   common::optional_help "$1" "
 
@@ -142,7 +149,7 @@ wizard_do_sync-time() {
 }
 
 
-wizard_do_pin-to-home() {
+wizard_file_pin-to-home() {
 
   common::required_help "$1" "[target]
 
@@ -153,19 +160,10 @@ wizard_do_pin-to-home() {
 }
 
 
-wizard_do_chromebook_swap-search-escape() {
+common::require 'xcape' &&
+wizard_chromeos_swap-search-escape() {
 
-  if common::program-exists xcape; then
-    common::do xcape -e 'Super_L:Escape'
-
-  else
-    common::clone https://github.com/alols/xcape /tmp/xcape
-
-    common::do cd /tmp/xcape
-    common::do make -j $NUM_CPUS
-    common::sudo make install
-    common::do cd -
-  fi
+  common::do xcape -e 'Super_L:Escape'
 }
 
 
@@ -250,7 +248,7 @@ wizard_start_http-server() {
 
 
 common::require "apt" &&
-wizard_do_first-time-install_small() {
+wizard_configure_ubuntu_small() {
   # install basic programs
 
   common::sudo apt-add-repository ppa:fish-shell/release-2
@@ -294,7 +292,7 @@ if common::require 'insync-headless'; then
 fi
 
 
-wizard_do_frequencies() {
+wizard_frequencies() {
 
   common::required_help "$1" "$__name [amount]"
 
@@ -303,7 +301,7 @@ wizard_do_frequencies() {
 }
 
 
-wizard_do_ratio() {
+wizard_ratio() {
 
   common::required_help "$1" "[amount]
 
@@ -321,14 +319,14 @@ wizard_do_ratio() {
 }
 
 
-wizard_do_parse_json() {
+wizard_parse_json() {
 
   python -m json.tool
 }
 
 
 common::require "xmllint" &&
-wizard_do_parse_xml() {
+wizard_parse_xml() {
 
   common::required_help "$1" "< file.xml
 
@@ -339,7 +337,7 @@ wizard_do_parse_xml() {
 }
 
 
-wizard_add_user () {
+wizard_configure_add-user () {
 
   common::required_help "$1" "[user name]
 
@@ -556,50 +554,6 @@ wizard_open() {
 
   done
   return $#
-}
-
-
-wizard_bookmark() {
-
-  common::required_help "$1" "[+]
-
-  bookmark current directory
-  "
-  local conf="$HOME/.bookmarks"
-
-  case $1 in
-    +) pwd >> "$conf" ;;
-    -) grep -wv "^$(pwd)$" "$conf" > "$conf.swap" && mv "$conf.swap" "$conf";;
-
-    -h|--help) echo "$usage" ;;
-
-    *)
-      if [[ $1 ]]; then
-        files=( $(grep -i -- "$1" "$conf") )
-      else
-        files=( $(cat "$conf") )
-      fi
-
-      case ${#files[@]} in
-        0) exit 0   ;;
-        1) choice=0 ;;
-        *)
-          let i=0
-          sort <<< "${files[@]}" | tr ' ' '\n' | while read -r file; do
-            printf "(%d) %s\n" "$i" "$file"
-            let i++
-          done
-
-          read -p '? ' -r choice
-          (( choice < 0 || choice > ${#files[@]} )) && exit 0
-          ;;
-      esac
-
-      line="$(grep -nw -- "^${files[$choice]}$" "$conf" | cut -d ':' -f 1)"
-      #shellcheck disable=SC2086
-      exit $line
-      ;;
-  esac
 }
 
 
