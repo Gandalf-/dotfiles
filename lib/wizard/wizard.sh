@@ -16,6 +16,24 @@ wizard_regenerate() {
 }
 
 
+wizard_macro() {
+
+  common::optional_help "$1" "(amount)
+
+  replay a portion of fish history in the current terminal
+
+    the order of selection in fzf matters
+  "
+
+  while read -r command; do
+    eval "$command"
+
+  done < <(fish -c 'history' \
+    | head -n "${1:-10}" \
+    | fzf -m)
+}
+
+
 common::require 'ffmpeg' &&
 wizard_transcode_movies() {
   #
@@ -105,42 +123,17 @@ wizard_start_http-server() {
 }
 
 
-if common::require 'insync-headless'; then
-  wizard_insync_start() {
-    insync-headless start
-  }
-  wizard_insync_manage-selective-sync() {
-    insync-headless manage_selective_sync austin.voecks@gmail.com
-  }
-  wizard_insync_reject-all-new-shares() {
-    insync-headless reject_all_new_shares austin.voecks@gmail.com
-  }
-  wizard_insync_pause-syncing() {
-    insync-headless pause_syncing
-  }
-  wizard_insync_resume-syncing() {
-    insync-headless resume_syncing
-  }
-  wizard_insync_retry-errors() {
-    insync-headless retry_errors
-  }
-  wizard_insync_status() {
-    insync-headless get_status
-  }
-  wizard_insync_errors() {
-    insync-headless get_errors
-  }
-  wizard_insync_sync-progress() {
-    insync-headless get_sync_progress
-  }
-fi
-
-
 wizard_frequencies() {
 
-  common::required_help "$1" "$__name [amount]"
+  common::required_help "$1" "[amount]
 
-  sort | uniq -c | sort -nr | head -n "$1";
+  count the occurances of each input line
+  "
+
+  sort \
+    | uniq -c \
+    | sort -nr \
+    | head -n "$1";
   return 1
 }
 

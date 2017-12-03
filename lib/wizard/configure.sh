@@ -1,5 +1,6 @@
 #!/bin/env bash
 
+
 common::require "apt" &&
 wizard_configure_ubuntu_small() {
   # install basic programs
@@ -12,7 +13,6 @@ wizard_configure_ubuntu_small() {
     tmux fish vim git ipython python-pip \
     silversearcher-ag
 }
-
 
 
 wizard_configure_add-user() {
@@ -31,4 +31,17 @@ wizard_configure_add-user() {
 
   common::do chown -R "$user:$user" /home/"$user"/
   return 1
+}
+
+
+common::require "apt" &&
+wizard_configure_ubuntu_developement() {
+
+  common::sudo apt update -y
+  common::sudo apt upgrade -y
+  common::sudo apt install htop python-pip tmux silversearcher-ag
+
+  wizard_install_git
+  wizard_install_fish
+  wizard_build_vim
 }
