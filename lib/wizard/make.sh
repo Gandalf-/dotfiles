@@ -8,7 +8,7 @@
 
 wizard_make_hash() {
 
-  head -c 50 /dev/urandom | md5sum
+  head -c 50 /dev/urandom | md5sum | cut -f 1 -d ' '
 }
 
 
@@ -27,7 +27,7 @@ wizard_make_tmpfs() {
   common::do mkdir -p "$target"
   common::sudo \
     mount -t tmpfs \
-    -o size=4G,nr_inodes=10k,mode=700,uid=1000,gid=1000 \
+    -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
     tmpfs_"$(basename $target)" "$target"
 
   return $#
@@ -53,7 +53,7 @@ wizard_make_mirror() {
   common::do mkdir -p "$target"
   common::sudo \
     mount -t tmpfs \
-    -o size=4G,nr_inodes=10k,mode=700,uid=1000,gid=1000 \
+    -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
     tmpfs_"$(basename $source)" "$target"
 
   common::do cp -r "$source"/\* "$target"
@@ -75,13 +75,13 @@ if common::program-exists 'tmux'; then
     return $#
   }
 
-  wizard_do_layout_vertical() {
+  wizard_layout_vertical() {
     tmux select-layout even-vertical
   }
-  wizard_do_layout_horizontal() {
+  wizard_layout_horizontal() {
     tmux select-layout even-horizontal
   }
-  wizard_do_layout_tiled() {
+  wizard_layout_tiled() {
     tmux select-layout tiled
   }
 fi

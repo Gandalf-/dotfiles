@@ -9,13 +9,39 @@
 __name=""
 
 
+wizard_regenerate() {
+
+  auto_wizard | grep -v 'work_wizard' # don't care that work_wizard not found
+  echo 'done'
+}
+
+
+wizard_macro() {
+
+  common::optional_help "$1" "(amount)
+
+  replay a portion of fish history in the current terminal
+
+    the order of selection in fzf matters
+  "
+
+  while read -r command; do
+    eval "$command"
+
+  done < <(fish -c 'history' \
+    | head -n "${1:-10}" \
+    | fzf -m)
+}
+
+
 common::require 'ffmpeg' &&
-wizard_do_transcode_movies() {
+wizard_transcode_movies() {
   #
   local preset=slow
 
   echo "Processing: $*"
   for file in "$@"; do
+
     common::do ffmpeg -hide_banner -i "$file" \
       -c:v libx264 -crf 19 -preset "$preset" -strict -2 \
       -c:a aac -b:a 192k -ac 2 "${file%.*}.mp4" \
@@ -29,7 +55,7 @@ wizard_do_transcode_movies() {
 }
 
 
-wizard_remove-trailing-whitespace() {
+wizard_file_remove-trailing-whitespace() {
 
   common::required_help "$1" "[file ...]
 
@@ -44,92 +70,8 @@ wizard_remove-trailing-whitespace() {
 }
 
 
-common::require "rsync" &&
-wizard_mirror_push() {
-
-  common::optional_help "$1" "
-
-  push /usr/local changes to archive
-  "
-  case $1 in
-    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
-    ''|--local) remote=~/Downloads/local ;;
-  esac
-
-  [[ $remote ]] || \
-      common::error "Unrecongized remote \"$remote\""
-
-  common::do \
-    rsync --delete --human-readable --archive --update --progress \
-    /usr/local/ "$remote"
-}
-
-
-wizard_mirror_diff() {
-
-  common::optional_help "$1" "
-
-  show what would be pushed and pulled by a mirror command
-  "
-  case $1 in
-    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
-    ''|--local) remote=~/Downloads/local ;;
-  esac
-
-  [[ $remote ]] || \
-      common::error "Unrecongized remote \"$remote\""
-
-  common::echo "push..."
-  common::do \
-    rsync --human-readable --dry-run --archive --update --verbose \
-    /usr/local/ "$remote"
-
-  common::echo ""
-  common::echo "pull..."
-  common::do \
-    rsync --human-readable --dry-run --archive --update --verbose \
-    "$remote"/ /usr/local
-
-  return $#
-}
-
-
-common::require "rsync" &&
-wizard_mirror_pull() {
-
-  common::optional_help "$1" "
-
-  pull archive into /usr/local
-  "
-  case $1 in
-    --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
-    ''|--local) remote=~/Downloads/local ;;
-  esac
-
-  [[ $remote ]] || \
-      common::error "Unrecongized remote \"$remote\""
-
-  common::do \
-    rsync --delete --human-readable --archive --update --progress \
-    "$remote"/ /usr/local
-}
-
-
-common::require "apt" &&
-wizard_do_dev-configure() {
-
-  common::sudo apt update -y
-  common::sudo apt upgrade -y
-  common::sudo apt install htop python-pip tmux silversearcher-ag
-
-  wizard_install_git
-  wizard_install_fish
-  wizard_build_vim
-}
-
-
 common::require 'service' 'ntpd' &&
-wizard_do_sync-time() {
+wizard_sync_time() {
 
   common::optional_help "$1" "
 
@@ -142,7 +84,7 @@ wizard_do_sync-time() {
 }
 
 
-wizard_do_pin-to-home() {
+wizard_file_pin-to-home() {
 
   common::required_help "$1" "[target]
 
@@ -153,19 +95,10 @@ wizard_do_pin-to-home() {
 }
 
 
-wizard_do_chromebook_swap-search-escape() {
+common::require 'xcape' &&
+wizard_chromeos_swap-search-escape() {
 
-  if common::program-exists xcape; then
-    common::do xcape -e 'Super_L:Escape'
-
-  else
-    common::clone https://github.com/alols/xcape /tmp/xcape
-
-    common::do cd /tmp/xcape
-    common::do make -j $NUM_CPUS
-    common::sudo make install
-    common::do cd -
-  fi
+  common::do xcape -e 'Super_L:Escape'
 }
 
 
@@ -183,65 +116,6 @@ wizard_show_largest-packages() {
 }
 
 
-wizard_show_progress() {
-
-  common::required_help "$1" "
-
-  run a command repeatedly, clear the screen between runs
-  "
-
-  while :; do
-    eval "$@"
-    sleep 1
-    clear
-  done
-
-  return $#
-}
-
-
-wizard_show_history() {
-
-  common::optional_help "$1" "(amount) (range)
-
-  show the <amount> of the most frequently run commands
-  "
-
-  local amount=${1:-25}
-  local range=${2:-1}
-
-  fish -c history \
-    | cut -f "$range" -d' ' \
-    | sort \
-    | uniq -c \
-    | sort -nr \
-    | head -n "$amount"
-
-  [[ $1 && $2 ]] && return 2
-  [[ $1 ]] && return 1
-  return 0
-}
-
-
-wizard_show_disk() {
-
-  common::optional_help "$1" "
-
-  show disk and partition usage
-  "
-
-  df -h
-}
-
-
-wizard_show_weather() {
-
-  curl http://wttr.in/~"${1:-Seattle}";
-  [[ $1 ]] && return 1
-  return 0
-}
-
-
 wizard_start_http-server() {
 
   python -m SimpleHTTPServer
@@ -249,61 +123,22 @@ wizard_start_http-server() {
 }
 
 
-common::require "apt" &&
-wizard_do_first-time-install_small() {
-  # install basic programs
+wizard_frequencies() {
 
-  common::sudo apt-add-repository ppa:fish-shell/release-2
-  common::sudo apt update
-  common::sudo apt upgrade
-  common::sudo apt install \
-    make gcc libreadline-dev build-essential cmake \
-    tmux fish vim git ipython python-pip \
-    silversearcher-ag
-}
+  common::required_help "$1" "[amount]
 
+  count the occurances of each input line
+  "
 
-if common::require 'insync-headless'; then
-  wizard_insync_start() {
-    insync-headless start
-  }
-  wizard_insync_manage-selective-sync() {
-    insync-headless manage_selective_sync austin.voecks@gmail.com
-  }
-  wizard_insync_reject-all-new-shares() {
-    insync-headless reject_all_new_shares austin.voecks@gmail.com
-  }
-  wizard_insync_pause-syncing() {
-    insync-headless pause_syncing
-  }
-  wizard_insync_resume-syncing() {
-    insync-headless resume_syncing
-  }
-  wizard_insync_retry-errors() {
-    insync-headless retry_errors
-  }
-  wizard_insync_status() {
-    insync-headless get_status
-  }
-  wizard_insync_errors() {
-    insync-headless get_errors
-  }
-  wizard_insync_sync-progress() {
-    insync-headless get_sync_progress
-  }
-fi
-
-
-wizard_do_frequencies() {
-
-  common::required_help "$1" "$__name [amount]"
-
-  sort | uniq -c | sort -nr | head -n "$1";
+  sort \
+    | uniq -c \
+    | sort -nr \
+    | head -n "$1";
   return 1
 }
 
 
-wizard_do_ratio() {
+wizard_ratio() {
 
   common::required_help "$1" "[amount]
 
@@ -321,14 +156,20 @@ wizard_do_ratio() {
 }
 
 
-wizard_do_parse_json() {
+common::require 'python' &&
+wizard_parse_json() {
+
+  common::optional_help "$1" "
+
+  pipe in json and pretty print it
+  "
 
   python -m json.tool
 }
 
 
 common::require "xmllint" &&
-wizard_do_parse_xml() {
+wizard_parse_xml() {
 
   common::required_help "$1" "< file.xml
 
@@ -336,25 +177,6 @@ wizard_do_parse_xml() {
   "
 
   xmllint --format -
-}
-
-
-wizard_add_user () {
-
-  common::required_help "$1" "[user name]
-
-  add a new sudo user to the system
-  "
-  user="$1"
-
-  common::do adduser "$user"
-  common::do usermod -aG sudo "$user"
-  common::do chsh -s /usr/bin/fish "$user"
-  common::do mkdir -p /home/"$user"/.ssh/
-  common::do cp -r /root/.ssh/ /home/"$user"/
-
-  common::do chown -R "$user:$user" /home/"$user"/
-  return 1
 }
 
 
@@ -384,6 +206,7 @@ wizard_clean_apt() {
 
   force purge removed apt packages
   "
+
   dpkg --list \
     | grep "^rc" \
     | cut -d " " -f 3 \
@@ -399,6 +222,7 @@ wizard_clean_files() {
 
   smart remove duplicate file names and intermediary file types
   "
+
   case "$1" in
     -d|--dry) dry=1 ;;
     *)        common::error "$usage" ;;
@@ -559,50 +383,6 @@ wizard_open() {
 }
 
 
-wizard_bookmark() {
-
-  common::required_help "$1" "[+]
-
-  bookmark current directory
-  "
-  local conf="$HOME/.bookmarks"
-
-  case $1 in
-    +) pwd >> "$conf" ;;
-    -) grep -wv "^$(pwd)$" "$conf" > "$conf.swap" && mv "$conf.swap" "$conf";;
-
-    -h|--help) echo "$usage" ;;
-
-    *)
-      if [[ $1 ]]; then
-        files=( $(grep -i -- "$1" "$conf") )
-      else
-        files=( $(cat "$conf") )
-      fi
-
-      case ${#files[@]} in
-        0) exit 0   ;;
-        1) choice=0 ;;
-        *)
-          let i=0
-          sort <<< "${files[@]}" | tr ' ' '\n' | while read -r file; do
-            printf "(%d) %s\n" "$i" "$file"
-            let i++
-          done
-
-          read -p '? ' -r choice
-          (( choice < 0 || choice > ${#files[@]} )) && exit 0
-          ;;
-      esac
-
-      line="$(grep -nw -- "^${files[$choice]}$" "$conf" | cut -d ':' -f 1)"
-      #shellcheck disable=SC2086
-      exit $line
-      ;;
-  esac
-}
-
-
 common::require "sshd" &&
 wizard_start_sshd() {
 
@@ -613,44 +393,6 @@ wizard_start_sshd() {
 
   common::sudo mkdir -p -m0755 /var/run/sshd
   common::sudo /usr/sbin/sshd
-}
-
-
-wizard_quick_shell() {
-
-  common::optional_help "$1" "
-
-  open a throw away shell file
-  "
-  common::do cd /tmp/
-  wizard_make_file_shell quick
-  vim quick.sh
-}
-
-
-wizard_quick_python() {
-
-  common::optional_help "$1" "
-
-  open a throw away python file
-  "
-  common::do cd /tmp/
-  wizard_make_file_python quick
-  vim quick.py
-  common::do cd -
-}
-
-
-wizard_quick_c()
-{
-  common::optional_help "$1" "
-
-  open a throw away c file
-  "
-  common::do cd /tmp/
-  wizard_make_file_c quick
-  vim quick.c
-  common::do cd -
 }
 
 

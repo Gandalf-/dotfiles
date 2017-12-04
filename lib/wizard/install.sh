@@ -29,17 +29,10 @@ wizard_install_dot-files() {
   common::do rm "$root"/etc/irssi/irssi
 }
 
-wizard_pkg_install() {
+common::require 'apt' &&
+wizard_install_apt() {
 
-  if common::program-exists apt; then
-    common::sudo apt install -y "$@"
-
-  elif common::program-exists crew; then
-    common::do crew install "$@"
-
-  else
-    common::error "Don't know how to install packages on this system"
-  fi
+  common::sudo apt install -y "$@"
 }
 
 wizard_install_autojump() {
@@ -55,6 +48,7 @@ wizard_install_autojump() {
   common::do cd -
 }
 
+common::require 'apt' &&
 wizard_install_git() {
 
   common::optional_help "$1" "
@@ -66,6 +60,7 @@ wizard_install_git() {
   common::sudo apt-get install git -y
 }
 
+common::require 'apt' &&
 wizard_install_vnc() {
 
   common::optional_help "$1" "
@@ -84,6 +79,7 @@ EOF
   common::do chmod +x "$HOME"/.vnc/xstartup
 }
 
+common::require 'apt' &&
 wizard_install_java() {
 
   common::optional_help "$1" "
@@ -95,6 +91,7 @@ wizard_install_java() {
   common::sudo apt install oracle-java8-installer
 }
 
+common::require 'dpkg' &&
 wizard_install_shellcheck() {
 
   common::optional_help "$1" "
@@ -130,6 +127,7 @@ wizard_install_lua() {
   echo "done"
 }
 
+common::require 'apt' &&
 wizard_install_fish() {
 
   common::optional_help "$1" "
@@ -142,6 +140,7 @@ wizard_install_fish() {
   common::sudo apt-get install -y fish
 }
 
+common::require 'apt' &&
 wizard_install_docker() {
 
   common::optional_help "$1" "

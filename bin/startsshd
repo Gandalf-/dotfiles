@@ -1,2 +1,0 @@
-#!/bin/sh
-sudo mkdir -p -m0755 /var/run/sshd; sudo /usr/sbin/sshd

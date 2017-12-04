@@ -109,6 +109,16 @@ autocli::make_reflective_functions() {
         cases+="|\"${sub_func:0:$i}\""
       done
 
+      # convert abc-def-ghi to adg if dashes are present
+      if grep -q '-' <<< "${sub_func[@]}"; then
+        cases+="|\"$(
+          tr '-' '\n' <<< "${sub_func[@]}" \
+            | cut -c 1 \
+            | xargs \
+            | tr -d ' '
+          )\""
+      fi
+
       function_body+="
         $cases)
           ${meta_func}_$sub_func \"\${@:2}\";; "
