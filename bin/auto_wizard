@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 
 # shellcheck disable=SC1090,SC1091
 
@@ -14,7 +14,7 @@ name="wizard"
 location="${root}/bin/"
 sources=(
   "${root}/lib/wizard/"*
-  "$HOME/scripity-scripts/lib/work_wizard.sh"
+  "$HOME/scripity-scripts/lib/wizard/"*
   )
 
 autocli::create \
