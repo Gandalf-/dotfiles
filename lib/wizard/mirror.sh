@@ -3,7 +3,7 @@
 common::require "rsync" &&
 wizard_mirror_push() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   push /usr/local changes to archive
   "
@@ -23,7 +23,7 @@ wizard_mirror_push() {
 
 wizard_mirror_diff() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   show what would be pushed and pulled by a mirror command
   "
@@ -53,7 +53,7 @@ wizard_mirror_diff() {
 common::require "rsync" &&
 wizard_mirror_pull() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   pull archive into /usr/local
   "

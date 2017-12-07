@@ -2,7 +2,7 @@
 
 wizard_show_progress() {
 
-  common::required_help "$1" "
+  common::required-help "$1" "
 
   run a command repeatedly, clear the screen between runs
   "
@@ -19,7 +19,7 @@ wizard_show_progress() {
 
 wizard_show_history() {
 
-  common::optional_help "$1" "(amount) (range)
+  common::optional-help "$1" "(amount) (range)
 
   show the <amount> of the most frequently run commands
   "
@@ -42,7 +42,7 @@ wizard_show_history() {
 
 wizard_show_disk() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   show disk and partition usage
   "

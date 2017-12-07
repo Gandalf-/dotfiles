@@ -11,14 +11,27 @@ __name=""
 
 wizard_regenerate() {
 
-  auto_wizard | grep -v 'work_wizard' # don't care that work_wizard not found
-  echo 'done'
+  # safely tell the script to rewrite itself. running auto_wizard in the middle
+  # of a wizard call will break the script (since it's overwriting itself)
+
+  common::optional-help "$1" "
+
+  regenerate wizard script using auto_wizard
+  "
+
+  (
+    sleep 1
+    auto_wizard | grep -v 'scripity'
+  ) &
+
+  disown
+  exit 0
 }
 
 
 wizard_macro() {
 
-  common::optional_help "$1" "(amount)
+  common::optional-help "$1" "(amount)
 
   replay a portion of fish history in the current terminal
 
@@ -57,7 +70,7 @@ wizard_transcode_movies() {
 
 wizard_file_remove-trailing-whitespace() {
 
-  common::required_help "$1" "[file ...]
+  common::required-help "$1" "[file ...]
 
   remove trailing whitespace in the target files
   "
@@ -73,7 +86,7 @@ wizard_file_remove-trailing-whitespace() {
 common::require 'service' 'ntpd' &&
 wizard_sync_time() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   synchonrize the system clock with NTP
   "
@@ -86,7 +99,7 @@ wizard_sync_time() {
 
 wizard_file_pin-to-home() {
 
-  common::required_help "$1" "[target]
+  common::required-help "$1" "[target]
 
   create a symbolic link in the home directory to [target]
   "
@@ -105,7 +118,7 @@ wizard_chromeos_swap-search-escape() {
 common::require 'dpkg' &&
 wizard_show_largest-packages() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   list all packages installed, sorted by size
   "
@@ -125,7 +138,7 @@ wizard_start_http-server() {
 
 wizard_frequencies() {
 
-  common::required_help "$1" "[amount]
+  common::required-help "$1" "[amount]
 
   count the occurances of each input line
   "
@@ -140,7 +153,7 @@ wizard_frequencies() {
 
 wizard_ratio() {
 
-  common::required_help "$1" "[amount]
+  common::required-help "$1" "[amount]
 
   count the occurances of each input line, produce ratio data
   "
@@ -159,7 +172,7 @@ wizard_ratio() {
 common::require 'python' &&
 wizard_parse_json() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   pipe in json and pretty print it
   "
@@ -171,7 +184,7 @@ wizard_parse_json() {
 common::require "xmllint" &&
 wizard_parse_xml() {
 
-  common::required_help "$1" "< file.xml
+  common::required-help "$1" "< file.xml
 
   pipe in a file an pretty print XML
   "
@@ -183,7 +196,7 @@ wizard_parse_xml() {
 common::require 'dpkg' &&
 wizard_clean_boot() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   safely cleans up old Linux kernel versions from /boot
   "
@@ -202,7 +215,7 @@ wizard_clean_boot() {
 common::require 'dpkg' &&
 wizard_clean_apt() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   force purge removed apt packages
   "
@@ -211,11 +224,14 @@ wizard_clean_apt() {
     | grep "^rc" \
     | cut -d " " -f 3 \
     | xargs sudo dpkg --purge \
-    || common::color_error "Looks like there's nothing to clean!"
+    || common::color-error "Looks like there's nothing to clean!"
 }
 
 
 wizard_clean_files() {
+
+  # clean up the filesystem under the current directory, mostly useful for
+  # removing duplicate files insync creates
 
   local fixed dry=0 counter=0 usage="
   $__name [-d|--dry]
@@ -284,7 +300,7 @@ wizard_update_platform() {
 common::require "apt" &&
 wizard_update_apt() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   update all apt packages
   "
@@ -297,7 +313,7 @@ wizard_update_apt() {
 common::require "pip" &&
 wizard_update_pip() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   update all python packages installed by pip
   "
@@ -354,7 +370,7 @@ wizard_build_vim () {
 
 wizard_open() {
 
-  common::required_help "$1" "
+  common::required-help "$1" "
 
   open a file based on it's type and available programs
   "
@@ -386,7 +402,7 @@ wizard_open() {
 common::require "sshd" &&
 wizard_start_sshd() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   start sshd on Chrome OS
   "
@@ -401,18 +417,18 @@ wizard_start_sshd() {
 # shellcheck disable=SC2034,SC2154,SC2016
 {
 meta_head[wizard_make_file]='
-common::required_help "$1" "[language] [file name]
+common::required-help "$1" "[language] [file name]
 $__usage
 "
 '
 meta_head[wizard_make_project]='
-common::required_help "$1" "[language] [project name]
+common::required-help "$1" "[language] [project name]
 $__usage
 "
 '
 
 meta_head[wizard]='
-common::required_help "$1" "(-q | -s | -e)
+common::required-help "$1" "(-q | -s | -e)
 $__usage
 "
 

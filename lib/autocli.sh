@@ -35,7 +35,7 @@ autocli::create() {
   done
 
   # generate all the intermediary functions
-  autocli::make_reflective_functions
+  autocli::make-reflective-functions
 
   # write the output script
   {
@@ -55,7 +55,7 @@ true
 }
 
 
-autocli::make_reflective_functions() {
+autocli::make-reflective-functions() {
   # none -> none
   #
   # inspects all the bash function defined thusfar and attempts to build the

@@ -17,7 +17,7 @@ wizard_configure_ubuntu_small() {
 
 wizard_configure_add-user() {
 
-  common::required_help "$1" "[user name]
+  common::required-help "$1" "[user name]
 
   add a new sudo user to the system
   "

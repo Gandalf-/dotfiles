@@ -15,7 +15,7 @@ wizard_make_hash() {
 common::require 'mount' &&
 wizard_make_tmpfs() {
 
-  common::required_help "$1" "[target directory]
+  common::required-help "$1" "[target directory]
 
   create a tmpfs in the target directory
 
@@ -37,7 +37,7 @@ wizard_make_tmpfs() {
 common::require 'mount' &&
 wizard_make_mirror() {
 
-  common::required_help "$2" "[source] [target]
+  common::required-help "$2" "[source] [target]
 
   mirror a root directory (source) into a tmpfs directory (target)
 
@@ -64,7 +64,7 @@ wizard_make_mirror() {
 
 if common::program-exists 'tmux'; then
   wizard_make_session() {
-    common::optional_help "$1" "[name]
+    common::optional-help "$1" "[name]
 
   create a new tmux session and move to it
     "

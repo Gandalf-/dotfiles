@@ -37,7 +37,7 @@ wizard_install_apt() {
 
 wizard_install_autojump() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   install autojump
   "
@@ -51,7 +51,7 @@ wizard_install_autojump() {
 common::require 'apt' &&
 wizard_install_git() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   install the newest git version
   "
@@ -63,7 +63,7 @@ wizard_install_git() {
 common::require 'apt' &&
 wizard_install_vnc() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   install xfce4 and start a VNC server. for droplets
   "
@@ -82,7 +82,7 @@ EOF
 common::require 'apt' &&
 wizard_install_java() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   install the Oracle JDK
   "
@@ -94,7 +94,7 @@ wizard_install_java() {
 common::require 'dpkg' &&
 wizard_install_shellcheck() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   download and install the latest shellcheck
   "
@@ -108,7 +108,7 @@ wizard_install_shellcheck() {
 
 wizard_install_lua() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   compile and install lua 5.3.3
   "
@@ -130,7 +130,7 @@ wizard_install_lua() {
 common::require 'apt' &&
 wizard_install_fish() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   install fish from the official repository so we get the most recent version
   "
@@ -143,7 +143,7 @@ wizard_install_fish() {
 common::require 'apt' &&
 wizard_install_docker() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   install the dependencies and kernel headers for docker-ce
   "

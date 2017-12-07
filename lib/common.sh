@@ -61,7 +61,7 @@ common::debug() {
 
 common::clone() {
 
-  common::required_help "$2" "[target] [location]"
+  common::required-help "$2" "[target] [location]"
 
   local target="$1"
   local location="$2"
@@ -70,10 +70,10 @@ common::clone() {
     common::do git clone --depth 1 "$target" "$location"
 }
 
-common::required_help() {
+common::required-help() {
   # produce help message when $1 is required
   #
-  # common::required_help "$1" "[some arguments]
+  # common::required-help "$1" "[some arguments]
   # this is some help text!
   # "
 
@@ -82,10 +82,10 @@ common::required_help() {
 ${caller} ${*:2}";; esac
 }
 
-common::optional_help() {
+common::optional-help() {
   # produce help message when $1 may be nothing
   #
-  # common::optional_help "$1" "
+  # common::optional-help "$1" "
   # this function doesn't take any arguments!
   # "
 
@@ -111,10 +111,10 @@ common::error() {
   exit 1
 }
 
-common::color_error() {
+common::color-error() {
   # print a colored message and exit with failure
   #
-  # common:color_error "something went very wrong"
+  # common:color-error "something went very wrong"
 
   common::echo "$@"
   exit 1
@@ -163,15 +163,15 @@ common::do() {
 
   elif (( "$QUIET" )); then
     eval "${@/ \"\"/}" >/dev/null \
-      || common::color_error "error running \"$*\""
+      || common::color-error "error running \"$*\""
 
   elif (( "$SILENT" )); then
     eval "${@/ \"\"/}" >/dev/null 2>/dev/null \
-      || common::color_error "error running \"$*\""
+      || common::color-error "error running \"$*\""
 
   else
     eval "${@/ \"\"/}" \
-      || common::color_error "error running \"$*\""
+      || common::color-error "error running \"$*\""
   fi
 }
 
