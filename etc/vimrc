@@ -284,9 +284,9 @@
     autocmd FileType make setlocal noexpandtab
 
   " Avoid dumb markdown extension
-    if has("*vimwiki")
-      autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
-    endif
+    " if has("*vimwiki")
+    "   autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
+    " endif
 
   " silver searcher-ing
     if executable('ag')

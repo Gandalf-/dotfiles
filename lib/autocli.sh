@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 
 # auto_cli
 #   generates intermediate functions for cli scripts
@@ -18,24 +18,26 @@ autocli::create() {
   root="$(dirname "${BASH_SOURCE[0]}")"/..
   source "${root}/lib/common.sh"
 
-  name="$1"
-  location="$2"
-  sources=( "${@:3}" )
-  output="${location}/${name}"
+  local name="$1"
+  local location="$2"
+  local sources=( "${@:3}" )
+  local output="${location}/${name}"
 
   declare -A meta_head meta_body    # these are accessible to the caller
 
   # pull in all the sources since we need them now
   for source in "${sources[@]}"; do
-    if [[ -f "$source" ]]; then
+    if common::file-exists "$source"; then
       source "$source"
     else
       echo "warn: $source not found"
     fi
   done
 
+  # generate all the intermediary functions
   autocli::make_reflective_functions
 
+  # write the output script
   {
     echo '#!/bin/bash
 # this is an auto generated file. do not edit manually
@@ -43,11 +45,12 @@ autocli::create() {
     declare -f -p
 
     echo "
-[[ "\${BASH_SOURCE[0]}" == "\${0}" ]] && $name \"\$@\"
+[[ \"\${BASH_SOURCE[0]}\" == \"\${0}\" ]] && $name \"\$@\"
 true
 "
   } > "$output"
 
+  # make the output script executable
   chmod +x "$output"
 }
 
@@ -55,6 +58,69 @@ true
 autocli::make_reflective_functions() {
   # none -> none
   #
+  # inspects all the bash function defined thusfar and attempts to build the
+  # higher level functions that are missing. commands are seperated by
+  # underscores. for instance, suppose that only the following functions are
+  # defined and do something interesting:
+  #
+  #   chef_bake_cake()
+  #   chef_bake_muffin()
+  #   chef_cleanup()
+  #
+  # autocli will define chef() and chef_bake() functions for you. they'll look
+  # something like the below. All substrings are valid.
+  #
+  # chef() {
+  #   case $1 in
+  #     b | ba | bak | bake)
+  #       chef_bake "$@"
+  #       ;;
+  #     c | cl | cle | clea | clean)
+  #       chef_clean "$@"
+  #       ;;
+  #     *)
+  #       echo "$usage" ;;
+  #   esac
+  # }
+  #
+  # in your output script, you can then call chef "$@" and it'll handle
+  # everything. you can then call the output script like:
+  #
+  #   chef_script bake cake
+  #   chef_script bake --help
+  #
+  # it's an error to define chef() yourself when calling autocli.
+  # You can inject code into the generated functions through the meta_head and
+  # meta_body variables.
+  #
+  # meta_head allows you to do things before the case statement
+  # meta_body allows you to add custom cases to the case statement
+  #
+  # example:
+  #   meta_head[chef]='
+  #   local done_cooking=0
+  #   '
+  #   meta_body[chef]='
+  #   done-cooking) echo "$done_cooking" ;;
+  #   '
+  #
+  # chef() {
+  #   done_cooking=0
+  #
+  #   case $1 in
+  #     done-cooking)
+  #       echo "$done_cooking"
+  #       ;;
+  #     b | ba | bak | bake)
+  #       chef_bake "$@"
+  #       ;;
+  #     c | cl | cle | clea | clean)
+  #       chef_clean "$@"
+  #       ;;
+  #     *)
+  #       echo "$usage" ;;
+  #   esac
+  # }
 
   declare -A __meta_functions
   local i j sub_commands=()
@@ -109,6 +175,9 @@ autocli::make_reflective_functions() {
         cases+="|\"${sub_func:0:$i}\""
       done
 
+      # convert verylongoption to vn
+      cases+="|\"${sub_func:0:1}${sub_func: -1}\""
+
       # convert abc-def-ghi to adg if dashes are present
       if grep -q '-' <<< "${sub_func[@]}"; then
         cases+="|\"$(
@@ -131,7 +200,11 @@ autocli::make_reflective_functions() {
   $sub_func"
       fi
     done
-    function_body+="*)
+    function_body+="
+    __list)
+      echo ${__meta_functions[$meta_func]}
+      ;;
+    *)
       if [[ \$usage ]]; then
         echo \"\$usage\"
         exit 0
