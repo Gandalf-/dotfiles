@@ -50,6 +50,13 @@ else if test "$at_cros"
   set -gx TERM  screen
   set -gx DIMENSION cros
 
+# gallium
+else if test -d ~/Documents/DotFiles
+  set scripts   ~/Documents/DotFiles
+  set wiki_loc  ~/google_drive/personal/wiki/index.md
+
+  set -gx DIMENSION gallium
+
 # personal
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/index.md
@@ -83,9 +90,8 @@ end
 set -gx TMP /tmp
 
 # fzf
-if test -d ~/.vim/bundle/fzf.vim/bin
-  set PATH ~/.vim/bundle/fzf.vim/bin $PATH
-  # source ~/.vim/bundle/fzf.vim/shell/key-bindings.fish
+if test -d ~/.vim/bundle/fzf/bin
+  set PATH ~/.vim/bundle/fzf/bin $PATH
 end
 
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
@@ -104,7 +110,7 @@ end
 # vimwiki
 if test "$wiki_loc"
   function vws; v "$wiki_loc" +"VimwikiSearch $argv"; end
-  alias vw="v $wiki_loc"
+  function vw ; cd (dirname "$wiki_loc"); vim "$wiki_loc"; end
 end
 
 # Fish git prompt and colors

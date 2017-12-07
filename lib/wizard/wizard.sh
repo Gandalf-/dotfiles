@@ -98,7 +98,7 @@ wizard_file_pin-to-home() {
 common::require 'xcape' &&
 wizard_chromeos_swap-search-escape() {
 
-  common::do xcape -e 'Super_L:Escape'
+  common::do xcape -e 'Super_L=Escape'
 }
 
 

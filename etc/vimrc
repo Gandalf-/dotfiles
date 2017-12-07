@@ -105,10 +105,10 @@
             \ 'syntax': 'markdown',
             \ 'ext': '.md'}]
 
-    elseif dimension == "ubuntu"
-      let g:vimwiki_root = '~/google_drive'
+    elseif dimension == "gallium"
+      let g:vimwiki_root = '~/google_drive/personal/wiki'
       let g:vimwiki_list = [{
-            \ "path": '~/google_drive/',
+            \ "path": '~/google_drive/personal/wiki/',
             \ "syntax": 'markdown',
             \ "ext": '.md',}]
 
