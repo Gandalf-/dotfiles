@@ -3,16 +3,16 @@
 # create fish completions for wizard
 #   writes them to root/lib/
 
-source $(which wizard)
+source $(which wizard)  # grab all function definitions
 mkdir -p ~/.config/fish/completions
 
 {
   echo "complete -e -c w"
 
   while read -r line; do
-    line="${line//_/ }"
-    line="${line//wizard/}"
-    line=( ${line} )
+    line="${line//_/ }"         # replace '_' with ' '
+    line="${line//wizard/}"     # remove 'wizard'
+    line=( $line )              # break into array of words
 
     last=$(( ${#line[@]} - 1 ))
     nlast=$(( last - 1 ))
@@ -30,7 +30,7 @@ mkdir -p ~/.config/fish/completions
 
   done < <(
     declare -F -p \
-      | cut -f 3 -d ' ' \
-      | grep -v 'common::\|autocli::'
+      | awk '{print $3}' \
+      | grep -v 'common::\|autocli::'   # not interested in library functions
     )
 } > ~/.config/fish/completions/w.fish

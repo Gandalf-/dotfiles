@@ -10,10 +10,6 @@ PLATFORM="$(uname)"
 
 export PLATFORM
 
-common::open-link() {
-
-  google-chrome "$1" 2>/dev/null >/dev/null &
-}
 
 common::file-exists() {
   # check if a file exists
@@ -22,6 +18,7 @@ common::file-exists() {
 
   [[ -f "$1" ]]
 }
+
 
 common::require() {
 
@@ -42,14 +39,25 @@ common::require() {
   return 0
 }
 
+
 common::program-exists() {
 
   which "$1" >/dev/null 2>/dev/null
 }
 
+
 common::contains() {
   [[ $1 =~ $2 ]]
 }
+
+
+common::program-exists "google-chrome" &&
+common::open-link() {
+  # open a link in chrome
+
+  google-chrome "$1" 2>/dev/null >/dev/null &
+}
+
 
 common::debug() {
   # only run the arguments if the DEBUG flag is set
@@ -59,16 +67,18 @@ common::debug() {
   (( "$DEBUG" )) && eval "$*"
 }
 
+
 common::clone() {
+  # clone a repository to a location
 
-  common::required-help "$2" "[target] [location]"
+  local target="${1?target required}"
+  local location="${2?location required}"
 
-  local target="$1"
-  local location="$2"
+  [[ -d "$location" ]] || common::error "location doesn't exist!"
 
-  [[ -d "$location" ]] || \
-    common::do git clone --depth 1 "$target" "$location"
+  common::do git clone --depth 1 "$target" "$location"
 }
+
 
 common::required-help() {
   # produce help message when $1 is required
@@ -77,10 +87,12 @@ common::required-help() {
   # this is some help text!
   # "
 
-  caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
-  case $1 in ""|-h|--help) common::error "
+  local caller="${FUNCNAME[1]//_/ }"
+
+  case $1 in ''|-h|--help) common::error "
 ${caller} ${*:2}";; esac
 }
+
 
 common::optional-help() {
   # produce help message when $1 may be nothing
@@ -89,10 +101,12 @@ common::optional-help() {
   # this function doesn't take any arguments!
   # "
 
-  caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
+  local caller="${FUNCNAME[1]//_/ }"
+
   case $1 in -h|--help) common::error "
 ${caller} ${*:2}";; esac
 }
+
 
 common::return() {
   # force a return code
@@ -101,6 +115,7 @@ common::return() {
 
   return "$1"
 }
+
 
 common::error() {
   # print a message and exit with failure
@@ -111,6 +126,7 @@ common::error() {
   exit 1
 }
 
+
 common::color-error() {
   # print a colored message and exit with failure
   #
@@ -120,6 +136,7 @@ common::color-error() {
   exit 1
 }
 
+
 common::echo() {
   # print a colored message
   #
@@ -128,6 +145,7 @@ common::echo() {
   local green="\033[01;32m" normal="\033[00m"
   printf "%b%s%b\n" "$green" "$*" "$normal"
 }
+
 
 common::wait-until() {
   # keep running a command sequence until it passes
@@ -141,6 +159,7 @@ common::wait-until() {
   echo -n " Done!"
   echo
 }
+
 
 common::do() {
   # print what we're about to do, then do it
@@ -175,11 +194,13 @@ common::do() {
   fi
 }
 
+
 common::sudo() {
   # print what we're about to do, then sudo do it
 
   common::do "sudo" "$@"
 }
+
 
 common::confirm() {
   # ask for confirmation with a message, if they reply n or N, exit

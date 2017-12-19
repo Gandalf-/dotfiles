@@ -61,7 +61,7 @@ while [[ $1 ]]; do
       branch="$(
         git branch -q \
           | fzf)"
-      common::required_help "$branch" "g cf [branch]"
+      common::required-help "$branch" "g cf [branch]"
       common::do git checkout "$branch"; shift
       ;;
 
@@ -71,7 +71,7 @@ while [[ $1 ]]; do
           | grep -i "$2" \
           | xargs \
           | cut -f1 -d' ')"
-      common::required_help "$branch" "g cs [branch]"
+      common::required-help "$branch" "g cs [branch]"
       common::do git checkout "$branch"; shift
       ;;
 

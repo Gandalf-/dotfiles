@@ -128,7 +128,8 @@ autocli::make-reflective-functions() {
   # read in all functions declared thus far, split them on '_'
   while read -r func; do
     sub_commands+=( "${func//_/ }" )
-  done < <(declare -F -p | cut -d ' ' -f 3)
+
+  done < <(declare -F -p | awk '{print $3}')
 
   # for each defined function, determine the base and assign sub functions to
   # meta functions
@@ -152,10 +153,11 @@ autocli::make-reflective-functions() {
   common::debug echo "keys ${!__meta_functions[*]}"
 
   local existing_functions
-  existing_functions=( $(declare -F | cut -d ' ' -f 3) )
+  existing_functions=( $(declare -F | awk '{print $3}') )
 
   # define each meta function
   for meta_func in "${!__meta_functions[@]}"; do
+
     common::debug echo "meta_func: $meta_func, ${__meta_functions[$meta_func]}"
 
     if [[ ${existing_functions[*]} =~ .*$meta_func\ .* ]]; then
@@ -163,7 +165,7 @@ autocli::make-reflective-functions() {
       exit 1
     fi
 
-    local auto_name; auto_name="$(tr '_' ' ' <<< "$meta_func")"
+    local auto_name="${meta_func//_/ }"
     local auto_usage=""
     local function_body=""
 

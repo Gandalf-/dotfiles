@@ -279,7 +279,7 @@
         %s/\s\+$//e
         call cursor(l, c)
     endfun
-    autocmd FileType vimwiki,markdown,conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+    autocmd FileType scheme,vimwiki,markdown,conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
   " File specific
     autocmd FileType make setlocal noexpandtab
 
@@ -560,8 +560,8 @@
     vnoremap <silent> <leader>T :!column -te<cr>
 
   " open buffer, open tab, reload, save, sudo save current file
-    nnoremap <leader>E :e<space>
-    nnoremap <leader>e :tabe<space>
+    nnoremap <leader>e :e<space>
+    nnoremap <leader>E :tabe<space>
     nnoremap <leader>l :e % <cr>zz
     nnoremap <leader>k :w<CR>
 
