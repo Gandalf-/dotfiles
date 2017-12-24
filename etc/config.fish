@@ -32,51 +32,47 @@ function  ....; builtin cd ../../../;command ls --color=auto ; end
 
 # workstation
 if test "$at_work"
-  set     wiki_loc  ~/cribshome/wiki/index.md
-  set     scripts   ~/cribshome/DotFiles
-
   set -gx DIFFDIR   ~/cribshome/diffs/
   set -gx SCRIPITY  /mnt/ssd/
   set -gx DIMENSION work
 
-  set PATH ~/scripity-scripts/bin $PATH
+  set PATH      ~/scripity-scripts/bin $PATH
+  set wiki_loc  ~/cribshome/wiki/index.md
+  set scripts   ~/cribshome/DotFiles
 
 # chrome os native
 else if test "$at_cros"
-  set scripts   /usr/local/home/DotFiles
-  set wiki_loc  /usr/local/home/google_drive/personal/wiki/index.md
-
   set -gx PAGER /usr/local/bin/less
   set -gx TERM  screen
   set -gx DIMENSION cros
 
+  set scripts   /usr/local/home/DotFiles
+  set wiki_loc  /usr/local/home/google_drive/personal/wiki/index.md
+
 # gallium
 else if test -d ~/Documents/DotFiles
+  set -gx DIMENSION gallium
+
   set scripts   ~/Documents/DotFiles
   set wiki_loc  ~/google_drive/personal/wiki/index.md
 
-  set -gx DIMENSION gallium
-
-# personal
+# birch, chroot
 else if test -d ~/google_drive
   set wiki_loc ~/google_drive/personal/wiki/index.md
   set scripts  ~/google_drive/personal/share/Public/DotFiles
 
   set -gx DIMENSION ubuntu
 
-# temporary
-else if test -d /tmp/DotFiles
+else
   set -gx DIMENSION unknown
-
 end
 
 # Languages
 #===========================
 
 # rust
-if test -d ~/.cargo/bin/
-  set PATH ~/.cargo/bin/ $PATH
-end
+test -d ~/.cargo/bin/
+  and set PATH ~/.cargo/bin/ $PATH
 
 # go
 if test -d /usr/local/go/bin/
@@ -92,20 +88,17 @@ set -gx TMP /tmp
 # fzf
 if test -d ~/.vim/bundle/fzf/bin
   set PATH ~/.vim/bundle/fzf/bin $PATH
+  set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
+  set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
 end
-
-set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-set -gx FZF_DEFAULT_OPTS '--height 50% --border'
 
 # autojump
-if test -f ~/.autojump/share/autojump/autojump.fish
-  . ~/.autojump/share/autojump/autojump.fish
-end
+test -f ~/.autojump/share/autojump/autojump.fish
+  and . ~/.autojump/share/autojump/autojump.fish
 
 # DotFiles scripts
-if test "$scripts"
-  set PATH $scripts/bin $PATH
-end
+test "$scripts"
+  and set PATH $scripts/bin $PATH
 
 # vimwiki
 if test "$wiki_loc"
