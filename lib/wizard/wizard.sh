@@ -228,24 +228,30 @@ wizard_clean_apt() {
 }
 
 
+wizard_clean_haskell() {
+
+  common::do rm *.hi *.o || error "No files to clean"
+  return 0
+}
+
+
 wizard_clean_files() {
 
   # clean up the filesystem under the current directory, mostly useful for
   # removing duplicate files insync creates
 
-  local fixed dry=0 counter=0 usage="
-  $__name [-d|--dry]
+  local dry=0 counter=0
+
+  common::optional-help "$1" "[--dry]
 
   smart remove duplicate file names and intermediary file types
   "
 
-  case "$1" in
-    -d|--dry) dry=1 ;;
-    *)        common::error "$usage" ;;
-  esac
+  local nargs=$#
+  case $1 in -d|--dry) dry=1; shift; esac
 
   while read -r file; do
-    fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
+    local fixed; fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
 
     # make sure the file still exists
     if [[ -e "$file" ]] ; then
@@ -282,7 +288,8 @@ wizard_clean_files() {
   else
     echo "Cleaned up $counter files"
   fi
-  return 1
+
+  return $nargs
 }
 
 

@@ -135,6 +135,7 @@ wizard_install_fish() {
   install fish from the official repository so we get the most recent version
   "
 
+  common::sudo apt-get install software-properties-common python-software-properties
   common::sudo apt-add-repository -y ppa:fish-shell/release-2
   common::sudo apt-get update
   common::sudo apt-get install -y fish

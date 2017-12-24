@@ -59,7 +59,7 @@ else if test -d ~/Documents/DotFiles
 
 # personal
 else if test -d ~/google_drive
-  set wiki_loc ~/google_drive/index.md
+  set wiki_loc ~/google_drive/personal/wiki/index.md
   set scripts  ~/google_drive/personal/share/Public/DotFiles
 
   set -gx DIMENSION ubuntu
