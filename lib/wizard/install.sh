@@ -24,6 +24,8 @@ wizard_install_dot-files() {
   link etc/vim/snippets        .vim/
   link etc/irssi               .irssi
   link lib/fish/functions      .config/fish/
+
+  local c="$HOME/.config/fish/completions"; [[ -d "$c" ]] && common::rm "$c"
   link lib/fish/completions    .config/fish/
 
   common::do rm "$root"/etc/irssi/irssi

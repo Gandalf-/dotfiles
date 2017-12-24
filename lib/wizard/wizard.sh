@@ -256,11 +256,21 @@ wizard_clean_files() {
     # make sure the file still exists
     if [[ -e "$file" ]] ; then
 
+      # target file exists too, make sure they're different
       if [[ -f "$fixed" ]]; then
+
+        soriginal=$(sha1sum "$file")
+        snew=$(sha1sum "$fixed")
+
         echo "remove dup: $file"
-        (( dry )) \
-          || rm "$file" \
-          || exit
+        if [[ $soriginal != $snew ]]; then
+          (( dry )) \
+            || rm "$file" \
+            || exit
+
+        else
+          echo "$file $fixed both exist but are different"
+        fi
 
       else
         echo "rename dup: $file"
