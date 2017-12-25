@@ -57,9 +57,9 @@ else if test -d ~/Documents/DotFiles
   set wiki_loc  ~/google_drive/personal/wiki/index.md
 
 # birch, chroot
-else if test -d ~/google_drive
-  set wiki_loc ~/google_drive/personal/wiki/index.md
-  set scripts  ~/google_drive/personal/share/Public/DotFiles
+else if test -d ~/DotFiles
+  set wiki_loc ~/wiki/index.md
+  set scripts  ~/DotFiles
 
   set -gx DIMENSION ubuntu
 
