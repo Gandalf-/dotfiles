@@ -34,6 +34,47 @@ wizard_make_tmpfs() {
 }
 
 
+common::require 'git' 'mount' &&
+wizard_make_tmpfs-git-clone() {
+
+  common::required-help "$1" "[name] (git repo)
+
+  clone a repo into a new tmpfs directory
+
+    w make tmpfs-git-clone haskell
+    w make tmpfs-git-clone https://github.com/danilop/yas3fs.git
+  "
+
+  is_repo() {
+    [[ $1 =~ github ]]
+  }
+
+  name_from_repo() {
+    # https://github.com/danilop/yas3fs.git -> yas3fs
+    local array=( ${1//\// } )
+    local name="${array[ $(expr ${#array[@]} - 1) ]}"
+    result="${name%.*}"
+  }
+
+  # given just a repo url
+  if is_repo "$1"; then
+    name_from_repo "$1"
+    local name="$result"
+    local repo="$1"
+
+  # just a name, try my github
+  else
+    local name="$1"
+    local repo="https://github.com/Gandalf-/$name.git"
+  fi
+
+  wizard_make_tmpfs "$name"
+  common::do git clone "$repo" "$name"
+
+  return $#
+}
+
+
 common::require 'mount' &&
 wizard_make_mirror() {
 

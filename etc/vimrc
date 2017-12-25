@@ -52,16 +52,18 @@
     try
       call vundle#begin()
         Plugin 'VundleVim/Vundle.vim'
-        Plugin 'vimwiki/vimwiki'
-        Plugin 'Shougo/neocomplete.vim'
-        Plugin 'Shougo/neosnippet.vim'
-        Plugin 'Shougo/neosnippet-snippets'
-        Plugin 'Shougo/neoinclude.vim'
-        Plugin 'w0rp/ale'
+
+        Plugin 'benmills/vimux'
+        Plugin 'christoomey/vim-tmux-navigator'
         Plugin 'junegunn/fzf'
         Plugin 'junegunn/fzf.vim'
-        Plugin 'christoomey/vim-tmux-navigator'
-        Plugin 'benmills/vimux'
+        Plugin 'Shougo/neocomplete.vim'
+        Plugin 'Shougo/neoinclude.vim'
+        Plugin 'Shougo/neosnippet-snippets'
+        Plugin 'Shougo/neosnippet.vim'
+        Plugin 'vim-scripts/haskell.vim'
+        Plugin 'vimwiki/vimwiki'
+        Plugin 'w0rp/ale'
 
         if has_vundle == 0
           :PluginInstall

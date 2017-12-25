@@ -50,7 +50,7 @@ wizard_macro() {
 common::require 'ffmpeg' &&
 wizard_transcode_movies() {
   #
-  local preset=slow
+  local preset=veryslow
 
   echo "Processing: $*"
   for file in "$@"; do
@@ -61,7 +61,7 @@ wizard_transcode_movies() {
       || common::error "failed on \"$file\". Giving up"
 
     common::echo "Waiting..."; sleep 5
-    common::do rm "$file"
+    common::do rm -i "$file"
   done
 
   return $#
