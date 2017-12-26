@@ -1,0 +1,59 @@
+#!/bin/bash
+
+
+error() {
+
+  echo "$@"
+  exit 1
+}
+
+main() {
+
+  [[ -e ~/.syncdaemon ]] || error '.syncdaemon file does not exist'
+
+  while read -r directory; do
+
+    (
+      cd "$directory"
+      gstatus="$(git status --porcelain)"
+
+      echo "$directory"
+      echo "$gstatus"
+      echo
+
+      if [[ $gstatus ]]; then
+        git add -A :/
+        git commit -m "git sync daemon - $(whoami)@$(hostname)"
+        git fetch --all --prune --quiet
+        git pull --quiet
+        git push --quiet
+      fi
+    )
+
+  done < ~/.syncdaemon
+}
+
+
+daemonize() {
+
+  while :; do
+    main
+    sleep 300
+  done
+}
+
+foreground=0
+
+case $1 in
+  -f|--foreground)
+    foreground=1
+    ;;
+esac
+
+if (( foreground )); then
+  daemonize
+
+else
+  daemonize &
+  disown
+fi

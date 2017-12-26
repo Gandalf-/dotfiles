@@ -29,6 +29,22 @@ wizard_regenerate() {
 }
 
 
+wizard_git_fetch() {
+
+  while read -r directory; do
+    (
+      cd "$directory"
+      git fetch --quiet --all --recurse-submodules --prune
+      echo "$directory"
+    ) &
+
+  done < <(find . -name .git)
+  wait
+
+  return $#
+}
+
+
 wizard_macro() {
 
   common::optional-help "$1" "(amount)
