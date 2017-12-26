@@ -16,17 +16,25 @@ main() {
     (
       cd "$directory"
       gstatus="$(git status --porcelain)"
+      lastcommit="$(git log --after="yesterday" --oneline | head -n 1)"
 
       echo "$directory"
-      echo "$gstatus"
-      echo
-
       if [[ $gstatus ]]; then
+
         git add -A :/
-        git commit -m "git sync daemon - $(whoami)@$(hostname)"
         git fetch --all --prune --quiet
-        git pull --quiet
-        git push --quiet
+
+        if grep -q 'git sync daemon' <<< "$lastcommit"; then
+          echo "time to ammend"
+          git commit --amend --no-edit
+          git push --force
+
+        else
+          git commit -m "git sync daemon - $(whoami)@$(hostname)"
+          git rebase --quiet
+          git push --quiet
+        fi
+        exit
       fi
     )
 
