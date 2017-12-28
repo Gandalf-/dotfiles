@@ -61,9 +61,9 @@
         Plugin 'Shougo/neoinclude.vim'
         Plugin 'Shougo/neosnippet-snippets'
         Plugin 'Shougo/neosnippet.vim'
-        Plugin 'vim-scripts/haskell.vim'
         Plugin 'vimwiki/vimwiki'
         Plugin 'w0rp/ale'
+        Plugin 'dag/vim2hs'
 
         if has_vundle == 0
           :PluginInstall
@@ -72,6 +72,9 @@
     catch
     endtry
     filetype plugin indent on
+
+  " vim2hs
+    let g:haskell_conceal_wide = 1
 
   " vimux
     let g:VimuxOrientation = "h"
