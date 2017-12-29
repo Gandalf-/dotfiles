@@ -27,7 +27,7 @@ wizard_devbot_start() {
 
   [[ -e $pfile ]] && common::error "devbot already running"
 
-  db::main 2>&1 >> $lfile &
+  devbot::main 2>&1 >> $lfile &
   local pid=$!
   disown
 
@@ -46,7 +46,7 @@ wizard_devbot_add() {
   local interval="$1"
   local procedure="${@:2}"
 
-  db::add "$interval" "$procedure"
+  devbot::add "$interval" "$procedure"
 
   return $#
 }
@@ -82,10 +82,49 @@ wizard_devbot_status() {
   fi
 }
 
+wizard_devbot_show() {
+
+  local schedule=~/.devbot-schedule
+
+  translate-time() {
+
+    local time="$1"
+
+    if (( time <= 60 )); then
+      echo "$time seconds"
+
+    elif (( time <= 3600 )); then
+      echo "$(expr $time / 60) minutes"
+
+    elif (( time <= 86400 )); then
+      echo "$(expr $time / 3600) hours"
+
+    else
+      echo "more than a day"
+    fi
+  }
+
+  echo
+  while read -r event; do
+    local data=( $event )
+    local interval="${data[0]}"
+    local when="${data[1]}"
+    local procedure="${data[@]:2}"
+
+    local time="$(translate-time $(expr $when - $(date '+%s')))"
+
+    common::echo "$procedure"
+    echo "  every $(translate-time $interval)"
+    echo "  next $time from now"
+    echo
+
+  done < $schedule
+}
+
 
 # devbot library
 
-db::add() {
+devbot::add() {
 
   # interval -> command ... -> none
   #
@@ -101,7 +140,7 @@ db::add() {
   echo "$interval $when $procedure" >> $schedule
 }
 
-db::initialize_events() {
+devbot::initialize_events() {
 
   # none -> none
   #
@@ -112,17 +151,18 @@ db::initialize_events() {
   local hour=3600
   local day=86400
 
-  db::add $fivem 'insync-headless reject_all_new_shares austin.voecks@gmail.com'
+  devbot::add $fivem \
+    'insync-headless reject_all_new_shares austin.voecks@gmail.com'
 
-  db::add $hour 'cd $HOME && wizard git fetch'
-  db::add $hour 'echo "" > ~/.devbot-log'
+  devbot::add $hour 'cd $HOME && wizard git fetch'
+  devbot::add $hour 'echo "" > ~/.devbot-log'
 
-  db::add $day 'wizard update pip'
-  db::add $day 'wizard update apt'
+  devbot::add $day 'wizard update pip'
+  devbot::add $day 'wizard update apt'
 
 }
 
-db::runner() {
+devbot::runner() {
 
   # interval -> unix epoch time -> command ... -> none
   #
@@ -141,7 +181,7 @@ db::runner() {
 
     if [[ $procedure ]]; then
       eval "$procedure"
-      db::add "$interval" "$procedure"
+      devbot::add "$interval" "$procedure"
 
     else
       echo "runner error, no procedure"
@@ -153,7 +193,7 @@ db::runner() {
   fi
 }
 
-db::main() {
+devbot::main() {
 
   # none -> none
   #
@@ -162,7 +202,7 @@ db::main() {
   local schedule=~/.devbot-schedule
   local copy_schedule=~/.devbot-schedule-copy
 
-  [[ -e $schedule ]] || db::initialize_events
+  [[ -e $schedule ]] || devbot::initialize_events
 
   echo "starting devbot"
   while :; do
@@ -173,7 +213,7 @@ db::main() {
 
     while read -r event; do
 
-      db::runner "$event"
+      devbot::runner "$event"
     done < $copy_schedule
 
     sleep 5

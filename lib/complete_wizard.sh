@@ -31,6 +31,7 @@ mkdir -p ~/.config/fish/completions
   done < <(
     declare -F -p \
       | awk '{print $3}' \
-      | grep -v 'common::\|autocli::'   # not interested in library functions
+      | grep -v 'common::\|autocli::\|devbot::'
+      # not interested in library functions
     )
 } > ~/.config/fish/completions/w.fish
