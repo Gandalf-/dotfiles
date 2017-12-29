@@ -4,11 +4,6 @@
 #   commonly useful functions across all scripts
 
 DEBUG=${DEBUG:-0}
-green="\033[01;32m"
-normal="\033[00m"
-PLATFORM="$(uname)"
-
-export PLATFORM
 
 
 common::check-network() {
@@ -148,8 +143,9 @@ common::echo() {
   #
   # common:echo "something happened"
 
+  # shellcheck disable=SC1117
   local green="\033[01;32m" normal="\033[00m"
-  printf "%b%s%b\n" "$green" "$*" "$normal"
+  printf "%b%s%b"\\n "$green" "$*" "$normal"
 }
 
 
@@ -172,10 +168,8 @@ common::do() {
   #
   # common::do rm -rf /tmp/*
 
-  local green="\033[01;32m" normal="\033[00m"
-
   if ! (( "$AUTO" )); then
-    printf "%b%s%b\n" "$green" "$*" "$normal"
+    common::echo "$*"
   fi
 
   if (( "$CONFIRM" )); then

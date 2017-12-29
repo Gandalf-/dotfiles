@@ -134,6 +134,8 @@ autocli::make-reflective-functions() {
   # for each defined function, determine the base and assign sub functions to
   # meta functions
   for ((i=0; i < ${#sub_commands[@]}; i++)); do
+
+    # shellcheck disable=SC2206
     local commands=( ${sub_commands[$i]} )
     local len=${#commands[@]}
     local base=${commands[0]}
@@ -153,6 +155,7 @@ autocli::make-reflective-functions() {
   common::debug echo "keys ${!__meta_functions[*]}"
 
   local existing_functions
+  # shellcheck disable=SC2207
   existing_functions=( $(declare -F | awk '{print $3}') )
 
   # define each meta function
