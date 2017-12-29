@@ -33,12 +33,42 @@ wizard_git_fetch() {
 
   while read -r directory; do
     (
-      cd "$directory"
+      local dir="$(dirname $directory)"
+      cd "$dir"
       git fetch --quiet --all --recurse-submodules --prune
-      echo "$directory"
+      echo "$dir"
     ) &
 
-  done < <(find . -name .git)
+  done < <(find . -name .git) | sort
+  wait
+
+  return $#
+}
+
+
+wizard_git_report() {
+
+  while read -r directory; do
+    (
+      local dir="$(dirname $directory)"
+      cd "$dir"
+      local status="$(git status)"
+
+      grep -q 'Your branch is ahead of' <<< "$status" &&
+        echo "$dir has local commits not pushed to remote"
+
+      grep -q 'can be fast-forwarded' <<< "$status" &&
+        echo "$dir can be fast-forwarded"
+
+      grep -q 'Changes not staged for commit' <<< "$status" &&
+        echo "$dir has uncommited, modified files"
+
+      grep -q 'Untracked files' <<< "$status" &&
+        echo "$dir has untracked files"
+
+    ) &
+
+  done < <(find . -name .git) | sort
   wait
 
   return $#

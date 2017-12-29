@@ -159,6 +159,7 @@ devbot::initialize_events() {
 
   devbot::add $day 'wizard update pip'
   devbot::add $day 'wizard update apt'
+  devbot::add $day 'rm -rf ~/google_drive/.insync-trash'
 
 }
 
