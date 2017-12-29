@@ -38,7 +38,7 @@ wizard_clean_apt() {
 
 wizard_clean_haskell() {
 
-  common::do rm *.hi *.o || error "No files to clean"
+  common::do rm ./*.hi ./*.o || error "No files to clean"
   return 0
 }
 
@@ -71,7 +71,7 @@ wizard_clean_files() {
         snew=$(sha1sum "$fixed")
 
         echo "remove dup: $file"
-        if [[ $soriginal != $snew ]]; then
+        if [[ $soriginal != "$snew" ]]; then
           (( dry )) \
             || rm "$file" \
             || exit
@@ -87,7 +87,7 @@ wizard_clean_files() {
           || exit
       fi
 
-      let counter++
+      (( counter++ ))
     fi
   done < <(find . -regex '.*([0-9]+).*')
 
@@ -97,7 +97,8 @@ wizard_clean_files() {
     (( dry )) \
       || rm "$file" \
       || exit
-    let counter++
+
+    (( counter++ ))
 
   done < <(find . -regex '.*\.\(pyc\|class\|o\|bak\)')
 
@@ -107,7 +108,7 @@ wizard_clean_files() {
     echo "Cleaned up $counter files"
   fi
 
-  return $nargs
+  return "$nargs"
 }
 
 

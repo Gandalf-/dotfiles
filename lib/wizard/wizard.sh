@@ -6,8 +6,6 @@
 #
 #   All the intermediary functions are produced by auto_cli.sh
 
-__name=""
-
 
 wizard_regenerate() {
 
@@ -31,10 +29,12 @@ wizard_regenerate() {
 
 wizard_git_fetch() {
 
+  common::check-network || common::error "no network connection"
+
   while read -r directory; do
     (
-      local dir="$(dirname $directory)"
-      cd "$dir"
+      local dir; dir="$(dirname "$directory")"
+      cd "$dir" || exit
       git fetch --quiet --all --recurse-submodules --prune
       echo "$dir"
     ) &
@@ -50,9 +50,9 @@ wizard_git_report() {
 
   while read -r directory; do
     (
-      local dir="$(dirname $directory)"
-      cd "$dir"
-      local status="$(git status)"
+      local dir; dir="$(dirname "$directory")"
+      cd "$dir" || exit
+      local status; status="$(git status)"
 
       grep -q 'Your branch is ahead of' <<< "$status" &&
         echo "$dir has local commits not pushed to remote"
@@ -257,6 +257,8 @@ wizard_update_apt() {
 
   update all apt packages
   "
+  common::check-network || common::error "no network connection"
+
   common::sudo apt update
   common::sudo apt upgrade -y
   common::sudo apt-get autoremove
@@ -270,6 +272,8 @@ wizard_update_pip() {
 
   update all python packages installed by pip
   "
+  common::check-network || common::error "no network connection"
+
   sudo -H pip freeze --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \

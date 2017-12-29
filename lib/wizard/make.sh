@@ -28,7 +28,7 @@ wizard_make_tmpfs() {
   common::sudo \
     mount -t tmpfs \
     -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
-    tmpfs_"$(basename $target)" "$target"
+    tmpfs_"$(basename "$target")" "$target"
 
   return $#
 }
@@ -51,8 +51,8 @@ wizard_make_tmpfs-git-clone() {
 
   name_from_repo() {
     # https://github.com/danilop/yas3fs.git -> yas3fs
-    local array=( ${1//\// } )
-    local name="${array[ $(expr ${#array[@]} - 1) ]}"
+    local array; read -ar array <<< "${1//\// }"
+    local name="${array[ $(( ${#array[@]} - 1)) ]}"
     result="${name%.*}"
   }
 
@@ -95,7 +95,7 @@ wizard_make_mirror() {
   common::sudo \
     mount -t tmpfs \
     -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
-    tmpfs_"$(basename $source)" "$target"
+    tmpfs_"$(basename "$source")" "$target"
 
   common::do cp -r "$source"/\* "$target"
 

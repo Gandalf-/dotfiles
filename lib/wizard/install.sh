@@ -122,7 +122,7 @@ wizard_install_lua() {
   common::do wget -N 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
   common::do tar zxvf lua-5.3.3.tar.gz
   common::do cd lua-5.3.3
-  common::do make -j $NUM_CPUS linux
+  common::do make linux
   common::sudo make install
 
   common::do cd -
