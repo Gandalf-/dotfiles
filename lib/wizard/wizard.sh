@@ -262,6 +262,8 @@ wizard_update_apt() {
   common::sudo apt update
   common::sudo apt upgrade -y
   common::sudo apt-get autoremove
+
+  return $#
 }
 
 
@@ -278,6 +280,8 @@ wizard_update_pip() {
     | grep -v '^\-e' \
     | cut -d = -f 1  \
     | xargs -n1 sudo -H pip install -U
+
+  return $#
 }
 
 

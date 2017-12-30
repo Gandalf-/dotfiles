@@ -197,7 +197,9 @@ devbot::runner() {
 
     if [[ $procedure ]]; then
       (
-        eval timeout 30 "$procedure"
+        timeout 30 bash -c "$procedure" ||
+          echo "error while running \"$procedure\""
+
         devbot::add "$interval" "$procedure"
       ) &
 
