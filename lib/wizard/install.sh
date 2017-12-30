@@ -10,25 +10,29 @@ wizard_install_dot-files() {
   common::do mkdir -p "$HOME"/.config/fish
 
   link() {
-    common::do ln -sf "$(readlink -e "${root}/$1")" "${HOME}/$2"
+    local here; here="$(readlink -e "${root}/$1")"
+    local there="${HOME}/$2"
+
+    common::do ln -sf "$here" "$there"
   }
 
   link etc/config.fish         .config/fish/config.fish
   link etc/vimrc               .vimrc
   link etc/tmux.conf           .tmux.conf
   link etc/bashrc              .bashrc
-  link etc/gitconfig           .gitconfig
   link etc/gitignore_global    .gitignore_global
   link etc/pylintrc            .pylintrc
+  link etc/devbotrc            .devbotrc
 
   link etc/vim/snippets        .vim/
   link etc/irssi               .irssi
   link lib/fish/functions      .config/fish/
 
-  local c="$HOME/.config/fish/completions"; [[ -d "$c" ]] && common::do rm "$c"
-  link lib/fish/completions    .config/fish/
+  # remove directory, not symbolic link
+  local completions="$HOME/.config/fish/completions";
+  [[ -L "$completions" ]] || common::do rm -rf "$completions"
 
-  common::do rm -f "$root"/etc/irssi/irssi
+  link lib/fish/completions    .config/fish/
 }
 
 common::require 'apt' &&

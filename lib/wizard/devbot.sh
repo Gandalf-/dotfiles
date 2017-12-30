@@ -34,6 +34,25 @@ wizard_devbot_start() {
   echo "$pid" > $pfile
 }
 
+wizard_devbot_edit() {
+
+  common::optional-help "$1" "
+
+  open up the devbot schedule in Vim to make manual changes.
+  devbot is paused while Vim is open.
+  "
+
+  local schedule=~/.devbot-schedule
+
+  wizard devbot kill
+  vim ~/.devbot-schedule
+  wizard devbot start
+
+  devbot::save
+
+  return $#
+}
+
 wizard_devbot_add() {
 
   common::required-help "$2" "[interval] [command ...]
@@ -47,6 +66,7 @@ wizard_devbot_add() {
   local procedure="${*:2}"
 
   devbot::add "$interval" "$procedure"
+  devbot::save
 
   return $#
 }
@@ -85,8 +105,7 @@ wizard_devbot_status() {
     else
       echo detected stale pid file, restarting >> $lfile
       rm $pfile
-      wizard devbot start &
-      disown
+      wizard devbot start
       echo "✓"
     fi
 
@@ -158,23 +177,15 @@ devbot::initialize_events() {
 
   # none -> none
   #
-  # add some basic tasks to the schedule
+  # load tasks from ~/.devbotrc
 
-  local fivem=300
-  local hour=3600
-  local day=86400
+  while read -r line; do
 
-  devbot::add $fivem \
-    'insync-headless reject_all_new_shares austin.voecks@gmail.com'
+    # shellcheck disable=SC2206
+    local data=( $line )
+    devbot::add "${data[0]}" "${data[@]:1}"
 
-  devbot::add $hour "cd $HOME && wizard git fetch"
-
-  devbot::add $day 'echo "" > ~/.devbot-log'
-  devbot::add $day 'wizard update pip'
-  devbot::add $day 'wizard update apt'
-  devbot::add $day 'rm -rf ~/google_drive/.insync-trash'
-  devbot::add $day 'vim +PluginUpdate +qall'
-
+  done < ~/.devbotrc
 }
 
 devbot::runner() {
@@ -212,6 +223,16 @@ devbot::runner() {
     echo "$interval $when $procedure" >> $schedule
   fi
   wait
+}
+
+devbot::save() {
+
+  # none -> none
+  #
+  # save the schedule to ~/.devbotrc minus the run timestamps
+
+  local schedule=~/.devbot-schedule
+  cut -f 1,3- -d ' ' "$schedule" > ~/.devbotrc
 }
 
 devbot::main() {
