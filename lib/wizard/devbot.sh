@@ -165,7 +165,7 @@ devbot::task:add() {
   #
   # writes an event to the schedule at (now + interval)
 
-  local schedule=~/.devbot-schedule
+  echo "task:add $*"
 
   local interval="$1"; shift
   local when="$(( interval + $(date '+%s') ))"
@@ -181,8 +181,6 @@ devbot::task:handle() {
   # check the time field of the input, if it's passed then run the command.
   # otherwise we add it back to schedule unchanged
 
-  local schedule=~/.devbot-schedule
-
   local interval="$1"
   local when="$2"
   local action="$3"
@@ -190,7 +188,9 @@ devbot::task:handle() {
   if (( when < $(date '+%s') )); then
     # run the event, add to schedule with updated time
 
-    [[ $action ]] || echo "runner error, no action" && return
+    common::debug "task:handle $action, $interval, $when"
+
+    [[ $action ]] || { echo "task:handle error: no action"; return; }
     devbot::eval "$action"
     devbot::task:add "$interval" "$action"
 
@@ -209,11 +209,7 @@ devbot::remind:write() {
 
 devbot::remind:add() {
 
-  # interval -> command -> none
-  #
-  # writes an event to the schedule at (now + interval)
-
-  local schedule=~/.devbot-schedule
+  # when -> command -> none
 
   local when="$1"; shift
   local action="$*"
@@ -222,7 +218,7 @@ devbot::remind:add() {
 }
 
 
-devbot::initialize_events() {
+devbot::initialize() {
 
   # none -> none
   #
@@ -249,7 +245,7 @@ devbot::initialize_events() {
         ;;
 
       *)
-        echo "initialize_events error, unrecongized event type: $type"
+        echo "initialize error: unrecongized event type: $type"
         ;;
 
     esac
@@ -314,7 +310,7 @@ devbot::main() {
   local schedule=~/.devbot-schedule
   local copy_schedule=~/.devbot-schedule-copy
 
-  [[ -s $schedule ]] || devbot::initialize_events
+  [[ -s $schedule ]] || devbot::initialize
 
   echo "starting devbot"
   while :; do
