@@ -22,8 +22,8 @@ wizard_devbot_start() {
   start devbot, will fail if already running
   "
 
-  local pfile=~/.devbot-pid
-  local lfile=~/.devbot-log
+  local pfile=~/.devbot/pid
+  local lfile=~/.devbot/log
 
   [[ -e $pfile ]] && common::error "devbot already running"
 
@@ -36,6 +36,24 @@ wizard_devbot_start() {
   return $#
 }
 
+wizard_devbot_report() {
+
+  common::optional-help "$1" "
+
+  check the report file for messages from devbot. messages are cleared after
+  reading
+  "
+
+  local rfile=~/.devbot/report
+
+  if [[ -s $rfile ]]; then
+    cat $rfile
+    rm $rfile
+  fi
+
+  return $#
+}
+
 wizard_devbot_edit() {
 
   common::optional-help "$1" "
@@ -44,10 +62,10 @@ wizard_devbot_edit() {
   devbot is paused while Vim is open.
   "
 
-  local schedule=~/.devbot-schedule
+  local schedule=~/.devbot/schedule
 
   wizard devbot kill
-  vim ~/.devbot-schedule
+  vim ~/.devbot/schedule
 
   devbot::save
   wizard devbot start
@@ -56,6 +74,11 @@ wizard_devbot_edit() {
 }
 
 wizard_devbot_bounce() {
+
+  common::optional-help "$1" "
+
+  restart devbot
+  "
 
   wizard devbot kill
   wizard devbot start
@@ -70,7 +93,7 @@ wizard_devbot_kill() {
   stop devbot, will fail if not running
   "
 
-  local pfile=~/.devbot-pid
+  local pfile=~/.devbot/pid
 
   [[ -e $pfile ]] || common::error "devbot is not running"
 
@@ -87,14 +110,21 @@ wizard_devbot_status() {
   report whether devbot is running, used by tmux status
   "
 
-  local pfile=~/.devbot-pid
-  local lfile=~/.devbot-log
+  local pfile=~/.devbot/pid
+  local lfile=~/.devbot/log
+  local rfile=~/.devbot/report
 
   if [[ -e $pfile ]]; then
     read -r pid < $pfile
 
     if kill -0 "$pid"; then
-      echo "✓"
+
+      if test -s $rfile; then
+        echo "Ʃ"
+
+      else
+        echo "✓"
+      fi
 
     else
       echo detected stale pid file, restarting >> $lfile
@@ -110,7 +140,12 @@ wizard_devbot_status() {
 
 wizard_devbot_list() {
 
-  local schedule=~/.devbot-schedule
+  common::optional-help "$1" "
+
+  print out the current devbot schedule
+  "
+
+  local schedule=~/.devbot/schedule
 
   translate-time() {
 
@@ -134,12 +169,14 @@ wizard_devbot_list() {
   while read -r event; do
     # shellcheck disable=SC2206
     local data=( $event )
+    local type="${data[0]}"
     local interval="${data[1]}"
     local when="${data[2]}"
     local procedure="${data[*]:3}"
 
     local time; time="$(translate-time $(( when - $(date '+%s') )) )"
 
+    echo -n "($type) "
     common::echo "$procedure"
     echo "  every $(translate-time "$interval")"
     echo "  next $time from now"
@@ -155,7 +192,9 @@ wizard_devbot_list() {
 
 devbot::task:write() {
 
-  local schedule=~/.devbot-schedule
+  common::debug "task:write $*"
+
+  local schedule=~/.devbot/schedule
   echo "task $*" >> "$schedule"
 }
 
@@ -165,7 +204,7 @@ devbot::task:add() {
   #
   # writes an event to the schedule at (now + interval)
 
-  echo "task:add $*"
+  common::debug "task:add $*"
 
   local interval="$1"; shift
   local when="$(( interval + $(date '+%s') ))"
@@ -181,14 +220,14 @@ devbot::task:handle() {
   # check the time field of the input, if it's passed then run the command.
   # otherwise we add it back to schedule unchanged
 
+  common::debug "task:handle $*"
+
   local interval="$1"
   local when="$2"
   local action="$3"
 
   if (( when < $(date '+%s') )); then
     # run the event, add to schedule with updated time
-
-    common::debug "task:handle $action, $interval, $when"
 
     [[ $action ]] || { echo "task:handle error: no action"; return; }
     devbot::eval "$action"
@@ -201,20 +240,57 @@ devbot::task:handle() {
 }
 
 
-devbot::remind:write() {
+devbot::report:write() {
 
-  local schedule=~/.devbot-schedule
-  echo "remind $*" >> "$schedule"
+  common::debug "report:write $*"
+
+  local schedule=~/.devbot/schedule
+  echo "report $*" >> "$schedule"
 }
 
-devbot::remind:add() {
+devbot::report:add() {
 
-  # when -> command -> none
+  # interval -> command -> none
+  #
+  # writes an event to the schedule at (now + interval)
 
-  local when="$1"; shift
+  common::debug "report:add $*"
+
+  local interval="$1"; shift
+  local when="$(( interval + $(date '+%s') ))"
   local action="$*"
 
-  devbot::remind:write "$when $action"
+  devbot::report:write "$interval $when $action"
+}
+
+devbot::report:handle() {
+
+  # interval -> when -> action -> none
+  #
+  # check the time field of the input, if it's passed then run the command.
+  # otherwise we add it back to schedule unchanged
+
+  common::debug "report:handle $*"
+
+  local interval="$1"
+  local when="$2"
+  local action="$3"
+
+  local report_file=~/.devbot/report
+
+  if (( when < $(date '+%s') )); then
+    # run the event, add to schedule with updated time
+
+    [[ $action ]] || { echo "report:handle error: no action"; return; }
+
+    devbot::eval "$action" >> $report_file
+    devbot::report:add "$interval" "$action"
+
+  else
+    # put the event back on the schedule unchanged
+    devbot::report:write "$interval $when $action"
+  fi
+
 }
 
 
@@ -247,7 +323,6 @@ devbot::initialize() {
       *)
         echo "initialize error: unrecongized event type: $type"
         ;;
-
     esac
 
   done < ~/.devbotrc
@@ -258,6 +333,8 @@ devbot::runner() {
   # string -> ... -> none
   #
   # figure out which type of event this is, and call the handler
+
+  common::debug "runner: $*"
 
   # shellcheck disable=SC2206
   local data=( $@ )
@@ -273,6 +350,15 @@ devbot::runner() {
       devbot::task:handle "$interval" "$when" "$action"
       ;;
 
+    report)
+      # type | interval | when | action ...
+      local interval="${data[1]}"
+      local when="${data[2]}"
+      local action="${data[*]:3}"
+
+      devbot::report:handle "$interval" "$when" "$action"
+      ;;
+
     *)
       echo "runner error, unrecongized task type: $type"
       ;;
@@ -285,7 +371,7 @@ devbot::save() {
   #
   # save the schedule to ~/.devbotrc minus the run timestamps
 
-  local schedule=~/.devbot-schedule
+  local schedule=~/.devbot/schedule
   # TODO update to parse types
   # cut -f 1,2,4- -d ' ' "$schedule" > ~/.devbotrc
 }
@@ -297,6 +383,7 @@ devbot::eval() {
   #
   # evaluate the given shell code with safety checks and timeout
 
+  common::debug "eval: $*"
   timeout 30 bash -c "$*" || echo "error while running \"$*\""
 }
 
@@ -307,8 +394,9 @@ devbot::main() {
   #
   # set up the schedule if it's not already there, run the main event loop
 
-  local schedule=~/.devbot-schedule
-  local copy_schedule=~/.devbot-schedule-copy
+  mkdir -p ~/.devbot
+  local schedule=~/.devbot/schedule
+  local copy_schedule=~/.devbot/schedule-copy
 
   [[ -s $schedule ]] || devbot::initialize
 

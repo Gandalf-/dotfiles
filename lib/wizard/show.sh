@@ -1,5 +1,58 @@
 #!/bin/env bash
 
+wizard_show_next-break() {
+
+  common::optional-help "$1" "[--script | break period]
+
+  "
+
+  local now; now=$(date +%s)
+  local history=~/.local/share/fish/fish_history
+  local break_period=$(( 60 * 10 ))
+  local work_period=$(( 60 * 30 ))
+
+  local previous="$now"
+  local last_break="$now"
+  local called_by_script=0
+
+  case $1 in
+    --script) called_by_script=1 ;;
+    '') ;;
+    *) break_period="$1" ;;
+  esac
+
+  while read -r time; do
+
+    if (( previous - time > break_period )); then
+      last_break="$previous"
+      break
+    fi
+
+    previous="$time"
+
+  done < <(
+    grep when: $history \
+      | grep -v cmd: \
+      | sort -r \
+      | awk '{print $2}'
+    )
+
+  local time=$(( now - last_break ))
+
+  (( called_by_script )) || \
+    echo -n "you've been working for $(( time / 60 )) minutes. "
+
+  if (( time > work_period )); then
+    echo "Take a break!"
+
+  elif ! (( called_by_script )); then
+    echo "You're doing great!"
+  fi
+
+  return $#
+}
+
+
 wizard_show_progress() {
 
   common::required-help "$1" "
