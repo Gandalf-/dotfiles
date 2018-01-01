@@ -51,7 +51,9 @@ wizard_make_tmpfs-git-clone() {
 
   name_from_repo() {
     # https://github.com/danilop/yas3fs.git -> yas3fs
-    local array; read -ar array <<< "${1//\// }"
+
+    # shellcheck disable=2206
+    local array=( ${1//\// } )
     local name="${array[ $(( ${#array[@]} - 1)) ]}"
     result="${name%.*}"
   }

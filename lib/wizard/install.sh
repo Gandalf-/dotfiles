@@ -41,6 +41,19 @@ wizard_install_apt() {
   common::sudo apt install -y "$@"
 }
 
+
+wizard_install_irssi() {
+
+  common::sudo apt install libtool libglib2.0-dev libssl-dev
+
+  common::do cd /tmp
+  wizard make git-tmpfs-clone https://github.com/irssi/irssi.git
+  common::do cd irssi
+  common::do ./autogen.sh
+  common::do make -j
+}
+
+
 wizard_install_autojump() {
 
   common::optional-help "$1" "
@@ -126,7 +139,7 @@ wizard_install_lua() {
   common::do wget -N 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
   common::do tar zxvf lua-5.3.3.tar.gz
   common::do cd lua-5.3.3
-  common::do make linux
+  common::do make -j linux
   common::sudo make install
 
   common::do cd -

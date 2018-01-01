@@ -6,6 +6,13 @@
 DEBUG=${DEBUG:-0}
 
 
+common::shift-array() {
+
+  shift
+  echo "$@"
+}
+
+
 common::check-network() {
 
   nc -w 1 -z 8.8.8.8 53

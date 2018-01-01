@@ -32,6 +32,8 @@ wizard_devbot_start() {
   disown
 
   echo "$pid" > $pfile
+
+  return $#
 }
 
 wizard_devbot_edit() {
@@ -46,27 +48,17 @@ wizard_devbot_edit() {
 
   wizard devbot kill
   vim ~/.devbot-schedule
-  wizard devbot start
 
   devbot::save
+  wizard devbot start
 
   return $#
 }
 
-wizard_devbot_add() {
+wizard_devbot_bounce() {
 
-  common::required-help "$2" "[interval] [command ...]
-
-  add a new event to the devbot schedule
-
-    w devbot add 60 'cd some/path/to/git/repo && git fetch'
-  "
-
-  local interval="$1"
-  local procedure="${*:2}"
-
-  devbot::add "$interval" "$procedure"
-  devbot::save
+  wizard devbot kill
+  wizard devbot start
 
   return $#
 }
@@ -84,6 +76,8 @@ wizard_devbot_kill() {
 
   pkill -F $pfile
   rm $pfile
+
+  return $#
 }
 
 wizard_devbot_status() {
@@ -114,7 +108,7 @@ wizard_devbot_status() {
   fi
 }
 
-wizard_devbot_show() {
+wizard_devbot_list() {
 
   local schedule=~/.devbot-schedule
 
@@ -140,9 +134,9 @@ wizard_devbot_show() {
   while read -r event; do
     # shellcheck disable=SC2206
     local data=( $event )
-    local interval="${data[0]}"
-    local when="${data[1]}"
-    local procedure="${data[*]:2}"
+    local interval="${data[1]}"
+    local when="${data[2]}"
+    local procedure="${data[*]:3}"
 
     local time; time="$(translate-time $(( when - $(date '+%s') )) )"
 
@@ -152,77 +146,141 @@ wizard_devbot_show() {
     echo
 
   done < $schedule
+
+  return $#
 }
 
 
 # devbot library
 
-devbot::add() {
+devbot::task:write() {
 
-  # interval -> command ... -> none
+  local schedule=~/.devbot-schedule
+  echo "task $*" >> "$schedule"
+}
+
+devbot::task:add() {
+
+  # interval -> command -> none
   #
   # writes an event to the schedule at (now + interval)
 
-  echo "add got $*"
+  local schedule=~/.devbot-schedule
+
+  local interval="$1"; shift
+  local when="$(( interval + $(date '+%s') ))"
+  local action="$*"
+
+  devbot::task:write "$interval $when $action"
+}
+
+devbot::task:handle() {
+
+  # interval -> when -> action -> none
+  #
+  # check the time field of the input, if it's passed then run the command.
+  # otherwise we add it back to schedule unchanged
 
   local schedule=~/.devbot-schedule
-  local interval="$1"
-  local procedure="$2"
-  local when="$(( interval + $(date '+%s') ))"
 
-  echo "$interval $when $procedure" >> $schedule
+  local interval="$1"
+  local when="$2"
+  local action="$3"
+
+  if (( when < $(date '+%s') )); then
+    # run the event, add to schedule with updated time
+
+    [[ $action ]] || echo "runner error, no action" && return
+    devbot::eval "$action"
+    devbot::task:add "$interval" "$action"
+
+  else
+    # put the event back on the schedule unchanged
+    devbot::task:write "$interval $when $action"
+  fi
 }
+
+
+devbot::remind:write() {
+
+  local schedule=~/.devbot-schedule
+  echo "remind $*" >> "$schedule"
+}
+
+devbot::remind:add() {
+
+  # interval -> command -> none
+  #
+  # writes an event to the schedule at (now + interval)
+
+  local schedule=~/.devbot-schedule
+
+  local when="$1"; shift
+  local action="$*"
+
+  devbot::remind:write "$when $action"
+}
+
 
 devbot::initialize_events() {
 
   # none -> none
   #
-  # load tasks from ~/.devbotrc
+  # converts events in ~/.devbotrc to schedule events
+  #
+  # very similar to devbot::runner, except that the input doesn't have
+  # timestamps
+
+  echo "loading events from ~/.devbotrc"
 
   while read -r line; do
 
     # shellcheck disable=SC2206
     local data=( $line )
-    devbot::add "${data[0]}" "${data[@]:1}"
+    local type="${data[0]}"
+
+    case $type in
+      task)
+        # type | interval | action ...
+        local interval="${data[1]}"
+        local action="${data[*]:2}"
+
+        devbot::task:add "$interval" "$action"
+        ;;
+
+      *)
+        echo "initialize_events error, unrecongized event type: $type"
+        ;;
+
+    esac
 
   done < ~/.devbotrc
 }
 
 devbot::runner() {
 
-  # interval -> unix epoch time -> command ... -> none
+  # string -> ... -> none
   #
-  # check the time field of the input, if it's passed then run the command.
-  # otherwise we add it back to schedule unchanged
+  # figure out which type of event this is, and call the handler
 
   # shellcheck disable=SC2206
   local data=( $@ )
-  local schedule=~/.devbot-schedule
+  local type="${data[0]}"
 
-  local interval="${data[0]}"
-  local when="${data[1]}"
-  local procedure="${data[*]:2}"
+  case $type in
+    task)
+      # type | interval | when | action ...
+      local interval="${data[1]}"
+      local when="${data[2]}"
+      local action="${data[*]:3}"
 
-  if (( when < $(date '+%s') )); then
-    # run the event, add to schedule with updated time
+      devbot::task:handle "$interval" "$when" "$action"
+      ;;
 
-    if [[ $procedure ]]; then
-      (
-        timeout 30 bash -c "$procedure" ||
-          echo "error while running \"$procedure\""
-
-        devbot::add "$interval" "$procedure"
-      ) &
-
-    else
-      echo "runner error, no procedure"
-    fi
-
-  else
-    # put the event back on the schedule unchanged
-    echo "$interval $when $procedure" >> $schedule
-  fi
-  wait
+    *)
+      echo "runner error, unrecongized task type: $type"
+      ;;
+  esac
 }
 
 devbot::save() {
@@ -232,8 +290,20 @@ devbot::save() {
   # save the schedule to ~/.devbotrc minus the run timestamps
 
   local schedule=~/.devbot-schedule
-  cut -f 1,3- -d ' ' "$schedule" > ~/.devbotrc
+  # TODO update to parse types
+  # cut -f 1,2,4- -d ' ' "$schedule" > ~/.devbotrc
 }
+
+
+devbot::eval() {
+
+  # string ... -> none
+  #
+  # evaluate the given shell code with safety checks and timeout
+
+  timeout 30 bash -c "$*" || echo "error while running \"$*\""
+}
+
 
 devbot::main() {
 
@@ -244,7 +314,7 @@ devbot::main() {
   local schedule=~/.devbot-schedule
   local copy_schedule=~/.devbot-schedule-copy
 
-  [[ -e $schedule ]] || devbot::initialize_events
+  [[ -s $schedule ]] || devbot::initialize_events
 
   echo "starting devbot"
   while :; do
@@ -256,6 +326,7 @@ devbot::main() {
     while read -r event; do
 
       devbot::runner "$event"
+
     done < $copy_schedule
 
     sleep 5
