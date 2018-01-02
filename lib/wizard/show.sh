@@ -4,6 +4,12 @@ wizard_show_next-break() {
 
   common::optional-help "$1" "[--script | break period]
 
+  calculate the last time you took a break (no commands added to fish history)
+  and compare that to the current time. if it was more than 30 minutes ago,
+  tells you to take a break
+
+    break_period  -> default 10 minutes
+    --script      -> only give output when break is recommended
   "
 
   local now; now=$(date +%s)

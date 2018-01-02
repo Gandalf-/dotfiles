@@ -13,7 +13,25 @@ common::shift-array() {
 }
 
 
+common::inplace-file-op() {
+
+  # file, string -> none
+  #
+  # common::inplace-file-op words.txt "grep -o . | sort | uniq -c"
+
+  local file="$1"; shift
+  local copy="$file".copy
+  local ops="$*"
+
+  mv "$file" "$copy"
+  eval "cat $copy | $ops > $file"
+  rm "$copy"
+}
+
+
 common::check-network() {
+
+  # none -> bool
 
   nc -w 1 -z 8.8.8.8 53
 }
