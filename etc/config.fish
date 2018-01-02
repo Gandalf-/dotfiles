@@ -34,6 +34,7 @@ function  ....; builtin cd ../../../;command ls --color=auto ; end
 if test "$at_work"
   set -gx DIFFDIR   ~/cribshome/diffs/
   set -gx SCRIPITY  /mnt/ssd/
+  set -gx ONEFSGIT  /mnt/ssd/onefs/
   set -gx DIMENSION work
 
   set PATH      ~/scripity-scripts/bin $PATH
@@ -90,11 +91,15 @@ end
 set -gx TMP /tmp
 
 # fzf
-if test -d ~/.vim/bundle/fzf/bin
+if test -e ~/.vim/bundle/fzf.vim/bin/fzf
+  set PATH ~/.vim/bundle/fzf.vim/bin $PATH
+
+else if test -e ~/.vim/bundle/fzf/bin/fzf
   set PATH ~/.vim/bundle/fzf/bin $PATH
-  set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-  set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
 end
+
+set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
+set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
 
 # autojump
 test -f ~/.autojump/share/autojump/autojump.fish

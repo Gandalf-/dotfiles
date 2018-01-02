@@ -1,0 +1,8 @@
+# wizard configuration file
+
+if test -e ~/.wizardrc; then
+  source ~/.wizardrc
+
+else
+  export BROWSER="google-chrome"
+fi

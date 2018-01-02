@@ -47,6 +47,9 @@ while [[ $1 ]]; do
     pu) common::do "git push -u \"${2:?g pu [remote]}\""; shift ;;
     pf) common::do "git push --force \"${2%.}\""; shift ;;
 
+    pfr) common::do "git push --force \"$2\" \"$3\""; shift 2;;
+    phr) common::do "git push \"$2\" \"$3\""; shift 2;;
+
     su)
       common::do git branch --set-upstream-to="${1:?g su [remote/branch]}"
       shift

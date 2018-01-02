@@ -8,22 +8,29 @@
 
 set -o pipefail
 
+sources=''
+inline=''
+
 
 autocli::create() {
   # location of generated file, source, source ... -> none
   #
   # regenerate output file if the sources have changed
 
-  local root name location sources output
+  local root name location output
   root="$(dirname "${BASH_SOURCE[0]}")"/..
   source "${root}/lib/common.sh"
 
   local name="$1"
   local location="$2"
-  local sources=( "${@:3}" )
   local output="${location}/${name}"
 
   declare -A meta_head meta_body    # these are accessible to the caller
+
+  # source inline files
+  for file in "${inline[@]}"; do
+    [[ -e "$file" ]] && source "$file"
+  done
 
   # pull in all the sources since we need them now
   for source in "${sources[@]}"; do
@@ -42,6 +49,13 @@ autocli::create() {
     echo '#!/bin/bash
 # this is an auto generated file. do not edit manually
     '
+
+    # write out inline files
+    for file in "${inline[@]}"; do
+      [[ -e "$file" ]] && cat "$file"
+    done
+
+    # write out all output functions
     declare -f -p
 
     echo "

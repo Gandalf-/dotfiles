@@ -12,15 +12,20 @@ source "${root}/lib/autocli.sh"
 
 name="wizard"
 location="${root}/bin/"
-sources=(
+
+export sources=(
   "${root}/lib/wizard/"*
   "${root}/lib/devbot.sh"
   "$HOME/scripity-scripts/lib/wizard/"*
   )
 
+export inline=(
+  # "${root}/etc/wizardrc"
+  "$HOME/scripity-scripts/etc/wizardrc"*
+)
+
 autocli::create \
   "$name" \
-  "$location" \
-  "${sources[@]}"
+  "$location"
 
 bash "${root}/lib/complete_wizard.sh"
