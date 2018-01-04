@@ -5,6 +5,7 @@
 #   commonly useful functions across all scripts
 
 DEBUG=${DEBUG:-0}
+DNSSERVER=''
 
 
 common::process-exists() {
@@ -56,7 +57,7 @@ common::check-network() {
 
   # none -> bool
 
-  nc -w 1 -z 8.8.8.8 53
+  nc -w 1 -z "$DNSSERVER" 53
 }
 
 

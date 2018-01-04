@@ -22,6 +22,7 @@ wizard_devbot_start() {
   start devbot, will fail if already running
   "
 
+  mkdir -p ~/.devbot
   local pfile=~/.devbot/pid
   local lfile=~/.devbot/log
 

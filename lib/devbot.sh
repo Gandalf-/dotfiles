@@ -217,7 +217,7 @@ devbot::eval() {
   # evaluate the given shell code with safety checks and timeout
 
   common::debug "eval: $*"
-  timeout 30 bash -c "$*" || echo "error while running \"$*\""
+  timeout 300 bash -c "$*" || echo "error while running \"$*\""
 }
 
 

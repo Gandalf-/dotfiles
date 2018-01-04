@@ -5,4 +5,5 @@ if test -e ~/.wizardrc; then
 
 else
   export BROWSER="google-chrome"
+  export DNSSERVER="8.8.8.8"
 fi

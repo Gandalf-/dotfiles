@@ -20,7 +20,7 @@ export sources=(
   )
 
 export inline=(
-  # "${root}/etc/wizardrc"
+  "${root}/etc/wizardrc"
   "$HOME/scripity-scripts/etc/wizardrc"*
 )
 
