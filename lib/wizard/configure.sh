@@ -1,9 +1,17 @@
 #!/bin/env bash
 
+# configure - wizard libary
+#
+# initial system configuration, mostly useful for droplets
+
 
 common::require "apt" &&
 wizard_configure_ubuntu_small() {
-  # install basic programs
+
+  common::optional-help "$1" "
+
+  install basic development packages
+  "
 
   common::sudo apt-add-repository ppa:fish-shell/release-2
   common::sudo apt update
@@ -20,6 +28,9 @@ wizard_configure_add-user() {
   common::required-help "$1" "[user name]
 
   add a new sudo user to the system
+    - creates user, add to sudoers
+    - create home directory
+    - copy root ssh keys to directory
   "
   user="$1"
 
@@ -36,6 +47,11 @@ wizard_configure_add-user() {
 
 common::require "apt" &&
 wizard_configure_ubuntu_developement() {
+
+  common::optional-help "$1" "
+
+  install additional development packages from source
+  "
 
   common::sudo apt update -y
   common::sudo apt upgrade -y

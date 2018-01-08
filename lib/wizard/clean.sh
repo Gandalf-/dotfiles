@@ -1,5 +1,9 @@
 #!/bin/env bash
 
+# clean - wizard libary
+#
+#   remove unnecessary files or packages intelligently
+
 
 common::require 'dpkg' &&
 wizard_clean_boot() {
@@ -25,7 +29,7 @@ wizard_clean_apt() {
 
   common::optional-help "$1" "
 
-  force purge removed apt packages
+  force purge removed apt packages. this will remove configuration files too.
   "
 
   dpkg --list \
@@ -38,21 +42,26 @@ wizard_clean_apt() {
 
 wizard_clean_haskell() {
 
-  common::do rm ./*.hi ./*.o || error "No files to clean"
+  common::optional-help "$1" "
+
+  remove intermediary GHC compilation files, *.hi *.o
+  "
+
+  common::do rm ./*.hi ./*.o || common::error "No files to clean"
   return 0
 }
 
 
 wizard_clean_files() {
 
-  # clean up the filesystem under the current directory, mostly useful for
-  # removing duplicate files insync creates
-
   local dry=0 counter=0
 
   common::optional-help "$1" "[--dry]
 
   smart remove duplicate file names and intermediary file types
+
+    clean up the filesystem under the current directory, mostly useful for
+    removing duplicate files insync creates
   "
 
   local nargs=$#

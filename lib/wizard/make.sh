@@ -6,6 +6,7 @@
 #
 #   All the intermediary functions are produced by auto_cli.sh
 
+
 wizard_make_hash() {
 
   head -c 50 /dev/urandom | md5sum | cut -f 1 -d ' '
@@ -17,9 +18,12 @@ wizard_make_tmpfs() {
 
   common::required-help "$1" "[target directory]
 
-  create a tmpfs in the target directory
+  create a tmpfs in the target directory. this doesn't overwrite the target
+  directory if it exists; it will be available again after you unmount the
+  tmpfs
 
     wizard make tmpfs /usr/local/tmp/tmpfs
+    wizard make tmpfs ~/.stack
   "
 
   local target="$1"
@@ -39,7 +43,9 @@ wizard_make_tmpfs-git-clone() {
 
   common::required-help "$1" "[name] (git repo)
 
-  clone a repo into a new tmpfs directory
+  clone a repo into a new tmpfs directory.
+
+  useful for cloning, make, install, delete work flows
 
     w make tmpfs-git-clone haskell
     w make tmpfs-git-clone https://github.com/danilop/yas3fs.git
@@ -83,6 +89,7 @@ wizard_make_mirror() {
   common::required-help "$2" "[source] [target]
 
   mirror a root directory (source) into a tmpfs directory (target)
+  once created, wizard mirror ... commands allow syncing, pushing and pulling
 
     wizard make mirror ~/google_drive /usr/local/tmp/
   "
@@ -99,7 +106,7 @@ wizard_make_mirror() {
     -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
     tmpfs_"$(basename "$source")" "$target"
 
-  common::do cp -r "$source"/\* "$target"
+  common::do cp -ar "$source"/\* "$target"
 
   return $#
 }

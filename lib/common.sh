@@ -1,15 +1,38 @@
 #!/bin/bash
 
 # common
+#
 #   commonly useful functions across all scripts
 
 DEBUG=${DEBUG:-0}
 
 
-common::shift-array() {
+common::process-exists() {
 
-  shift
-  echo "$@"
+  # pid -> bool
+  #
+  # check if a process is running
+
+  kill -0 "$1"
+}
+
+
+common::file-not-empty() {
+
+  # file -> bool
+  #
+  # check if a file's size is non zero
+
+  [[ -s "$1" ]]
+}
+
+common::dir-exists() {
+
+  # path -> bool
+  #
+  # check if a directory exists
+
+  [[ -d "$1" ]]
 }
 
 
@@ -42,7 +65,7 @@ common::file-exists() {
   #
   # common::file-exists $filename && echo "yes"
 
-  [[ -f "$1" ]]
+  [[ -e "$1" ]]
 }
 
 

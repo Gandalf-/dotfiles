@@ -1,10 +1,19 @@
 #!/bin/bash
 
+# install - wizard libary
+#
+#   install packages, programs from source and more
+
 
 wizard_install_dot-files() {
 
-  local root
-  root="$(dirname "${BASH_SOURCE[0]}")"/..
+  common::optional-help "$1" "
+
+  link all the configuration files in this repository to their correct
+  locations in the system
+  "
+
+  local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
 
   common::do mkdir -p "$HOME"/.vim
   common::do mkdir -p "$HOME"/.config/fish
@@ -38,11 +47,22 @@ wizard_install_dot-files() {
 common::require 'apt' &&
 wizard_install_apt() {
 
+  common::required-help "$1" "[package...]
+
+  install a package with apt
+  "
+
   common::sudo apt install -y "$@"
 }
 
 
+common::require 'apt' &&
 wizard_install_irssi() {
+
+  common::optional-help "$1" "
+
+  install irssi's dependencies with apt, then clone and compile from source
+  "
 
   common::sudo apt install libtool libglib2.0-dev libssl-dev
 
@@ -58,14 +78,16 @@ wizard_install_autojump() {
 
   common::optional-help "$1" "
 
-  install autojump
+  install autojump from github
   "
+
   common::clone git://github.com/joelthelion/autojump.git /tmp/autojump
 
   common::do cd /tmp/autojump
   common::do ./install.py
   common::do cd -
 }
+
 
 common::require 'apt' &&
 wizard_install_git() {
@@ -78,6 +100,7 @@ wizard_install_git() {
   common::sudo apt-get update
   common::sudo apt-get install git -y
 }
+
 
 common::require 'apt' &&
 wizard_install_vnc() {
@@ -98,6 +121,7 @@ EOF
   common::do chmod +x "$HOME"/.vnc/xstartup
 }
 
+
 common::require 'apt' &&
 wizard_install_java() {
 
@@ -109,6 +133,7 @@ wizard_install_java() {
   common::sudo apt update
   common::sudo apt install oracle-java8-installer
 }
+
 
 common::require 'dpkg' &&
 wizard_install_shellcheck() {
@@ -125,11 +150,13 @@ wizard_install_shellcheck() {
   common::do cd -
 }
 
+
+common::require 'apt' &&
 wizard_install_lua() {
 
   common::optional-help "$1" "
 
-  compile and install lua 5.3.3
+  install dependencies with apt, compile and install lua 5.3.3
   "
   common::sudo apt install gcc build-essential libreadline-dev
 
@@ -146,6 +173,7 @@ wizard_install_lua() {
   echo "done"
 }
 
+
 common::require 'apt' &&
 wizard_install_fish() {
 
@@ -160,6 +188,7 @@ wizard_install_fish() {
   common::sudo apt-get install -y fish
 }
 
+
 common::require 'apt' &&
 wizard_install_docker() {
 
@@ -167,10 +196,13 @@ wizard_install_docker() {
 
   install the dependencies and kernel headers for docker-ce
   "
+
   common::do curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
     | sudo apt-key add -
+
   common::sudo add-apt-repository -y \
     "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
+
   common::sudo apt-get update
   common::do apt-cache policy docker-ce
   common::sudo apt-get install -y docker-ce

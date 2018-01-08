@@ -25,7 +25,8 @@ wizard_devbot_start() {
   local pfile=~/.devbot/pid
   local lfile=~/.devbot/log
 
-  [[ -e $pfile ]] && common::error "devbot already running"
+  common::file-exists "$pfile" &&
+    common::error "devbot already running"
 
   devbot::main >> $lfile 2>&1 &
   local pid=$!
@@ -46,7 +47,7 @@ wizard_devbot_report() {
 
   local rfile=~/.devbot/report
 
-  if [[ -s $rfile ]]; then
+  if common::file-not-empty $rfile; then
     cat $rfile
     rm $rfile
   fi
@@ -95,7 +96,8 @@ wizard_devbot_kill() {
 
   local pfile=~/.devbot/pid
 
-  [[ -e $pfile ]] || common::error "devbot is not running"
+  common::file-exists $pfile ||
+    common::error "devbot is not running"
 
   pkill -F $pfile
   rm $pfile
@@ -114,12 +116,12 @@ wizard_devbot_status() {
   local lfile=~/.devbot/log
   local rfile=~/.devbot/report
 
-  if [[ -e $pfile ]]; then
+  if common::file-exists $pfile; then
     read -r pid < $pfile
 
-    if kill -0 "$pid"; then
+    if common::process-exists "$pid"; then
 
-      if test -s $rfile; then
+      if common::file-not-empty $rfile; then
         echo "Ʃ"
 
       else

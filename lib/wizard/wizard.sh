@@ -14,11 +14,10 @@ wizard_regenerate() {
 
   common::optional-help "$1" "
 
-  regenerate wizard script using auto_wizard
+  regenerate wizard using auto_wizard, without clobbering ourselves
   "
 
-  (
-    sleep 1
+  ( sleep .5
     auto_wizard | grep -v 'scripity'
   ) &
 
@@ -28,6 +27,12 @@ wizard_regenerate() {
 
 
 wizard_git_fetch() {
+
+  common::optional-help "$1" "
+
+  recursively discover git directories under the current working directory,
+  fetch all branches
+  "
 
   common::check-network || common::error "no network connection"
 
@@ -47,6 +52,12 @@ wizard_git_fetch() {
 
 
 wizard_git_report() {
+
+  common::optional-help "$1" "
+
+  recursively discover git directories under the current working directory,
+  print out a small human readable report on their status
+  "
 
   while read -r directory; do
     (
@@ -79,9 +90,8 @@ wizard_macro() {
 
   common::optional-help "$1" "(amount)
 
-  replay a portion of fish history in the current terminal
-
-    the order of selection in fzf matters
+  replay a portion of fish history in the current terminal. the order of
+  selection in fzf matters
   "
 
   while read -r command; do
@@ -95,7 +105,13 @@ wizard_macro() {
 
 common::require 'ffmpeg' &&
 wizard_transcode_movies() {
-  #
+
+  common::required-help "$1" "[file.avi ...]
+
+  convert all input files to mp4 using ffmpeg, asks for confirmation before
+  deleting the source file
+  "
+
   local preset=veryslow
 
   echo "Processing: $*"
@@ -120,6 +136,7 @@ wizard_file_remove-trailing-whitespace() {
 
   remove trailing whitespace in the target files
   "
+
   while [[ $1 ]]; do
     common::do sed -i 's/[ \t]*$//' "$1"
     shift
@@ -167,11 +184,13 @@ wizard_show_largest-packages() {
   common::optional-help "$1" "
 
   list all packages installed, sorted by size
+
+    $ w s lp | head -n 50
   "
 
   # shellcheck disable=SC2016
   dpkg-query -Wf '${Installed-Size}\t${Package}\n' \
-    | sort -n
+    | sort -nr
 }
 
 
@@ -221,6 +240,8 @@ wizard_parse_json() {
   common::optional-help "$1" "
 
   pipe in json and pretty print it
+
+    $ curl remote.com/file.json | w parse json
   "
 
   python -m json.tool
@@ -257,6 +278,7 @@ wizard_update_apt() {
 
   update all apt packages
   "
+
   common::check-network || common::error "no network connection"
 
   common::sudo apt update
@@ -286,10 +308,16 @@ wizard_update_pip() {
 
 
 common::require "wget" "pip" "apt" &&
-wizard_build_vim () {
-  # compile and install the latest vim
+wizard_build_vim-ultimate () {
 
-  echo "installing vim"
+  common::optional-help "$1" "
+
+  install all possible Vim dedependencies with apt, then download master.zip,
+  compile and install with all feaures enabled
+
+  this really isn't necessary
+  "
+
   wizard_install_lua
 
   # common::sudo apt-get build-dep vim-gnome
@@ -322,10 +350,8 @@ wizard_build_vim () {
     --enable-cscope \
     --prefix=/usr
 
-  common::do \
-    make -j "$(getconf _NPROCESSORS_ONLN)" CFLAGS='"-oFast -march=native"'
+  common::do make -j CFLAGS='"-oFast -march=native"'
   common::sudo make install
-  echo "done"
 }
 
 
@@ -335,6 +361,7 @@ wizard_open() {
 
   open a file based on it's type and available programs
   "
+
   local filetype
 
   for target in "$@"; do
