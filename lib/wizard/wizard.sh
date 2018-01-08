@@ -7,6 +7,38 @@
 #   All the intermediary functions are produced by auto_cli.sh
 
 
+wizard_hunt() {
+
+  common::optional-help "$1" "(-#) (pid or process name)
+
+  find processes and send them a signal, default SIGTERM
+
+    wizard hunt
+    wizard hunt -9
+    wizard hunt vim
+    wizard hunt -HUP apache
+  "
+
+  local signal=-TERM
+  local nargs=$#
+  case $1 in -*) signal="$1"; shift ;; esac
+
+  while read -r process; do
+    local pid; pid="$(awk '{print $1}' <<< "$process")"
+    kill "$signal" "$pid"
+
+  done < <(
+    # shellcheck disable=SC2009
+    if [[ $1 ]]; then
+      ps ax | grep "$1"
+    else
+      ps ax
+    fi | fzf -m --cycle
+    )
+
+  return "$nargs"
+}
+
 wizard_regenerate() {
 
   # safely tell the script to rewrite itself. running auto_wizard in the middle
