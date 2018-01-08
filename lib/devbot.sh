@@ -57,8 +57,8 @@ devbot::task:handle() {
     # run the event, add to schedule with updated time
 
     [[ $action ]] || { echo "task:handle error: no action"; return; }
-    devbot::eval "$action"
     devbot::task:add "$interval" "$action"
+    devbot::eval "$action"
 
   else
     # put the event back on the schedule unchanged
