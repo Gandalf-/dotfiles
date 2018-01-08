@@ -64,6 +64,8 @@
         Plugin 'vimwiki/vimwiki'
         Plugin 'w0rp/ale'
         Plugin 'dag/vim2hs'
+        Plugin 'ehamberg/vim-cute-python'
+        Plugin 'Gandalf-/vim-sh-syntax'
 
         if has_vundle == 0
           :PluginInstall
