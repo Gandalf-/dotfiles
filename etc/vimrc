@@ -77,7 +77,7 @@
     filetype plugin indent on
 
   " vim2hs
-    let g:haskell_conceal_wide = 1
+    " let g:haskell_conceal_wide = 1
 
   " vimux
     let g:VimuxOrientation = "h"
