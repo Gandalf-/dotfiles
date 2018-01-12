@@ -9,6 +9,13 @@ flush = False
 add_context = False
 
 
+def error(string):
+    ''' string -> IO
+    '''
+    print(string)
+    sys.exit(1)
+
+
 def include_context():
     ''' none -> none
 
@@ -43,8 +50,7 @@ def db_print(value, context=None):
 
         elif isinstance(value, list):
             for elem in value:
-                print(elem, end=' ')
-            print('')
+                print(elem)
 
         else:
             pprint.pprint(value)
@@ -70,6 +76,19 @@ def db_dereference(keys, i, db, base, create):
             db_action(db, db, [reference] + deref_args, create=create)
 
 
+def db_normalize(db):
+    ''' dict -> None
+
+    finds lists of a single element and converts them into singletons
+    '''
+    for k, v in db.items():
+        if isinstance(v, list) and len(v) == 1:
+            db[k] = v[0]
+
+        if isinstance(v, dict):
+            db_normalize(v)
+
+
 def db_action(db, base, keys, create=False):
     ''' dict, dict, list of string -> bool
 
@@ -87,9 +106,51 @@ def db_action(db, base, keys, create=False):
             left = keys[i - 1]
             right = keys[i + 1:]
 
+            # single = str, multi = list
+            right = right[0] if len(right) == 1 else right
+
             last_base[left] = right
             flush_needed()
             return
+
+        # append a value or values to a list
+        elif key == '+':
+            left = keys[i - 1]
+            right = keys[i + 1:]
+
+            # convert to list
+            if not isinstance(last_base[left], list):
+                last_base[left] = list(last_base[left])
+
+            # add the new element
+            last_base[left] += right
+            flush_needed()
+            return
+
+        # remove a value from a list
+        elif key == '-':
+            left = keys[i - 1]
+            right = keys[i + 1]
+
+            fuzzy = False
+            if right[0] == '`':
+                fuzzy = True
+                right = right[1:]
+
+            if not isinstance(last_base[left], list):
+                error('error: cannot subtract from value that is not a list')
+
+            try:
+                if fuzzy:
+                    right = [_ for _ in last_base[left] if right in _].pop()
+
+                last_base[left].remove(right)
+
+            except (IndexError, ValueError):
+                error('error: {a} not in {b}'.format(a=right, b=left))
+            else:
+                flush_needed()
+                return
 
         # wildcard, value -> key
         elif key == '@':
@@ -138,10 +199,9 @@ def db_action(db, base, keys, create=False):
                 base = base[key]
 
             except TypeError:
-                print(
+                error(
                     'error: cannot index into value. {a} -> {b}, {b} :: value'
                     .format(a=base, b=key))
-                return
 
     context = keys[-1] if len(keys) > 0 else None
     db_print(base, context)
@@ -156,6 +216,9 @@ def main():
 
     db apple colors
     db apple !colors
+
+    db apple colors + green yellow
+    db apple colors - `een
 
     db -c @ 456
     '''
@@ -174,6 +237,9 @@ def main():
     db_action(db, db, keys, create=True)
 
     if flush:
+        # normalize
+        db_normalize(db)
+
         # write the updated values back out
         with open(db_path, 'w') as fd:
             json.dump(db, fd)
