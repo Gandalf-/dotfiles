@@ -214,10 +214,11 @@ devbot::eval() {
 
   # string ... -> none
   #
-  # evaluate the given shell code with safety checks and timeout
+  # evaluate the given shell code by throwing in into the wind
 
   common::debug "eval: $*"
-  timeout 300 bash -c "$*" || echo "error while running \"$*\""
+  bash -c "$*" || echo "error while running \"$*\"" &
+  disown
 }
 
 

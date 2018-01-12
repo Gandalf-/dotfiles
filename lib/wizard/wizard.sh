@@ -33,7 +33,7 @@ wizard_hunt() {
       ps ax | grep "$1"
     else
       ps ax
-    fi | fzf -m --cycle
+    fi | cut -c 1-250 | fzf -m --cycle
     )
 
   return "$nargs"
@@ -333,7 +333,7 @@ wizard_update_pip() {
   sudo -H pip freeze --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \
-    | xargs -n1 sudo -H pip install -U
+    | xargs -n1 sudo -H pip install -q -U
 
   return $#
 }

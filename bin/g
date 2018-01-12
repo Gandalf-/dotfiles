@@ -36,7 +36,8 @@ while [[ $1 ]]; do
 
     rh) common::do "git reset --hard HEAD" ;;
     ri) common::do "git rebase -i \"$2\""; shift ;;
-    rc) common::do "git rebase --continue"; shift ;;
+    rc) common::do "git rebase --continue" ;;
+    hc) common::do "git cherry-pick --continue" ;;
     cm) common::do "git commit -m \"${2:?g cm [message]}\""; shift ;;
     m)  common::do "git merge \"${2%-}\""    ; shift ;;
 
@@ -55,6 +56,10 @@ while [[ $1 ]]; do
       shift
       ;;
     sc) common::do git diff --name-only --diff-filter=U;;
+    oc)
+      # shellcheck disable=SC2046
+      vim $(git diff --name-only --diff-filter=U)
+      ;;
     cc) common::do "git clean -nfd"
         common::confirm "Continue?"
         common::do "git clean -fd"
@@ -139,6 +144,8 @@ while [[ $1 ]]; do
     pf : push --force [branch]
     su : branch --set-upstream-to=[remote/branch]
     sc : show conflicting files
+    oc : open conflicts
+    hc : cherry-pick --continue
       "
       exit 1
       ;;

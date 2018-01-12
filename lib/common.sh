@@ -8,6 +8,22 @@ DEBUG=${DEBUG:-0}
 DNSSERVER=''
 
 
+common::verify-global() {
+
+  # string -> none || exit
+  #
+  # check if a variable is defined
+
+  local global="$1"
+
+  [[ ${!global} ]] ||
+    common::error "$global not defined in ~/.wizardrc.
+
+  run \"wizard help ${global//_/-}\" for more information
+  "
+}
+
+
 common::process-exists() {
 
   # pid -> bool
