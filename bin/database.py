@@ -9,6 +9,16 @@ flush = False
 add_context = False
 
 
+def include_context():
+    ''' none -> none
+
+    signal to db_print() that we want key = value context added
+    '''
+    # pylint: disable=global-statement
+    global add_context
+    add_context = True
+
+
 def flush_needed():
     ''' none -> none
 
@@ -40,7 +50,7 @@ def db_print(value, context=None):
             pprint.pprint(value)
 
 
-def db_dereference(args, i, db, base, create):
+def db_dereference(keys, i, db, base, create):
     ''' list of string, int, dict, dict, bool -> None
 
     dereferences always start at the top level of the database, hence the
@@ -48,7 +58,7 @@ def db_dereference(args, i, db, base, create):
     '''
 
     # the value is a pointer to a key somewhere else
-    deref_args = args[i + 1:]
+    deref_args = keys[i + 1:]
 
     # current value is a string
     if isinstance(base, str):
@@ -60,7 +70,7 @@ def db_dereference(args, i, db, base, create):
             db_action(db, db, [reference] + deref_args, create=create)
 
 
-def db_action(db, base, args, create=False):
+def db_action(db, base, keys, create=False):
     ''' dict, dict, list of string -> bool
 
     move through the input arguments to
@@ -68,31 +78,23 @@ def db_action(db, base, args, create=False):
         - delete keys
         - assign values to keys
     '''
-    assignee = False
     last_base = {}
 
-    for i, arg in enumerate(args):
+    for i, key in enumerate(keys):
 
         # assignement
-        if arg == '=':
-            assignee = args[i - 1]
+        if key == '=':
+            left = keys[i - 1]
+            right = keys[i + 1:]
 
-            remaining_args = args[i + 1:]
-
-            if len(remaining_args) == 1:
-                # single element
-                last_base[assignee] = args[i + 1]
-            else:
-                # list assignement
-                last_base[assignee] = remaining_args
-
+            last_base[left] = right
             flush_needed()
             return
 
         # wildcard, value -> key
-        elif arg == '@':
+        elif key == '@':
             for k, v in base.items():
-                if v == args[i + 1]:
+                if v == keys[i + 1]:
                     if add_context:
                         db_print(v, context=k)
                     else:
@@ -100,8 +102,8 @@ def db_action(db, base, args, create=False):
             return
 
         # remove
-        elif arg == 'del':
-            del(last_base[args[i - 1]])
+        elif key == 'del':
+            del(last_base[keys[i - 1]])
 
             flush_needed()
             return
@@ -111,13 +113,11 @@ def db_action(db, base, args, create=False):
 
             # keep track of the level before so we can modify this level
             last_base = base
-
             dereference = False
-            key = arg
 
-            if arg[0] == '!':
+            if key[0] == '!':
                 # dereference result
-                key = arg[1:]
+                key = key[1:]
                 dereference = True
 
             try:
@@ -125,7 +125,7 @@ def db_action(db, base, args, create=False):
                 if not dereference:
                     continue
 
-                db_dereference(args, i, db, base, True)
+                db_dereference(keys, i, db, base, True)
                 return
 
             except KeyError:
@@ -134,16 +134,17 @@ def db_action(db, base, args, create=False):
                     return
 
                 # create a new key
-                base[arg] = {}
-                base = base[arg]
+                base[key] = {}
+                base = base[key]
 
             except TypeError:
                 print(
                     'error: cannot index into value. {a} -> {b}, {b} :: value'
-                    .format(a=base, b=arg))
+                    .format(a=base, b=key))
                 return
 
-    db_print(base, args[-1])
+    context = keys[-1] if len(keys) > 0 else None
+    db_print(base, context)
 
 
 def main():
@@ -164,15 +165,13 @@ def main():
     with open(db_path, 'r') as fd:
         db = json.load(fd)
 
-    args = sys.argv[1:]
+    keys = sys.argv[1:]
 
-    if args[0] == '-c':
-        # pylint: disable=global-statement
-        global add_context
-        add_context = True
-        args = args[1:]
+    if next(iter(keys), '') == '-c':
+        include_context()
+        keys = keys[1:]
 
-    db_action(db, db, args, create=True)
+    db_action(db, db, keys, create=True)
 
     if flush:
         # write the updated values back out
