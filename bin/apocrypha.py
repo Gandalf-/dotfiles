@@ -231,7 +231,7 @@ class Apocrypha(object):
         '''
         if self.test:
             self.output += [string]
-            raise ApocryphaError
+            raise ApocryphaError(string)
         else:
             print(string)
             sys.exit(1)

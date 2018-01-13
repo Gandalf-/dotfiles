@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "$@" | nc localhost 9999
