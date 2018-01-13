@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import json
+import os
 import pprint
+import subprocess
 import sys
-from os.path import expanduser
 
 flush = False
 add_context = False
@@ -19,7 +20,7 @@ def error(string):
 def include_context():
     ''' none -> none
 
-    signal to db_print() that we want key = value context added
+    signal to display() that we want key = value context added
     '''
     # pylint: disable=global-statement
     global add_context
@@ -36,7 +37,28 @@ def flush_needed():
     flush = True
 
 
-def db_print(value, context=None):
+def search(base, key, context):
+    ''' dict, string, list of string -> None
+
+    recursively search through the base dictionary, print out all the keys that
+    have the given value
+    '''
+
+    if isinstance(base, list):
+        for e in base:
+            if e == key:
+                display(context[-1], context=' = '.join(context[:-1]))
+        return
+
+    for k, v in base.items():
+        if v == key:
+            display(k, context=' = '.join(context))
+
+        elif isinstance(v, dict) or isinstance(v, list):
+            search(v, key, context + [k])
+
+
+def display(value, context=None):
     ''' any -> IO
 
     figure out what a value is, and try to print it correctly
@@ -56,11 +78,11 @@ def db_print(value, context=None):
             pprint.pprint(value)
 
 
-def db_dereference(keys, i, db, base, create):
+def dereference(keys, i, db, base, create):
     ''' list of string, int, dict, dict, bool -> None
 
     dereferences always start at the top level of the database, hence the
-        db_action(db, db, ...)
+        action(db, db, ...)
     '''
 
     # the value is a pointer to a key somewhere else
@@ -68,15 +90,15 @@ def db_dereference(keys, i, db, base, create):
 
     # current value is a string
     if isinstance(base, str):
-        db_action(db, db, [base] + deref_args, create=create)
+        action(db, db, [base] + deref_args, create=create)
 
     # current value is iterable
     else:
         for reference in base:
-            db_action(db, db, [reference] + deref_args, create=create)
+            action(db, db, [reference] + deref_args, create=create)
 
 
-def db_normalize(db):
+def normalize(db):
     ''' dict -> None
 
     finds lists of a single element and converts them into singletons
@@ -86,10 +108,10 @@ def db_normalize(db):
             db[k] = v[0]
 
         if isinstance(v, dict):
-            db_normalize(v)
+            normalize(v)
 
 
-def db_action(db, base, keys, create=False):
+def action(db, base, keys, create=False):
     ''' dict, dict, list of string -> bool
 
     move through the input arguments to
@@ -127,6 +149,28 @@ def db_action(db, base, keys, create=False):
             flush_needed()
             return
 
+        # open up this level in Vim for modification
+        elif key == 'edit':
+            left = keys[i - 1]
+            tmp = '/tmp/apocrypha-' + '-'.join(keys[:i]) + '.json'
+
+            with open(tmp, 'w+') as f:
+                json.dump(base, f, indent=4, sort_keys=True)
+
+            subprocess.call(['vim', tmp])
+
+            try:
+                with open(tmp, 'r') as f:
+                    right = json.load(f)
+
+                if right:
+                    last_base[left] = right
+                    flush_needed()
+
+            finally:
+                os.remove(tmp)
+            return
+
         # remove a value from a list
         elif key == '-':
             left = keys[i - 1]
@@ -154,12 +198,7 @@ def db_action(db, base, keys, create=False):
 
         # wildcard, value -> key
         elif key == '@':
-            for k, v in base.items():
-                if v == keys[i + 1]:
-                    if add_context:
-                        db_print(v, context=k)
-                    else:
-                        db_print(k)
+            search(db, keys[i + 1], keys[:i])
             return
 
         # remove
@@ -174,19 +213,19 @@ def db_action(db, base, keys, create=False):
 
             # keep track of the level before so we can modify this level
             last_base = base
-            dereference = False
+            reference = False
 
             if key[0] == '!':
                 # dereference result
                 key = key[1:]
-                dereference = True
+                reference = True
 
             try:
                 base = base[key]
-                if not dereference:
+                if not reference:
                     continue
 
-                db_dereference(keys, i, db, base, True)
+                dereference(keys, i, db, base, True)
                 return
 
             except KeyError:
@@ -204,7 +243,7 @@ def db_action(db, base, keys, create=False):
                     .format(a=base, b=key))
 
     context = keys[-1] if len(keys) > 0 else None
-    db_print(base, context)
+    display(base, context)
 
 
 def main():
@@ -224,8 +263,8 @@ def main():
     '''
 
     # load the database
-    db_path = expanduser('~') + '/.db.json'
-    with open(db_path, 'r') as fd:
+    path = os.path.expanduser('~') + '/.db.json'
+    with open(path, 'r') as fd:
         db = json.load(fd)
 
     keys = sys.argv[1:]
@@ -234,14 +273,14 @@ def main():
         include_context()
         keys = keys[1:]
 
-    db_action(db, db, keys, create=True)
+    action(db, db, keys, create=True)
 
     if flush:
         # normalize
-        db_normalize(db)
+        normalize(db)
 
         # write the updated values back out
-        with open(db_path, 'w') as fd:
+        with open(path, 'w') as fd:
             json.dump(db, fd)
 
 
