@@ -6,37 +6,34 @@ import pprint
 import subprocess
 import sys
 
-flush = False
-add_context = False
 
-
-def error(string):
-    ''' string -> IO
-    '''
-    print(string)
-    sys.exit(1)
+class ApocryphaError(Exception):
+    pass
 
 
 class Apocrypha(object):
 
-    def __init__(self, path, context=False):
+    type_error = 'error: cannot index into value. {a} -> {b}, {b} :: value'
+
+    def __init__(self, path, context=False, test=False):
         ''' filepath, bool -> Apocrypha
         '''
         self.flush = False
         self.add_context = context
         self.path = path
+        self.test = test
+        self.output = []
 
         with open(path, 'r') as fd:
             self.db = json.load(fd)
 
-    def action(self, args):
-        ''' dict, list of string -> None
+    def action(self, args, read_only=False):
+        ''' list of string -> None
         '''
         self._action(self.db, self.db, args, create=True)
 
-        if self.flush:
-            # normalize
-            normalize(self.db)
+        if not read_only and self.flush:
+            self.normalize(self.db)
 
             # write the updated values back out
             with open(self.path, 'w') as fd:
@@ -73,7 +70,7 @@ class Apocrypha(object):
 
                 # convert to list
                 if not isinstance(last_base[left], list):
-                    last_base[left] = list(last_base[left])
+                    last_base[left] = [last_base[left]]
 
                 # add the new element
                 last_base[left] += right
@@ -107,27 +104,13 @@ class Apocrypha(object):
                 left = keys[i - 1]
                 right = keys[i + 1]
 
-                fuzzy = False
-                if right[0] == '`':
-                    fuzzy = True
-                    right = right[1:]
+                self.list_remove(left, right, last_base)
 
-                if not isinstance(last_base[left], list):
-                    error(
-                        'error: cannot subtract from non list value')
+                if len(last_base[left]) == 1:
+                    last_base[left] = last_base[left][0]
 
-                try:
-                    if fuzzy:
-                        right = \
-                            [_ for _ in last_base[left] if right in _].pop()
-
-                    last_base[left].remove(right)
-
-                except (IndexError, ValueError):
-                    error('error: {a} not in {b}'.format(a=right, b=left))
-                else:
-                    self.flush = True
-                    return
+                self.flush = True
+                return
 
             # wildcard, value -> key
             elif key == '@':
@@ -155,25 +138,20 @@ class Apocrypha(object):
 
                 try:
                     base = base[key]
-                    if not reference:
-                        continue
-
-                    self.dereference(keys, i, db, base, True)
-                    return
+                    if reference:
+                        self.dereference(keys, i, db, base, True)
+                        return
 
                 except KeyError:
                     if not create:
-                        print(key + ' not found')
-                        return
+                        self.error(key + ' not found')
 
                     # create a new key
                     base[key] = {}
                     base = base[key]
 
                 except TypeError:
-                    error(
-                        'error: cannot index into value. {a} -> {b}, {b} :: value'
-                        .format(a=base, b=key))
+                    self.error(Apocrypha.type_error.format(a=base, b=key))
 
         context = keys[-1] if len(keys) > 0 else None
         self.display(base, context)
@@ -202,19 +180,31 @@ class Apocrypha(object):
 
         figure out what a value is, and try to print it correctly
         '''
-        if value:
-            if context and self.add_context:
-                print(context, end=' = ')
+        if not value:
+            return
 
-            if isinstance(value, str):
-                print(value)
-
-            elif isinstance(value, list):
-                for elem in value:
-                    print(elem)
-
+        if self.test:
+            if self.add_context and context:
+                self.output += [context + ' = ' + value]
             else:
-                pprint.pprint(value)
+                self.output += [value]
+            return
+
+        if context and self.add_context:
+            print(context, end=' = ')
+
+        # string
+        if isinstance(value, str):
+            print(value)
+
+        # list
+        elif isinstance(value, list):
+            for elem in value:
+                print(elem)
+
+        # dict
+        else:
+            pprint.pprint(value)
 
     def search(self, base, key, context):
         ''' dict, string, list of string -> None
@@ -236,48 +226,44 @@ class Apocrypha(object):
             elif isinstance(v, dict) or isinstance(v, list):
                 self.search(v, key, context + [k])
 
+    def error(self, string):
+        ''' string -> IO
+        '''
+        if self.test:
+            self.output += [string]
+            raise ApocryphaError
+        else:
+            print(string)
+            sys.exit(1)
 
-def normalize(db):
-    ''' dict -> None
+    def list_remove(self, left, right, base):
+        ''' string, string, dict -> None
+        '''
+        fuzzy = False
+        if right[0] == '`':
+            fuzzy = True
+            right = right[1:]
 
-    finds lists of a single element and converts them into singletons
-    '''
-    for k, v in db.items():
-        if isinstance(v, list) and len(v) == 1:
-            db[k] = v[0]
+        if not isinstance(base[left], list):
+            self.error('error: cannot subtract from non list value')
 
-        if isinstance(v, dict):
-            normalize(v)
+        try:
+            if fuzzy:
+                right = [_ for _ in base[left] if right in _].pop()
 
+            base[left].remove(right)
 
-def main():
-    ''' string, ... -> IO
+        except (IndexError, ValueError):
+            self.error('error: {a} not in {b}'.format(a=right, b=left))
 
-    db apple colors = blue red
-    db red = 123
-    db blue = 456
+    def normalize(self, db):
+        ''' dict -> None
 
-    db apple colors
-    db apple !colors
+        finds lists of a single element and converts them into singletons
+        '''
+        for k, v in db.items():
+            if isinstance(v, list) and len(v) == 1:
+                db[k] = v[0]
 
-    db apple colors + green yellow
-    db apple colors - `een
-
-    db -c @ 456
-    '''
-
-    # load the database
-    path = os.path.expanduser('~') + '/.db.json'
-    args = sys.argv[1:]
-    context = False
-
-    if next(iter(args), '') == '-c':
-        context = True
-        args = args[1:]
-
-    apocrypha = Apocrypha(path, context=context)
-    apocrypha.action(args)
-
-
-if __name__ == '__main__':
-    main()
+            if isinstance(v, dict):
+                self.normalize(v)
