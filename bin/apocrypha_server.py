@@ -55,7 +55,11 @@ class Handler(socketserver.BaseRequestHandler):
         args = self.data.split('\n') if self.data else []
         print('query: ', args)
 
-        result = None
+        if len(args) > 0 and args[0] == '-c':
+            args = args[1:]
+            db_server.add_context = True
+
+        result = ''
         try:
             # send the arguments to the Apocrypha instance, read_only=True
             # means that we don't write out the changes immediately
@@ -68,15 +72,14 @@ class Handler(socketserver.BaseRequestHandler):
             result = str(error)
 
         finally:
-            # unknown error
-            if not result:
-                result = 'unexpected error'
+            if result:
+                result += '\n'
 
         # send reply to client
-        result += '\n'
         self.request.sendall(result.encode('utf-8'))
 
         # reset output, save changes if needed
+        db_server.add_context = False
         db_server.output = []
         db_server.save_db()
 

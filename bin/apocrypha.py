@@ -236,9 +236,10 @@ class Apocrypha(object):
         if not value:
             return
         result = []
+        base = ''
 
         if context and self.add_context:
-            result += [context + ' = ']
+            base = context + ' = '
 
         # string
         if isinstance(value, str):
@@ -246,7 +247,7 @@ class Apocrypha(object):
                 value = value[1:]
                 self.dereference([], 0, value, False)
             else:
-                result += [str(value)]
+                result += [base + str(value)]
 
         # list
         elif isinstance(value, list):
@@ -255,11 +256,11 @@ class Apocrypha(object):
                     elem = elem[1:]
                     self.dereference([], 0, elem, False)
                 else:
-                    result += [str(elem)]
+                    result += [base + str(elem)]
 
         # dict
         else:
-            result += [pprint.pformat(value)]
+            result += [base + pprint.pformat(value)]
 
         self.output += result
 
