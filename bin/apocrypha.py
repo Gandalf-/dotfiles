@@ -161,6 +161,18 @@ class Apocrypha(object):
 
         dereferences always start at the top level of the database, hence the
             action(db, db, ...)
+
+            $ d pointer = value
+            $ d !pointer
+            value
+
+        spaces are significant in value being treated as references. a space
+        denotes a new level of indexing from the top level
+
+            $ d pointer = 'one two'
+            $ d one two = value
+            $ d !pointer
+            value
         '''
 
         # the value is a pointer to a key somewhere else
@@ -168,12 +180,14 @@ class Apocrypha(object):
 
         # current value is a string
         if isinstance(base, str):
-            self._action(db, db, [base] + deref_args, create=create)
+            self._action(
+                db, db, base.split(' ') + deref_args, create=create)
 
         # current value is iterable
         else:
             for reference in base:
-                self._action(db, db, [reference] + deref_args, create=create)
+                self._action(
+                    db, db, reference.split(' ') + deref_args, create=create)
 
     def display(self, value, context=None):
         ''' any -> IO

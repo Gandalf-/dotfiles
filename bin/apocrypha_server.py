@@ -34,11 +34,13 @@ class ApocryphaServer(apocrypha.Apocrypha):
 
         normalize and write out the database
         '''
-        self.normalize(self.db)
 
-        # write the updated values back out
-        with open(self.path, 'w') as fd:
-            json.dump(self.db, fd)
+        if self.flush:
+            self.normalize(self.db)
+
+            # write the updated values back out
+            with open(self.path, 'w') as fd:
+                json.dump(self.db, fd)
 
 
 class Handler(socketserver.BaseRequestHandler):
@@ -54,27 +56,34 @@ class Handler(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip().decode("utf-8")
 
         if self.data:
-            args = self.data.split(' ')
+            args = self.data.split('\n')
         else:
             args = []
 
-        print('query: ', self.data)
+        print('query: ', args)
+
+        def printer(base):
+            ''' dict, list, string -> string
+
+            recursive type aware printer
+            '''
+            result = ''
+
+            if isinstance(base, str):
+                result += base + '\n'
+
+            elif isinstance(base, list):
+                for elem in base:
+                    result += printer(elem)
+
+            else:
+                result += pprint.pformat(base) + '\n'
+
+            return result
 
         try:
             db_server.action(args, read_only=True)
-
-            # send back the result of the action
-            result = ''
-            for value in db_server.output:
-                if isinstance(value, str):
-                    result += value + '\n'
-
-                elif isinstance(value, list):
-                    for elem in value:
-                        result += elem + '\n'
-
-                else:
-                    result += pprint.pformat(value) + '\n'
+            result = printer(db_server.output)
 
         except apocrypha.ApocryphaError as error:
             result = str(error) + '\n'
