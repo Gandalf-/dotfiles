@@ -15,13 +15,17 @@ class Apocrypha(object):
 
     type_error = 'error: cannot index into value. {a} -> {b}, {b} :: value'
 
-    def __init__(self, path, context=False, test=False):
-        ''' filepath, bool -> Apocrypha
+    def __init__(self, path, context=False, headless=False):
+        ''' string, maybe bool, maybe bool -> Apocrypha
+
+        @path       full path to the database json file
+        @context    add context to output, instead of "value", "key = value"
+        @headless   don't write to stdout, save in self.output
         '''
         self.flush = False
         self.add_context = context
         self.path = path
-        self.test = test
+        self.headless = headless
         self.output = []
 
         with open(path, 'r') as fd:
@@ -70,11 +74,19 @@ class Apocrypha(object):
 
                 # convert to list
                 if not isinstance(last_base[left], list):
-                    last_base[left] = [last_base[left]]
+                    if last_base[left]:
+                        last_base[left] = [last_base[left]]
+                    else:
+                        last_base[left] = []
 
                 # add the new element
                 last_base[left] += right
                 self.flush = True
+                return
+
+            elif key == 'keys':
+                for base_key in base.keys():
+                    self.display(base_key)
                 return
 
             # open up this level in Vim for modification
@@ -197,7 +209,7 @@ class Apocrypha(object):
         if not value:
             return
 
-        if self.test:
+        if self.headless:
             if self.add_context and context:
                 self.output += [context + ' = ' + value]
             else:
@@ -209,12 +221,20 @@ class Apocrypha(object):
 
         # string
         if isinstance(value, str):
-            print(value)
+            if value[0] == '!':
+                value = value[1:]
+                self.dereference([], 0, self.db, value, False)
+            else:
+                print(value)
 
         # list
         elif isinstance(value, list):
             for elem in value:
-                print(elem)
+                if elem[0] == '!':
+                    elem = elem[1:]
+                    self.dereference([], 0, self.db, elem, False)
+                else:
+                    print(elem)
 
         # dict
         else:
@@ -243,7 +263,7 @@ class Apocrypha(object):
     def error(self, string):
         ''' string -> IO
         '''
-        if self.test:
+        if self.headless:
             self.output += [string]
             raise ApocryphaError(string)
         else:

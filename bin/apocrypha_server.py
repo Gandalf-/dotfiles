@@ -15,11 +15,11 @@ class ApocryphaServer(apocrypha.Apocrypha):
     def __init__(self, path, context=False):
         ''' filepath, maybe bool -> ApocryphaServer
 
-        test=True means that results get saved to self.output, which we can
+        headless=True means that results get saved to self.output, which we can
         return to the client
         '''
         apocrypha.Apocrypha.__init__(
-            self, path, context=context, test=True)
+            self, path, context=context, headless=True)
 
     def action(self, args, read_only=False):
         ''' list of string -> None

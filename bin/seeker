@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+from apocrypha import Apocrypha
+
+
+def main():
+    ''' string, ... -> IO
+
+    db apple colors = blue red
+    db red = 123
+    db blue = 456
+
+    db apple colors
+    db apple !colors
+
+    db apple colors + green yellow
+    db apple colors - `een
+
+    db -c @ 456
+    '''
+
+    # load the database
+    path = os.path.expanduser('~') + '/.db.json'
+    args = sys.argv[1:]
+    context = False
+
+    if next(iter(args), '') in ['--context', '-c']:
+        context = True
+        args = args[1:]
+
+    apocrypha = Apocrypha(path, context=context)
+    apocrypha.action(args)
+
+
+if __name__ == '__main__':
+    main()
