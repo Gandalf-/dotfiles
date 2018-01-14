@@ -15,32 +15,25 @@ class ApocryphaServer(apocrypha.Apocrypha):
     def __init__(self, path, context=False):
         ''' filepath, maybe bool -> ApocryphaServer
 
-        headless=True means that results get saved to self.output, which we can
-        return to the client
+        @path       full path to the database json file
+        @context    add context to output, instead of "value", "key = value"
+
+        headless=True means that results get saved to self.output, which we
+        return to the client instead of printing to stdout
         '''
         apocrypha.Apocrypha.__init__(
             self, path, context=context, headless=True)
 
     def action(self, args, read_only=False):
-        ''' list of string -> None
+        ''' list of string, maybe bool -> none
+
+        @args       arguments from the user
+        @read_only  do not write changes to the database file
 
         this overrides the default, which saves the database after giving the
         response to the user to only give the response
         '''
         self._action(self.db, self.db, args, create=True)
-
-    def save_db(self):
-        ''' None -> None
-
-        normalize and write out the database
-        '''
-
-        if self.flush:
-            self.normalize(self.db)
-
-            # write the updated values back out
-            with open(self.path, 'w') as fd:
-                json.dump(self.db, fd)
 
 
 class Handler(socketserver.BaseRequestHandler):
@@ -52,44 +45,38 @@ class Handler(socketserver.BaseRequestHandler):
     client.
     """
     def handle(self):
-        # self.request is the TCP socket connected to the client
+        ''' none -> none
+
+        self.request is the TCP socket connected to the client
+        '''
+
+        # get query, parse into arguments
         self.data = self.request.recv(1024).strip().decode("utf-8")
-
-        if self.data:
-            args = self.data.split('\n')
-        else:
-            args = []
-
+        args = self.data.split('\n') if self.data else []
         print('query: ', args)
 
-        def printer(base):
-            ''' dict, list, string -> string
-
-            recursive type aware printer
-            '''
-            result = ''
-
-            if isinstance(base, str):
-                result += base + '\n'
-
-            elif isinstance(base, list):
-                for elem in base:
-                    result += printer(elem)
-
-            else:
-                result += pprint.pformat(base) + '\n'
-
-            return result
-
+        result = None
         try:
+            # send the arguments to the Apocrypha instance, read_only=True
+            # means that we don't write out the changes immediately
+
             db_server.action(args, read_only=True)
-            result = printer(db_server.output)
+            result = '\n'.join(db_server.output)
 
         except apocrypha.ApocryphaError as error:
-            result = str(error) + '\n'
+            # user, usage error
+            result = str(error)
 
+        finally:
+            # unknown error
+            if not result:
+                result = 'unexpected error'
+
+        # send reply to client
+        result += '\n'
         self.request.sendall(result.encode('utf-8'))
 
+        # reset output, save changes if needed
         db_server.output = []
         db_server.save_db()
 
@@ -102,11 +89,13 @@ class Server(socketserver.TCPServer):
 
 
 if __name__ == "__main__":
-    HOST, PORT = "localhost", 9999
+    host, port = "localhost", 9999
+
+    # create the ApocryphaServer instance
+    db_server = ApocryphaServer(db_path)
 
     # Create the server, binding to localhost on port 9999
-    db_server = ApocryphaServer(db_path)
-    server = Server((HOST, PORT), Handler)
+    server = Server((host, port), Handler)
 
     try:
         server.serve_forever()

@@ -22,7 +22,7 @@ class TestApocrypha(unittest.TestCase):
     def test_dereference(self):
         a = Apocrypha('tests/test-db.json', headless=True)
         a.action(['!colors'])
-        self.assertEqual(a.output, ['nice', {}, {}])
+        self.assertEqual(a.output, ['nice'])
 
 
 class TestApocryphaAssignDelete(unittest.TestCase):
@@ -52,7 +52,13 @@ class TestApocryphaAssignDelete(unittest.TestCase):
 
         args = ['!animals', 'legs']
         a.action(args, read_only=True)
-        self.assertEqual(a.output, [4, 8, 2])
+        self.assertEqual(a.output, ['4', '8', '2'])
+
+    def test_deep_dereference(self):
+        pass
+
+    def test_deep_dereference_list(self):
+        pass
 
     def test_delete_through_reference(self):
         a = Apocrypha('tests/test-db.json', headless=True)
@@ -63,6 +69,12 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         self.assertEqual(a.db['wolf'], {})
         self.assertEqual(a.db['octopus'], {})
         self.assertEqual(a.db['bird'], {})
+
+    def test_symlink(self):
+        pass
+
+    def test_symlink_list(self):
+        pass
 
 
 class TestApocryphaLists(unittest.TestCase):

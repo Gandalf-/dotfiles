@@ -32,11 +32,29 @@ class Apocrypha(object):
             self.db = json.load(fd)
 
     def action(self, args, read_only=False):
-        ''' list of string -> None
+        ''' list of string, maybe bool -> none
+
+        @args       arguments from the user
+        @read_only  do not write changes to the database file
+
+        perform the database actions required from the arguments, handle
+        output and save changes if required
         '''
         self._action(self.db, self.db, args, create=True)
 
-        if not read_only and self.flush:
+        if not self.headless:
+            print('\n'.join(self.output))
+
+        if not read_only:
+            self.save_db()
+
+    def save_db(self):
+        ''' none -> none
+
+        normalize and write out the database, but only if self.flush is True
+        '''
+
+        if self.flush:
             self.normalize(self.db)
 
             # write the updated values back out
@@ -151,7 +169,7 @@ class Apocrypha(object):
                 try:
                     base = base[key]
                     if reference:
-                        self.dereference(keys, i, db, base, True)
+                        self.dereference(keys, i, base, True)
                         return
 
                 except KeyError:
@@ -168,8 +186,15 @@ class Apocrypha(object):
         context = keys[-1] if len(keys) > 0 else None
         self.display(base, context)
 
-    def dereference(self, keys, i, db, base, create):
-        ''' list of string, int, dict, dict, bool -> None
+    def dereference(self, keys, i, base, create):
+        ''' list of string, int, dict, dict, bool -> none
+
+        @keys   list of database keys to check
+        @i      position in the input keys
+        @base   current object that we're working with, corresponds to a
+                "level" in the database
+        @create whether or not to add new indexes to the database, if false
+                will throw an error if an index that doesn't exist is accessed
 
         dereferences always start at the top level of the database, hence the
             action(db, db, ...)
@@ -193,13 +218,15 @@ class Apocrypha(object):
         # current value is a string
         if isinstance(base, str):
             self._action(
-                db, db, base.split(' ') + deref_args, create=create)
+                self.db, self.db,
+                base.split(' ') + deref_args, create=create)
 
         # current value is iterable
         else:
             for reference in base:
                 self._action(
-                    db, db, reference.split(' ') + deref_args, create=create)
+                    self.db, self.db,
+                    reference.split(' ') + deref_args, create=create)
 
     def display(self, value, context=None):
         ''' any -> IO
@@ -208,40 +235,36 @@ class Apocrypha(object):
         '''
         if not value:
             return
-
-        if self.headless:
-            if self.add_context and context:
-                self.output += [context + ' = ' + value]
-            else:
-                self.output += [value]
-            return
+        result = []
 
         if context and self.add_context:
-            print(context, end=' = ')
+            result += [context + ' = ']
 
         # string
         if isinstance(value, str):
             if value[0] == '!':
                 value = value[1:]
-                self.dereference([], 0, self.db, value, False)
+                self.dereference([], 0, value, False)
             else:
-                print(value)
+                result += [str(value)]
 
         # list
         elif isinstance(value, list):
             for elem in value:
                 if elem[0] == '!':
                     elem = elem[1:]
-                    self.dereference([], 0, self.db, elem, False)
+                    self.dereference([], 0, elem, False)
                 else:
-                    print(elem)
+                    result += [str(elem)]
 
         # dict
         else:
-            pprint.pprint(value)
+            result += [pprint.pformat(value)]
+
+        self.output += result
 
     def search(self, base, key, context):
-        ''' dict, string, list of string -> None
+        ''' dict, string, list of string -> none
 
         recursively search through the base dictionary, print out all the keys
         that have the given value '''
@@ -271,7 +294,7 @@ class Apocrypha(object):
             sys.exit(1)
 
     def list_remove(self, left, right, base):
-        ''' string, string, dict -> None
+        ''' string, string, dict -> none
         '''
         fuzzy = False
         if right[0] == '`':
@@ -291,7 +314,7 @@ class Apocrypha(object):
             self.error('error: {a} not in {b}'.format(a=right, b=left))
 
     def normalize(self, db):
-        ''' dict -> None
+        ''' dict -> none
 
         finds lists of a single element and converts them into singletons
         '''
