@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import apocrypha
-import json
 import os
-import pprint
 import socketserver
 
 db_server = None
@@ -12,8 +10,8 @@ db_path = os.path.expanduser('~') + '/.db.json'
 
 class ApocryphaServer(apocrypha.Apocrypha):
 
-    def __init__(self, path, context=False):
-        ''' filepath, maybe bool -> ApocryphaServer
+    def __init__(self, path):
+        ''' filepath -> ApocryphaServer
 
         @path       full path to the database json file
         @context    add context to output, instead of "value", "key = value"
@@ -22,7 +20,7 @@ class ApocryphaServer(apocrypha.Apocrypha):
         return to the client instead of printing to stdout
         '''
         apocrypha.Apocrypha.__init__(
-            self, path, context=context, headless=True)
+            self, path, add_context=False, headless=True)
 
     def action(self, args, read_only=False):
         ''' list of string, maybe bool -> none
@@ -30,7 +28,7 @@ class ApocryphaServer(apocrypha.Apocrypha):
         @args       arguments from the user
         @read_only  do not write changes to the database file
 
-        this overrides the default, which saves the database after giving the
+        This overrides the default, which saves the database after giving the
         response to the user to only give the response
         '''
         self._action(self.db, self.db, args, create=True)

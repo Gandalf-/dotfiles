@@ -14,5 +14,7 @@
   "animals": ["wolf", "octopus", "bird"],
   "wolf": {"legs": 4 },
   "octopus": {"legs": 8 },
-  "bird": {"legs": 2}
+  "bird": {"legs": 2},
+  "one": "two three",
+  "two": {"three": "four"}
 }

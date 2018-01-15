@@ -15,18 +15,18 @@ class Apocrypha(object):
 
     type_error = 'error: cannot index into value. {a} -> {b}, {b} :: value'
 
-    def __init__(self, path, context=False, headless=False):
+    def __init__(self, path, add_context=False, headless=False):
         ''' string, maybe bool, maybe bool -> Apocrypha
 
         @path       full path to the database json file
         @context    add context to output, instead of "value", "key = value"
         @headless   don't write to stdout, save in self.output
         '''
+        self.add_context = add_context
         self.flush = False
-        self.add_context = context
-        self.path = path
         self.headless = headless
         self.output = []
+        self.path = path
 
         with open(path, 'r') as fd:
             self.db = json.load(fd)
@@ -37,7 +37,7 @@ class Apocrypha(object):
         @args       arguments from the user
         @read_only  do not write changes to the database file
 
-        perform the database actions required from the arguments, handle
+        Perform the database actions required from the arguments, handle
         output and save changes if required
         '''
         self._action(self.db, self.db, args, create=True)
@@ -51,7 +51,7 @@ class Apocrypha(object):
     def save_db(self):
         ''' none -> none
 
-        normalize and write out the database, but only if self.flush is True
+        Normalize and write out the database, but only if self.flush is True
         '''
 
         if self.flush:
@@ -64,7 +64,7 @@ class Apocrypha(object):
     def _action(self, db, base, keys, create=False):
         ''' dict, dict, list of string -> bool
 
-        move through the input arguments to
+        Move through the input arguments to
             - index further into the database
             - delete keys
             - assign values to keys
@@ -73,12 +73,12 @@ class Apocrypha(object):
 
         for i, key in enumerate(keys):
 
-            # assignement
+            # assignment
             if key == '=':
                 left = keys[i - 1]
                 right = keys[i + 1:]
 
-                # single = str, multi = list
+                # single = string, multi = list
                 right = right[0] if len(right) == 1 else right
 
                 last_base[left] = right
@@ -87,21 +87,28 @@ class Apocrypha(object):
 
             # append a value or values to a list
             elif key == '+':
-                left = keys[i - 1]
-                right = keys[i + 1:]
+                left = keys[i - 1]      # string
+                right = keys[i + 1:]    # list of string
 
-                # convert to list
-                if not isinstance(last_base[left], list):
-                    if last_base[left]:
-                        last_base[left] = [last_base[left]]
-                    else:
-                        last_base[left] = []
+                # creation of a new value
+                if not last_base[left]:
+                    if len(right) == 1:
+                        right = right[0]
 
-                # add the new element
-                last_base[left] += right
+                    last_base[left] = right
+
+                # value exists but not a list, create list and add
+                elif not isinstance(last_base[left], list):
+                    last_base[left] = [last_base[left]] + right
+
+                # add to existing list
+                else:
+                    last_base[left] += right
+
                 self.flush = True
                 return
 
+            # print the keys defined at this level
             elif key == 'keys':
                 for base_key in base.keys():
                     self.display(base_key)
@@ -174,7 +181,7 @@ class Apocrypha(object):
 
                 except KeyError:
                     if not create:
-                        self.error(key + ' not found')
+                        self.error('error: ' + key + ' not found')
 
                     # create a new key
                     base[key] = {}
@@ -196,14 +203,14 @@ class Apocrypha(object):
         @create whether or not to add new indexes to the database, if false
                 will throw an error if an index that doesn't exist is accessed
 
-        dereferences always start at the top level of the database, hence the
+        Dereferences always start at the top level of the database, hence the
             action(db, db, ...)
 
             $ d pointer = value
             $ d !pointer
             value
 
-        spaces are significant in value being treated as references. a space
+        Spaces are significant in value being treated as references. A space
         denotes a new level of indexing from the top level
 
             $ d pointer = 'one two'
@@ -229,14 +236,18 @@ class Apocrypha(object):
                     reference.split(' ') + deref_args, create=create)
 
     def display(self, value, context=None):
-        ''' any -> IO
+        ''' any, maybe string -> none
 
-        figure out what a value is, and try to print it correctly
+        @value      string, list or dict to add to output
+        @context    additional information to include in output
+
+        Figure out what a value is, and print it correctly, dereferences
+        symlinks automatically
         '''
         if not value:
             return
-        result = []
-        base = ''
+
+        result, base = [], ''
 
         if context and self.add_context:
             base = context + ' = '
@@ -265,11 +276,16 @@ class Apocrypha(object):
         self.output += result
 
     def search(self, base, key, context):
-        ''' dict, string, list of string -> none
+        ''' any, string, list of string -> none
 
-        recursively search through the base dictionary, print out all the keys
+        @base       the object to search through
+        @key        value to find
+        @context    additional information to pass onto display()
+
+        Recursively search through the base dictionary, print out all the keys
         that have the given value '''
 
+        # list
         if isinstance(base, list):
             for e in [_ for _ in base if _ == key]:
                 if e == key:
@@ -277,6 +293,7 @@ class Apocrypha(object):
                         context[-1], context=' = '.join(context[:-1]))
             return
 
+        # dict
         for k, v in base.items():
             if v == key:
                 self.display(k, context=' = '.join(context))
@@ -284,15 +301,20 @@ class Apocrypha(object):
             elif isinstance(v, dict) or isinstance(v, list):
                 self.search(v, key, context + [k])
 
-    def error(self, string):
-        ''' string -> IO
+    def error(self, message):
+        ''' string -> none | IO
+
+        @message    description of the error that occurred
+        #impure     self.output
+
+        Send an error to the user and stop execution
         '''
         if self.headless:
-            self.output += [string]
-            raise ApocryphaError(string)
-        else:
-            print(string)
-            sys.exit(1)
+            self.output += [message]
+            raise ApocryphaError(message)
+
+        print(message)
+        sys.exit(1)
 
     def list_remove(self, left, right, base):
         ''' string, string, dict -> none
@@ -317,7 +339,7 @@ class Apocrypha(object):
     def normalize(self, db):
         ''' dict -> none
 
-        finds lists of a single element and converts them into singletons
+        Finds lists of a single element and converts them into singletons
         '''
         for k, v in db.items():
             if isinstance(v, list) and len(v) == 1:
