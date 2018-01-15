@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+'''
+Apocrypha
+
+    A flexible, json based database that supports
+    - strings, lists, dictionaries
+    - references to other keys
+    - arbitrary depth indexing and assignment
+    - symbolic links to other keys at any level
+    - server and client for performance
+'''
+
 import json
 import os
 import pprint
@@ -13,7 +24,7 @@ class ApocryphaError(Exception):
 
 class Apocrypha(object):
 
-    type_error = 'error: cannot index into value. {a} -> {b}, {b} :: value'
+    type_error = 'cannot index into value. {a} -> {b}, {b} :: value'
 
     def __init__(self, path, add_context=False, headless=False):
         ''' string, maybe bool, maybe bool -> Apocrypha
@@ -116,24 +127,27 @@ class Apocrypha(object):
 
             # open up this level in Vim for modification
             elif key == 'edit':
+                self.output = [json.dumps(base, indent=4, sort_keys=True)]
+                return
+
+            elif key == '--set':
                 left = keys[i - 1]
-                tmp = '/tmp/apocrypha-' + '-'.join(keys[:i]) + '.json'
-
-                with open(tmp, 'w+') as f:
-                    json.dump(base, f, indent=4, sort_keys=True)
-
-                subprocess.call(['vim', tmp])
 
                 try:
-                    with open(tmp, 'r') as f:
-                        right = json.load(f)
+                    right = json.loads(keys[i + 1])
 
-                    if right:
+                except json.decoder.JSONDecodeError:
+                    self.error('malformed json')
+
+                if right:
+
+                    if last_base:
                         last_base[left] = right
-                        self.flush = True
+                    else:
+                        # global overwrite
+                        self.db = right
 
-                finally:
-                    os.remove(tmp)
+                    self.flush = True
                 return
 
             # remove a value from a list
@@ -181,7 +195,7 @@ class Apocrypha(object):
 
                 except KeyError:
                     if not create:
-                        self.error('error: ' + key + ' not found')
+                        self.error(key + ' not found')
 
                     # create a new key
                     base[key] = {}
@@ -309,6 +323,8 @@ class Apocrypha(object):
 
         Send an error to the user and stop execution
         '''
+        message = 'error: ' + message
+
         if self.headless:
             self.output += [message]
             raise ApocryphaError(message)
@@ -325,7 +341,7 @@ class Apocrypha(object):
             right = right[1:]
 
         if not isinstance(base[left], list):
-            self.error('error: cannot subtract from non list value')
+            self.error('cannot subtract from non list value')
 
         try:
             if fuzzy:
@@ -334,7 +350,7 @@ class Apocrypha(object):
             base[left].remove(right)
 
         except (IndexError, ValueError):
-            self.error('error: {a} not in {b}'.format(a=right, b=left))
+            self.error('{a} not in {b}'.format(a=right, b=left))
 
     def normalize(self, db):
         ''' dict -> none

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+'''
+Apocrypha Server
+
+    TCP network server that listens for database requests
+'''
+
 import apocrypha
 import os
 import socketserver
@@ -49,7 +55,15 @@ class Handler(socketserver.BaseRequestHandler):
         '''
 
         # get query, parse into arguments
-        self.data = self.request.recv(1024).strip().decode("utf-8")
+        self.data = ''
+        while True:
+            data = self.request.recv(1024).strip().decode("utf-8")
+
+            if not data:
+                break
+            else:
+                self.data += data
+
         args = self.data.split('\n') if self.data else []
         print('query: ', args)
 
