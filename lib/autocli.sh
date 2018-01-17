@@ -48,6 +48,7 @@ autocli::create() {
   {
     echo '#!/bin/bash
 # this is an auto generated file. do not edit manually
+{
     '
 
     # write out inline files
@@ -61,6 +62,7 @@ autocli::create() {
     echo "
 [[ \"\${BASH_SOURCE[0]}\" == \"\${0}\" ]] && $name \"\$@\"
 true
+}
 "
   } > "$output"
 
