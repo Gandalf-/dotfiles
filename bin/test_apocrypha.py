@@ -186,7 +186,7 @@ class TestApocryphaSymlink(unittest.TestCase):
     @unittest.skip
     def test_symlink_list_index(self):
         '''
-        index through a symlink and assign
+        index through a list of symlink
         '''
         a = Apocrypha('tests/test-db.json', headless=True)
 
@@ -201,6 +201,23 @@ class TestApocryphaSymlink(unittest.TestCase):
             a.action(c, read_only=True)
 
         self.assertEqual(a.output, ['apple', 'pumpkin'])
+
+    def test_symlink_index(self):
+        '''
+        index through a symlink
+        '''
+        a = Apocrypha('tests/test-db.json', headless=True)
+
+        commands = [
+            ['one', '=', '!two'],
+            ['two', 'sub', '=', 'apple'],
+            ['one', 'sub']
+        ]
+
+        for c in commands:
+            a.action(c, read_only=True)
+
+        self.assertEqual(a.output, ['apple'])
 
     def test_symlink_dict(self):
         pass

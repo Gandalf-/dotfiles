@@ -12,9 +12,7 @@ Apocrypha
 '''
 
 import json
-import os
 import pprint
-import subprocess
 import sys
 
 
@@ -24,7 +22,7 @@ class ApocryphaError(Exception):
 
 class Apocrypha(object):
 
-    type_error = 'cannot index into value. {a} -> {b} -> ?, {b} :: value'
+    type_error = 'cannot index through value. {a} -> {b} -> ?, {b} :: value'
 
     def __init__(self, path, add_context=False, headless=False):
         ''' string, maybe bool, maybe bool -> Apocrypha
