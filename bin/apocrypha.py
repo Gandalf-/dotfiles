@@ -368,7 +368,11 @@ class Apocrypha(object):
 
         Finds lists of a single element and converts them into singletons
         '''
-        for k, v in db.items():
+
+        for k, v in list(db.items()):
+            if not v:
+                del(db[k])
+
             if isinstance(v, list) and len(v) == 1:
                 db[k] = v[0]
 

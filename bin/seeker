@@ -1,38 +1,46 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-import sys
-import os
-from apocrypha import Apocrypha
+# client for apocrypha server
+#
+# arguments are delimited by newlines
 
+main() {
+  local edit_mode=0
 
-def main():
-    ''' string, ... -> IO
+  for arg in "$@"; do
+    [[ "$arg" == "edit" ]] && edit_mode=1
+  done
 
-    db apple colors = blue red
-    db red = 123
-    db blue = 456
+  if (( edit_mode )); then
 
-    db apple colors
-    db apple !colors
+    local rest="${*:1:$(($#-1))}"
+    local name="/tmp/apocrypha-$rest.json"
 
-    db apple colors + green yellow
-    db apple colors - `een
+    for arg in "$@"; do
+      echo "$arg"
+    done |
+      nc localhost 9999 > "$name"
 
-    db -c @ 456
-    '''
+    vim "$name"
 
-    # load the database
-    path = os.path.expanduser('~') + '/.db.json'
-    args = sys.argv[1:]
-    context = False
+    local content; content="$(tr -d '\n' < "$name")"
+    {
+      for arg in "$@"; do
+        [[ "$arg" != "edit" ]] && echo "$arg"
+      done
 
-    if next(iter(args), '') in ['--context', '-c']:
-        context = True
-        args = args[1:]
+      echo "--set"
+      echo "$content"
+    } | nc localhost 9999
 
-    apocrypha = Apocrypha(path, context=context)
-    apocrypha.action(args)
+    rm "$name"
 
+  else
+    while [[ $1 ]]; do
+      echo "$1"; shift
+    done |
+      nc localhost 9999
+  fi
+}
 
-if __name__ == '__main__':
-    main()
+main "$@"

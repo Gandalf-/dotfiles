@@ -1,46 +1,85 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-# client for apocrypha server
-#
-# arguments are delimited by newlines
+import json
+import socket
+import subprocess
+import sys
+import time
 
-main() {
-  local edit_mode=0
 
-  for arg in "$@"; do
-    [[ "$arg" == "edit" ]] && edit_mode=1
-  done
+def edit_temp_file(temp_file):
+    ''' string -> string
+    '''
+    subprocess.call(['vim', temp_file])
 
-  if (( edit_mode )); then
+    with open(temp_file, 'r') as fd:
+        output = fd.read()
 
-    local rest="${*:1:$(($#-1))}"
-    local name="/tmp/apocrypha-$rest.json"
+    try:
+        output = json.dumps(json.loads(output))
 
-    for arg in "$@"; do
-      echo "$arg"
-    done |
-      nc localhost 9999 > "$name"
+    except json.decoder.JSONDecodeError:
+        print('error: file has JSON formatting errors')
+        time.sleep(1)
+        edit_temp_file(temp_file)
 
-    vim "$name"
+    else:
+        return output
 
-    local content; content="$(tr -d '\n' < "$name")"
-    {
-      for arg in "$@"; do
-        [[ "$arg" != "edit" ]] && echo "$arg"
-      done
 
-      echo "--set"
-      echo "$content"
-    } | nc localhost 9999
+def main():
+    ''' string -> io
+    '''
+    edit_mode = False
+    remote = ('localhost', 9999)
+    args = sys.argv[1:]
 
-    rm "$name"
+    if len(args) > 1 and args[-1] == 'edit':
+        edit_mode = True
+        temp_file = '/tmp/apocrypha-' + '-'.join(args[:-1]) + '.json'
 
-  else
-    while [[ $1 ]]; do
-      echo "$1"; shift
-    done |
-      nc localhost 9999
-  fi
-}
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(remote)
 
-main "$@"
+    query = '\n'.join(args) + '\n'
+    sock.sendall(query.encode('utf-8'))
+    sock.shutdown(socket.SHUT_WR)
+
+    result = ''
+    while True:
+        data = sock.recv(1024)
+
+        if not data:
+            sock.close()
+            break
+        else:
+            result += data.decode('utf-8')
+
+    # usual case
+    if not edit_mode:
+        result = result.strip('\n')
+        if result:
+            print(result)
+        return
+
+    # user wants to edit
+    #   - write result to temp file
+    #   - open with vim
+    #   - send temp file back to server
+    with open(temp_file, 'w+') as fd:
+        fd.write(result)
+
+    output = edit_temp_file(temp_file)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(remote)
+
+    query = args[:-1] + ['--set', output]
+    query = '\n'.join(query) + '\n'
+
+    sock.sendall(query.encode('utf-8'))
+    sock.close()
+
+
+if __name__ == '__main__':
+    main()
