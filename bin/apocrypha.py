@@ -24,7 +24,7 @@ class ApocryphaError(Exception):
 
 class Apocrypha(object):
 
-    type_error = 'cannot index into value. {a} -> {b}, {b} :: value'
+    type_error = 'cannot index into value. {a} -> {b} -> ?, {b} :: value'
 
     def __init__(self, path, add_context=False, headless=False):
         ''' string, maybe bool, maybe bool -> Apocrypha
@@ -180,17 +180,33 @@ class Apocrypha(object):
 
                 # keep track of the level before so we can modify this level
                 last_base = base
-                reference = False
+                key_is_reference = False
+                base_is_reference = False
 
                 if key[0] == '!':
-                    # dereference result
                     key = key[1:]
-                    reference = True
+                    key_is_reference = True
+
+                if isinstance(base, str) and base[0] == '!':
+                    base = base[1:]
+                    base_is_reference = True
 
                 try:
+                    if base_is_reference:
+                        # we're rebasing ourselves on the dereferenced value of
+                        # our current base. we keep all arguments
+                        #
+                        # this means that we're trying to index through a
+                        # reference
+                        self.dereference(base, keys[i:], create=True)
+                        return
+
                     base = base[key]
-                    if reference:
-                        self.dereference(keys, i, base, True)
+
+                    if key_is_reference:
+                        # this means we're trying to get the value of a
+                        # reference
+                        self.dereference(base, keys[i + 1:], True)
                         return
 
                 except KeyError:
@@ -207,7 +223,7 @@ class Apocrypha(object):
         context = keys[-1] if len(keys) > 0 else None
         self.display(base, context)
 
-    def dereference(self, keys, i, base, create):
+    def dereference(self, base, args, create):
         ''' list of string, int, dict, dict, bool -> none
 
         @keys   list of database keys to check
@@ -233,21 +249,18 @@ class Apocrypha(object):
             value
         '''
 
-        # the value is a pointer to a key somewhere else
-        deref_args = keys[i + 1:]
-
         # current value is a string
         if isinstance(base, str):
             self._action(
                 self.db, self.db,
-                base.split(' ') + deref_args, create=create)
+                base.split(' ') + args, create=create)
 
         # current value is iterable
         else:
             for reference in base:
                 self._action(
                     self.db, self.db,
-                    reference.split(' ') + deref_args, create=create)
+                    reference.split(' ') + args, create=create)
 
     def display(self, value, context=None):
         ''' any, maybe string -> none
@@ -270,7 +283,7 @@ class Apocrypha(object):
         if isinstance(value, str):
             if value[0] == '!':
                 value = value[1:]
-                self.dereference([], 0, value, False)
+                self.dereference(value, [], False)
             else:
                 result += [base + str(value)]
 
@@ -279,7 +292,7 @@ class Apocrypha(object):
             for elem in value:
                 if elem[0] == '!':
                     elem = elem[1:]
-                    self.dereference([], 0, elem, False)
+                    self.dereference(elem, [], False)
                 else:
                     result += [base + str(elem)]
 

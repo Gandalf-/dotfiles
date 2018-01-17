@@ -216,7 +216,7 @@ class TestApocryphaSymlink(unittest.TestCase):
         for c in commands:
             a.action(c, read_only=True)
 
-        self.assertEqual(a.output, ['apple', 'pumpkin'])
+        self.assertEqual(a.output, [])
 
 
 class TestApocryphaLists(unittest.TestCase):
