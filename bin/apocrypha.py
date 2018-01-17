@@ -68,7 +68,7 @@ class Apocrypha(object):
 
             # write the updated values back out
             with open(self.path, 'w') as fd:
-                json.dump(self.db, fd)
+                json.dump(self.db, fd, sort_keys=True)
 
     def _action(self, db, base, keys, create=False):
         ''' dict, dict, list of string -> bool
@@ -218,8 +218,8 @@ class Apocrypha(object):
                 except TypeError:
                     self.error(Apocrypha.type_error.format(a=base, b=key))
 
-        context = keys[-1] if len(keys) > 0 else None
-        self.display(base, context)
+        # context = keys[-1] if len(keys) > 0 else None
+        self.display(base, ' = '.join(keys[:-1]))
 
     def dereference(self, base, args, create):
         ''' list of string, int, dict, dict, bool -> none

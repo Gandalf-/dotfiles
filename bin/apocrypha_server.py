@@ -9,6 +9,7 @@ Apocrypha Server
 import apocrypha
 import os
 import socketserver
+import time
 
 db_server = None
 db_path = os.path.expanduser('~') + '/.db.json'
@@ -55,6 +56,7 @@ class Handler(socketserver.BaseRequestHandler):
         '''
 
         # get query, parse into arguments
+        start = int(round(time.time() * 100000))
         self.data = ''
         while True:
             data = self.request.recv(1024).strip().decode("utf-8")
@@ -65,7 +67,6 @@ class Handler(socketserver.BaseRequestHandler):
                 self.data += data
 
         args = self.data.split('\n') if self.data else []
-        print('query: ', args)
 
         if len(args) > 0 and args[0] == '-c':
             args = args[1:]
@@ -89,11 +90,14 @@ class Handler(socketserver.BaseRequestHandler):
 
         # send reply to client
         self.request.sendall(result.encode('utf-8'))
+        end = int(round(time.time() * 100000))
 
         # reset output, save changes if needed
         db_server.add_context = False
         db_server.output = []
         db_server.save_db()
+
+        print('query: ({t:4}) {a}'.format(t=end-start, a=str(args)))
 
 
 class Server(socketserver.TCPServer):
