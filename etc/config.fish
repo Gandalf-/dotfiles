@@ -64,6 +64,12 @@ else if test -d ~/google_drive
 
   set -gx DIMENSION ubuntu
 
+# raspberry pi
+else if test (whoami) = pi
+  set scripts   ~/DotFiles
+
+  set -gx DIMENSION raspberry
+
 # temporary
 else if test -d /tmp/DotFiles
   set -gx DIMENSION unknown
