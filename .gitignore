@@ -2,3 +2,4 @@ bin/wizard
 *.nfs*
 etc/gitconfig
 lib/fish/completions/w.fish
+__pycache__

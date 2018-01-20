@@ -1,5 +1,9 @@
 #!/bin/env bash
 
+# mirror - wizard libary
+#
+# this commands only make sense in a ChromeOS -> Chromebrew context
+
 common::require "rsync" &&
 wizard_mirror_push() {
 
@@ -7,6 +11,7 @@ wizard_mirror_push() {
 
   push /usr/local changes to archive
   "
+
   case $1 in
     --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
     ''|--local) remote=~/Downloads/local ;;
@@ -27,6 +32,7 @@ wizard_mirror_diff() {
 
   show what would be pushed and pulled by a mirror command
   "
+
   case $1 in
     --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
     ''|--local) remote=~/Downloads/local ;;
@@ -57,6 +63,7 @@ wizard_mirror_pull() {
 
   pull archive into /usr/local
   "
+
   case $1 in
     --archway)  remote=Archway:/mnt/z/Austin/Documents/local ;;
     ''|--local) remote=~/Downloads/local ;;
@@ -69,18 +76,3 @@ wizard_mirror_pull() {
     rsync --delete --human-readable --archive --update --progress \
     "$remote"/ /usr/local
 }
-
-
-common::require "apt" &&
-wizard_configure_ubuntu_developement() {
-
-  common::sudo apt update -y
-  common::sudo apt upgrade -y
-  common::sudo apt install htop python-pip tmux silversearcher-ag
-
-  wizard_install_git
-  wizard_install_fish
-  wizard_build_vim
-}
-
-

@@ -34,7 +34,7 @@ function tresult() {
     echo "PASSED"
   else
     echo "FAILED"
-    let FAILURES++
+    (( FAILURES++ ))
   fi
   echo
 }

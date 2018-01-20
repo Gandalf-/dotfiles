@@ -36,7 +36,8 @@ while [[ $1 ]]; do
 
     rh) common::do "git reset --hard HEAD" ;;
     ri) common::do "git rebase -i \"$2\""; shift ;;
-    rc) common::do "git rebase --continue"; shift ;;
+    rc) common::do "git rebase --continue" ;;
+    hc) common::do "git cherry-pick --continue" ;;
     cm) common::do "git commit -m \"${2:?g cm [message]}\""; shift ;;
     m)  common::do "git merge \"${2%-}\""    ; shift ;;
 
@@ -47,11 +48,18 @@ while [[ $1 ]]; do
     pu) common::do "git push -u \"${2:?g pu [remote]}\""; shift ;;
     pf) common::do "git push --force \"${2%.}\""; shift ;;
 
+    pfr) common::do "git push --force \"$2\" \"$3\""; shift 2;;
+    phr) common::do "git push \"$2\" \"$3\""; shift 2;;
+
     su)
       common::do git branch --set-upstream-to="${1:?g su [remote/branch]}"
       shift
       ;;
     sc) common::do git diff --name-only --diff-filter=U;;
+    oc)
+      # shellcheck disable=SC2046
+      vim $(git diff --name-only --diff-filter=U)
+      ;;
     cc) common::do "git clean -nfd"
         common::confirm "Continue?"
         common::do "git clean -fd"
@@ -61,7 +69,7 @@ while [[ $1 ]]; do
       branch="$(
         git branch -q \
           | fzf)"
-      common::required_help "$branch" "g cf [branch]"
+      common::required-help "$branch" "g cf [branch]"
       common::do git checkout "$branch"; shift
       ;;
 
@@ -71,7 +79,7 @@ while [[ $1 ]]; do
           | grep -i "$2" \
           | xargs \
           | cut -f1 -d' ')"
-      common::required_help "$branch" "g cs [branch]"
+      common::required-help "$branch" "g cs [branch]"
       common::do git checkout "$branch"; shift
       ;;
 
@@ -136,6 +144,8 @@ while [[ $1 ]]; do
     pf : push --force [branch]
     su : branch --set-upstream-to=[remote/branch]
     sc : show conflicting files
+    oc : open conflicts
+    hc : cherry-pick --continue
       "
       exit 1
       ;;

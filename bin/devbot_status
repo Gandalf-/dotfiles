@@ -1,0 +1,28 @@
+#!/bin/bash
+
+pfile=~/.devbot/pid
+lfile=~/.devbot/log
+rfile=~/.devbot/report
+
+if [[ -e $pfile ]]; then
+  read -r pid < $pfile
+
+  if kill -0 "$pid"; then
+
+    if [[ -s $rfile ]]; then
+      echo "Ʃ"
+
+    else
+      echo "✓"
+    fi
+
+  else
+    echo detected stale pid file, restarting >> $lfile
+    rm $pfile
+    wizard devbot start
+    echo "✓"
+  fi
+
+else
+  echo "✗"
+fi

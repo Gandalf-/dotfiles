@@ -32,35 +32,35 @@ function  ....; builtin cd ../../../;command ls --color=auto ; end
 
 # workstation
 if test "$at_work"
-  set     wiki_loc  ~/cribshome/wiki/index.md
-  set     scripts   ~/cribshome/DotFiles
-
   set -gx DIFFDIR   ~/cribshome/diffs/
   set -gx SCRIPITY  /mnt/ssd/
+  set -gx ONEFSGIT  /mnt/ssd/onefs/
   set -gx DIMENSION work
 
-  set PATH ~/scripity-scripts/bin $PATH
+  set PATH      ~/scripity-scripts/bin $PATH
+  set wiki_loc  ~/cribshome/wiki/index.md
+  set scripts   ~/cribshome/DotFiles
 
 # chrome os native
 else if test "$at_cros"
-  set scripts   /usr/local/home/DotFiles
-  set wiki_loc  /usr/local/home/google_drive/personal/wiki/index.md
-
   set -gx PAGER /usr/local/bin/less
   set -gx TERM  screen
   set -gx DIMENSION cros
 
+  set scripts   /usr/local/home/DotFiles
+  set wiki_loc  /usr/local/home/google_drive/personal/wiki/index.md
+
 # gallium
 else if test -d ~/Documents/DotFiles
+  set -gx DIMENSION gallium
+
   set scripts   ~/Documents/DotFiles
   set wiki_loc  ~/google_drive/personal/wiki/index.md
 
-  set -gx DIMENSION gallium
-
-# personal
-else if test -d ~/google_drive
-  set wiki_loc ~/google_drive/index.md
-  set scripts  ~/google_drive/personal/share/Public/DotFiles
+# birch, chroot
+else if test -d ~/DotFiles
+  set wiki_loc ~/wiki/index.md
+  set scripts  ~/DotFiles
 
   set -gx DIMENSION ubuntu
 
@@ -71,18 +71,20 @@ else if test (whoami) = pi
   set -gx DIMENSION raspberry
 
 # temporary
-else if test -d /tmp/DotFiles
+else
   set -gx DIMENSION unknown
-
 end
 
 # Languages
 #===========================
 
 # rust
-if test -d ~/.cargo/bin/
-  set PATH ~/.cargo/bin/ $PATH
-end
+test -d ~/.cargo/bin/
+  and set PATH ~/.cargo/bin/ $PATH
+
+# haskell
+test -d ~/.local/bin/
+  and set PATH ~/.local/bin/ $PATH
 
 # go
 if test -d /usr/local/go/bin/
@@ -96,22 +98,23 @@ end
 set -gx TMP /tmp
 
 # fzf
-if test -d ~/.vim/bundle/fzf/bin
+if test -e ~/.vim/bundle/fzf.vim/bin/fzf
+  set PATH ~/.vim/bundle/fzf.vim/bin $PATH
+
+else if test -e ~/.vim/bundle/fzf/bin/fzf
   set PATH ~/.vim/bundle/fzf/bin $PATH
 end
 
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-set -gx FZF_DEFAULT_OPTS '--height 50% --border'
+set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
 
 # autojump
-if test -f ~/.autojump/share/autojump/autojump.fish
-  . ~/.autojump/share/autojump/autojump.fish
-end
+test -f ~/.autojump/share/autojump/autojump.fish
+  and . ~/.autojump/share/autojump/autojump.fish
 
 # DotFiles scripts
-if test "$scripts"
-  set PATH $scripts/bin $PATH
-end
+test "$scripts"
+  and set PATH $scripts/bin $PATH
 
 # vimwiki
 if test "$wiki_loc"

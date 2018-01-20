@@ -6,8 +6,38 @@
 #
 #   All the intermediary functions are produced by auto_cli.sh
 
-__name=""
 
+wizard_hunt() {
+
+  common::optional-help "$1" "(-#) (pid or process name)
+
+  find processes and send them a signal, default SIGTERM
+
+    wizard hunt
+    wizard hunt -9
+    wizard hunt vim
+    wizard hunt -HUP apache
+  "
+
+  local signal=-TERM
+  local nargs=$#
+  case $1 in -*) signal="$1"; shift ;; esac
+
+  while read -r process; do
+    local pid; pid="$(awk '{print $1}' <<< "$process")"
+    kill "$signal" "$pid"
+
+  done < <(
+    # shellcheck disable=SC2009
+    if [[ $1 ]]; then
+      ps ax | grep "$1"
+    else
+      ps ax
+    fi | cut -c 1-250 | fzf -m --cycle
+    )
+
+  return "$nargs"
+}
 
 wizard_regenerate() {
 
@@ -16,11 +46,10 @@ wizard_regenerate() {
 
   common::optional-help "$1" "
 
-  regenerate wizard script using auto_wizard
+  regenerate wizard using auto_wizard, without clobbering ourselves
   "
 
-  (
-    sleep 1
+  ( sleep .5
     auto_wizard | grep -v 'scripity'
   ) &
 
@@ -29,13 +58,72 @@ wizard_regenerate() {
 }
 
 
+wizard_git_fetch() {
+
+  common::optional-help "$1" "
+
+  recursively discover git directories under the current working directory,
+  fetch all branches
+  "
+
+  common::check-network || common::error "no network connection"
+
+  while read -r directory; do
+    (
+      local dir; dir="$(dirname "$directory")"
+      cd "$dir" || exit
+      git fetch --quiet --all --recurse-submodules --prune
+      echo "$dir"
+    ) &
+
+  done < <(find . -name .git) | sort
+  wait
+
+  return $#
+}
+
+
+wizard_git_report() {
+
+  common::optional-help "$1" "
+
+  recursively discover git directories under the current working directory,
+  print out a small human readable report on their status
+  "
+
+  while read -r directory; do
+    (
+      local dir; dir="$(dirname "$directory")"
+      cd "$dir" || exit
+      local status; status="$(git status)"
+
+      grep -q 'Your branch is ahead of' <<< "$status" &&
+        echo "$dir has local commits not pushed to remote"
+
+      grep -q 'can be fast-forwarded' <<< "$status" &&
+        echo "$dir can be fast-forwarded"
+
+      grep -q 'Changes not staged for commit' <<< "$status" &&
+        echo "$dir has uncommited, modified files"
+
+      grep -q 'Untracked files' <<< "$status" &&
+        echo "$dir has untracked files"
+
+    ) &
+
+  done < <(find . -name .git) | sort
+  wait
+
+  return $#
+}
+
+
 wizard_macro() {
 
   common::optional-help "$1" "(amount)
 
-  replay a portion of fish history in the current terminal
-
-    the order of selection in fzf matters
+  replay a portion of fish history in the current terminal. the order of
+  selection in fzf matters
   "
 
   while read -r command; do
@@ -49,8 +137,14 @@ wizard_macro() {
 
 common::require 'ffmpeg' &&
 wizard_transcode_movies() {
-  #
-  local preset=slow
+
+  common::required-help "$1" "[file.avi ...]
+
+  convert all input files to mp4 using ffmpeg, asks for confirmation before
+  deleting the source file
+  "
+
+  local preset=veryslow
 
   echo "Processing: $*"
   for file in "$@"; do
@@ -61,7 +155,7 @@ wizard_transcode_movies() {
       || common::error "failed on \"$file\". Giving up"
 
     common::echo "Waiting..."; sleep 5
-    common::do rm "$file"
+    common::do rm -i "$file"
   done
 
   return $#
@@ -74,6 +168,7 @@ wizard_file_remove-trailing-whitespace() {
 
   remove trailing whitespace in the target files
   "
+
   while [[ $1 ]]; do
     common::do sed -i 's/[ \t]*$//' "$1"
     shift
@@ -121,11 +216,13 @@ wizard_show_largest-packages() {
   common::optional-help "$1" "
 
   list all packages installed, sorted by size
+
+    $ w s lp | head -n 50
   "
 
   # shellcheck disable=SC2016
   dpkg-query -Wf '${Installed-Size}\t${Package}\n' \
-    | sort -n
+    | sort -nr
 }
 
 
@@ -175,6 +272,8 @@ wizard_parse_json() {
   common::optional-help "$1" "
 
   pipe in json and pretty print it
+
+    $ curl remote.com/file.json | w parse json
   "
 
   python -m json.tool
@@ -190,99 +289,6 @@ wizard_parse_xml() {
   "
 
   xmllint --format -
-}
-
-
-common::require 'dpkg' &&
-wizard_clean_boot() {
-
-  common::optional-help "$1" "
-
-  safely cleans up old Linux kernel versions from /boot
-  "
-
-  dpkg --list \
-    | grep linux-image \
-    | awk '{ print $2 }' \
-    | sort -V \
-    | sed -n '/'"$(uname -r)"'/q;p' \
-    | xargs sudo apt-get -y purge
-
-  return $#
-}
-
-
-common::require 'dpkg' &&
-wizard_clean_apt() {
-
-  common::optional-help "$1" "
-
-  force purge removed apt packages
-  "
-
-  dpkg --list \
-    | grep "^rc" \
-    | cut -d " " -f 3 \
-    | xargs sudo dpkg --purge \
-    || common::color-error "Looks like there's nothing to clean!"
-}
-
-
-wizard_clean_files() {
-
-  # clean up the filesystem under the current directory, mostly useful for
-  # removing duplicate files insync creates
-
-  local fixed dry=0 counter=0 usage="
-  $__name [-d|--dry]
-
-  smart remove duplicate file names and intermediary file types
-  "
-
-  case "$1" in
-    -d|--dry) dry=1 ;;
-    *)        common::error "$usage" ;;
-  esac
-
-  while read -r file; do
-    fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
-
-    # make sure the file still exists
-    if [[ -e "$file" ]] ; then
-
-      if [[ -f "$fixed" ]]; then
-        echo "remove dup: $file"
-        (( dry )) \
-          || rm "$file" \
-          || exit
-
-      else
-        echo "rename dup: $file"
-        (( dry )) \
-          || mv "$file" "$fixed" \
-          || exit
-      fi
-
-      let counter++
-    fi
-  done < <(find . -regex '.*([0-9]+).*')
-
-  while read -r file; do
-    echo "remove: $file"
-
-    (( dry )) \
-      || rm "$file" \
-      || exit
-    let counter++
-
-  done < <(find . -regex '.*\.\(pyc\|class\|o\|bak\)')
-
-  if (( dry )); then
-    echo "Would have cleaned up $counter files"
-  else
-    echo "Cleaned up $counter files"
-  fi
-  return 1
 }
 
 
@@ -304,9 +310,14 @@ wizard_update_apt() {
 
   update all apt packages
   "
+
+  common::check-network || common::error "no network connection"
+
   common::sudo apt update
   common::sudo apt upgrade -y
-  common::sudo apt-get autoremove
+  common::sudo apt autoremove -y
+
+  return $#
 }
 
 
@@ -317,18 +328,28 @@ wizard_update_pip() {
 
   update all python packages installed by pip
   "
+  common::check-network || common::error "no network connection"
+
   sudo -H pip freeze --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \
-    | xargs -n1 sudo -H pip install -U
+    | xargs -n1 sudo -H pip install -q -U
+
+  return $#
 }
 
 
 common::require "wget" "pip" "apt" &&
-wizard_build_vim () {
-  # compile and install the latest vim
+wizard_build_vim-ultimate () {
 
-  echo "installing vim"
+  common::optional-help "$1" "
+
+  install all possible Vim dedependencies with apt, then download master.zip,
+  compile and install with all feaures enabled
+
+  this really isn't necessary
+  "
+
   wizard_install_lua
 
   # common::sudo apt-get build-dep vim-gnome
@@ -361,10 +382,8 @@ wizard_build_vim () {
     --enable-cscope \
     --prefix=/usr
 
-  common::do \
-    make -j "$(getconf _NPROCESSORS_ONLN)" CFLAGS='"-oFast -march=native"'
+  common::do make -j CFLAGS='"-oFast -march=native"'
   common::sudo make install
-  echo "done"
 }
 
 
@@ -374,6 +393,7 @@ wizard_open() {
 
   open a file based on it's type and available programs
   "
+
   local filetype
 
   for target in "$@"; do

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# client for apocrypha server
+#
+# arguments are delimited by newlines
+
+main() {
+  local edit_mode=0
+
+  for arg in "$@"; do
+    [[ "$arg" == "edit" ]] && edit_mode=1
+  done
+
+  if (( edit_mode )); then
+
+    local rest="${*:1:$(($#-1))}"
+    local name="/tmp/apocrypha-$rest.json"
+
+    for arg in "$@"; do
+      echo "$arg"
+    done |
+      nc localhost 9999 > "$name"
+
+    vim "$name"
+
+    local content; content="$(tr -d '\n' < "$name")"
+    {
+      for arg in "$@"; do
+        [[ "$arg" != "edit" ]] && echo "$arg"
+      done
+
+      echo "--set"
+      echo "$content"
+    } | nc localhost 9999
+
+    rm "$name"
+
+  else
+    while [[ $1 ]]; do
+      echo "$1"; shift
+    done |
+      nc localhost 9999
+  fi
+}
+
+main "$@"

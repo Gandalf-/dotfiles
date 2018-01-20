@@ -1,52 +1,93 @@
 #!/bin/bash
 
+# install - wizard libary
+#
+#   install packages, programs from source and more
+
 
 wizard_install_dot-files() {
 
-  local root
-  root="$(dirname "${BASH_SOURCE[0]}")"/..
+  common::optional-help "$1" "
+
+  link all the configuration files in this repository to their correct
+  locations in the system
+  "
+
+  local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
 
   common::do mkdir -p "$HOME"/.vim
   common::do mkdir -p "$HOME"/.config/fish
 
   link() {
-    common::do ln -sf "$(readlink -e "${root}/$1")" "${HOME}/$2"
+    local here; here="$(readlink -e "${root}/$1")"
+    local there="${HOME}/$2"
+
+    common::do ln -sf "$here" "$there"
   }
 
   link etc/config.fish         .config/fish/config.fish
   link etc/vimrc               .vimrc
   link etc/tmux.conf           .tmux.conf
   link etc/bashrc              .bashrc
-  link etc/gitconfig           .gitconfig
   link etc/gitignore_global    .gitignore_global
   link etc/pylintrc            .pylintrc
+  link etc/devbotrc            .devbotrc
 
   link etc/vim/snippets        .vim/
   link etc/irssi               .irssi
   link lib/fish/functions      .config/fish/
-  link lib/fish/completions    .config/fish/
 
-  common::do rm "$root"/etc/irssi/irssi
+  # remove directory, not symbolic link
+  local completions="$HOME/.config/fish/completions";
+  [[ -L "$completions" ]] || common::do rm -rf "$completions"
+
+  link lib/fish/completions    .config/fish/
 }
 
 common::require 'apt' &&
 wizard_install_apt() {
 
+  common::required-help "$1" "[package...]
+
+  install a package with apt
+  "
+
   common::sudo apt install -y "$@"
 }
+
+
+common::require 'apt' &&
+wizard_install_irssi() {
+
+  common::optional-help "$1" "
+
+  install irssi's dependencies with apt, then clone and compile from source
+  "
+
+  common::sudo apt install libtool libglib2.0-dev libssl-dev
+
+  common::do cd /tmp
+  wizard make git-tmpfs-clone https://github.com/irssi/irssi.git
+  common::do cd irssi
+  common::do ./autogen.sh
+  common::do make -j
+}
+
 
 wizard_install_autojump() {
 
   common::optional-help "$1" "
 
-  install autojump
+  install autojump from github
   "
+
   common::clone git://github.com/joelthelion/autojump.git /tmp/autojump
 
   common::do cd /tmp/autojump
   common::do ./install.py
   common::do cd -
 }
+
 
 common::require 'apt' &&
 wizard_install_git() {
@@ -59,6 +100,7 @@ wizard_install_git() {
   common::sudo apt-get update
   common::sudo apt-get install git -y
 }
+
 
 common::require 'apt' &&
 wizard_install_vnc() {
@@ -79,6 +121,7 @@ EOF
   common::do chmod +x "$HOME"/.vnc/xstartup
 }
 
+
 common::require 'apt' &&
 wizard_install_java() {
 
@@ -90,6 +133,7 @@ wizard_install_java() {
   common::sudo apt update
   common::sudo apt install oracle-java8-installer
 }
+
 
 common::require 'dpkg' &&
 wizard_install_shellcheck() {
@@ -106,11 +150,13 @@ wizard_install_shellcheck() {
   common::do cd -
 }
 
+
+common::require 'apt' &&
 wizard_install_lua() {
 
   common::optional-help "$1" "
 
-  compile and install lua 5.3.3
+  install dependencies with apt, compile and install lua 5.3.3
   "
   common::sudo apt install gcc build-essential libreadline-dev
 
@@ -120,12 +166,13 @@ wizard_install_lua() {
   common::do wget -N 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
   common::do tar zxvf lua-5.3.3.tar.gz
   common::do cd lua-5.3.3
-  common::do make -j $NUM_CPUS linux
+  common::do make -j linux
   common::sudo make install
 
   common::do cd -
   echo "done"
 }
+
 
 common::require 'apt' &&
 wizard_install_fish() {
@@ -135,10 +182,12 @@ wizard_install_fish() {
   install fish from the official repository so we get the most recent version
   "
 
+  common::sudo apt-get install software-properties-common python-software-properties
   common::sudo apt-add-repository -y ppa:fish-shell/release-2
   common::sudo apt-get update
   common::sudo apt-get install -y fish
 }
+
 
 common::require 'apt' &&
 wizard_install_docker() {
@@ -147,10 +196,13 @@ wizard_install_docker() {
 
   install the dependencies and kernel headers for docker-ce
   "
+
   common::do curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
     | sudo apt-key add -
+
   common::sudo add-apt-repository -y \
     "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
+
   common::sudo apt-get update
   common::do apt-cache policy docker-ce
   common::sudo apt-get install -y docker-ce
