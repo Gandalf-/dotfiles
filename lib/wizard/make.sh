@@ -77,7 +77,7 @@ wizard_make_tmpfs-git-clone() {
   fi
 
   wizard_make_tmpfs "$name"
-  common::do git clone "$repo" "$name"
+  common::do git clone --depth 1 "$repo" "$name"
 
   return $#
 }

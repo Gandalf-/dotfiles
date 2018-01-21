@@ -340,47 +340,32 @@ wizard_update_pip() {
 
 
 common::require "wget" "pip" "apt" &&
-wizard_build_vim-ultimate () {
+wizard_build_vim() {
 
   common::optional-help "$1" "
 
   install all possible Vim dedependencies with apt, then download master.zip,
   compile and install with all feaures enabled
-
-  this really isn't necessary
   "
-
-  wizard_install_lua
-
-  # common::sudo apt-get build-dep vim-gnome
-  common::sudo apt-get install \
-    libncurses5-dev libgnome2-dev libgnomeui-dev \
-    libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
-    libcairo2-dev libx11-dev libxpm-dev libxt-dev \
-    silversearcher-ag python-pip unzip
 
   common::sudo -H pip install pylint flake8
 
-  common::do cd /tmp/
-  common::do wget -N 'https://github.com/vim/vim/archive/master.zip'
-  common::do unzip master.zip
-  common::do cd vim-master
+  common::do cd ~/
+	wizard_make_tmpfs-git-clone https://github.com/vim/vim.git
+  common::do cd vim
 
   common::do ./configure \
     --with-features=huge \
     --with-lua-prefix=/usr/local \
-    --with-lua-jit=yes \
     --enable-multibyte \
     --enable-rubyinterp=yes \
     --enable-pythoninterp=yes \
-    --with-python-config-dir=/usr/lib/python2.7/config \
     --enable-python3interp=yes \
-    --with-python3-config-dir=/usr/lib/python3.5/config \
     --enable-perlinterp=yes \
     --enable-luainterp=yes \
     --enable-gui=auto \
     --enable-cscope \
-    --prefix=/usr
+    --prefix=/usr/local
 
   common::do make -j CFLAGS='"-oFast -march=native"'
   common::sudo make install

@@ -67,6 +67,7 @@
         Plugin 'ehamberg/vim-cute-python'
         Plugin 'Gandalf-/vim-sh-syntax'
         Plugin 'justinmk/vim-syntax-extra'
+        Plugin 'tpope/vim-fugitive'
 
         if has_vundle == 0
           :PluginInstall
@@ -78,6 +79,9 @@
 
   " vim2hs
     " let g:haskell_conceal_wide = 1
+
+  " taskwiki
+    let g:taskwiki_syntax = 'markdown'
 
   " vimux
     let g:VimuxOrientation = "h"
@@ -264,6 +268,7 @@
     set statusline+=%w   " Preview window flag.
     set statusline+=\    " Space.
     set statusline+=%=   " Right align.
+    set statusline+=%{fugitive#statusline()}
     set statusline+=\ %l:%03c\ %p%%
 
   " Colors

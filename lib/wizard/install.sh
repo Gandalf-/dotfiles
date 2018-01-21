@@ -64,7 +64,7 @@ wizard_install_irssi() {
   install irssi's dependencies with apt, then clone and compile from source
   "
 
-  common::sudo apt install libtool libglib2.0-dev libssl-dev
+  wizard_install_apt libtool libglib2.0-dev libssl-dev
 
   common::do cd /tmp
   wizard make git-tmpfs-clone https://github.com/irssi/irssi.git
@@ -98,7 +98,7 @@ wizard_install_git() {
   "
   common::sudo add-apt-repository ppa:git-core/ppa -y
   common::sudo apt-get update
-  common::sudo apt-get install git -y
+  wizard_install_apt git
 }
 
 
@@ -110,7 +110,7 @@ wizard_install_vnc() {
   install xfce4 and start a VNC server. for droplets
   "
   common::sudo apt update
-  common::sudo apt install xfce4 xfce4-goodies tightvncserver
+  wizard_install_apt xfce4 xfce4-goodies tightvncserver
   common::sudo vncserver
   common::sudo vncserver -kill :1
   cat > "$HOME"/.vnc/xstartup << EOF
@@ -131,7 +131,7 @@ wizard_install_java() {
   "
   common::sudo add-apt-repository -y ppa:webupd8team/java
   common::sudo apt update
-  common::sudo apt install oracle-java8-installer
+  wizard_install_apt oracle-java8-installer
 }
 
 
@@ -182,10 +182,10 @@ wizard_install_fish() {
   install fish from the official repository so we get the most recent version
   "
 
-  common::sudo apt-get install software-properties-common python-software-properties
+  wizard_install_apt software-properties-common python-software-properties
   common::sudo apt-add-repository -y ppa:fish-shell/release-2
   common::sudo apt-get update
-  common::sudo apt-get install -y fish
+  wizard_install_apt fish
 }
 
 
@@ -205,6 +205,6 @@ wizard_install_docker() {
 
   common::sudo apt-get update
   common::do apt-cache policy docker-ce
-  common::sudo apt-get install -y docker-ce
+  wizard_install_apt -y docker-ce
 }
 
