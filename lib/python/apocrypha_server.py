@@ -117,6 +117,7 @@ if __name__ == '__main__':
     server = Server((host, port), Handler)
 
     try:
+        print('starting')
         server.serve_forever()
 
     except KeyboardInterrupt:

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# does the same as wizard devbot status, but without the overhead. this is
+# important because it's called every 5 seconds by each tmux window
+
 pfile=~/.devbot/pid
 lfile=~/.devbot/log
 rfile=~/.devbot/report

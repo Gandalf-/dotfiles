@@ -4,20 +4,23 @@ import unittest
 from apocrypha import Apocrypha, ApocryphaError
 
 
+testdb = 'resources/test-db.json'
+
+
 class TestApocrypha(unittest.TestCase):
 
     def test_basics(self):
         '''
         we can open the database and nothing explodes
         '''
-        Apocrypha('tests/test-db.json', headless=True)
+        Apocrypha(testdb, headless=True)
 
     def test_index(self):
         '''
         $ d a
         123
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
         a.action(['a'])
         self.assertEqual(a.output, ['123'])
 
@@ -26,7 +29,7 @@ class TestApocrypha(unittest.TestCase):
         $ d sub apple
         red
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
         a.action(['sub', 'apple'])
         self.assertEqual(a.output, ['red'])
 
@@ -37,7 +40,7 @@ class TestApocrypha(unittest.TestCase):
         $ d !two
         a b c
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
         a.action(['!colors'])
         self.assertEqual(a.output, ['nice'])
 
@@ -50,7 +53,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         $ d one
         two
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
         a.action(['assign', '=', '123'], read_only=True)
         self.assertEqual(a.db['assign'], '123')
 
@@ -60,7 +63,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         $ d one del
         $ d one
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
         a.action(['removable', 'del'], read_only=True)
         self.assertFalse('removable' in a.db)
 
@@ -73,7 +76,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         $ d three
         four
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         args = ['!colors', '=', 'hello']
         a.action(args, read_only=True)
@@ -83,7 +86,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         self.assertEqual(a.db['yellow'], 'hello')
 
     def test_dereference_list(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', 'two', 'three'],
@@ -98,7 +101,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         self.assertEqual(a.output, ['hello', 'there'])
 
     def test_deep_dereference(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', 'two three'],
@@ -112,7 +115,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         self.assertEqual(a.output, ['four'])
 
     def test_deep_dereference_list(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', 'two three', 'four five'],
@@ -127,7 +130,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         self.assertEqual(a.output, ['apple', 'pumpkin'])
 
     def test_delete_through_reference(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         args = ['!animals', 'legs', 'del']
         a.action(args, read_only=True)
@@ -140,7 +143,7 @@ class TestApocryphaAssignDelete(unittest.TestCase):
 class TestApocryphaSymlink(unittest.TestCase):
 
     def test_symlink(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', '!two'],
@@ -154,7 +157,7 @@ class TestApocryphaSymlink(unittest.TestCase):
         self.assertEqual(a.output, ['three'])
 
     def test_symlink_list(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', '!two', '!three'],
@@ -172,7 +175,7 @@ class TestApocryphaSymlink(unittest.TestCase):
         '''
         cannot assign through symlinks
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', '!two', '!three'],
@@ -188,7 +191,7 @@ class TestApocryphaSymlink(unittest.TestCase):
         '''
         index through a list of symlink
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', '!two', '!three'],
@@ -206,7 +209,7 @@ class TestApocryphaSymlink(unittest.TestCase):
         '''
         index through a symlink
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['one', '=', '!two'],
@@ -223,7 +226,7 @@ class TestApocryphaSymlink(unittest.TestCase):
         pass
 
     def test_symlink_recursion(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['a', 'del'],
@@ -241,7 +244,7 @@ class TestApocryphaLists(unittest.TestCase):
     def test_list_append_create(self):
         ''' appending to a key that doesn't exist yet
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['unique', '+', 'hello'],
@@ -257,7 +260,7 @@ class TestApocryphaLists(unittest.TestCase):
     def test_list_append_create_with_space(self):
         ''' appending to a key that doesn't exist yet
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['unique', '+', 'hello there'],
@@ -274,7 +277,7 @@ class TestApocryphaLists(unittest.TestCase):
         '''
         appending to a string (singleton value) should convert it to a list
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['unique', '=', 'hello there'],
@@ -289,7 +292,7 @@ class TestApocryphaLists(unittest.TestCase):
         self.assertTrue(isinstance(a.db['unique'], list))
 
     def test_list_append_to_list(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['unique', '=', 'a'],
@@ -311,7 +314,7 @@ class TestApocryphaLists(unittest.TestCase):
         '''
         list of any -> list to any
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         args = ['animals', '-', 'bird']
         a.action(args, read_only=True)
@@ -323,7 +326,7 @@ class TestApocryphaLists(unittest.TestCase):
         list of any -> string
             where len(list of any) == 2
         '''
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         args = ['list', '-', '2']
         a.action(args, read_only=True)
@@ -358,7 +361,7 @@ class TestApocryphaSearch(unittest.TestCase):
 class TestApocryphaErrors(unittest.TestCase):
 
     def test_list_subtract_error(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         args = ['list', '-', 'applesauce']
 
@@ -366,7 +369,7 @@ class TestApocryphaErrors(unittest.TestCase):
             a.action(args, read_only=True)
 
     def test_list_subtract_non_list(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         args = ['green', '-', 'applesauce']
 
@@ -374,7 +377,7 @@ class TestApocryphaErrors(unittest.TestCase):
             a.action(args, read_only=True)
 
     def test_index_into_value(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         args = ['green', 'nice', 'failure']
 
@@ -385,7 +388,7 @@ class TestApocryphaErrors(unittest.TestCase):
 class TestApocryphaExtensive(unittest.TestCase):
 
     def test_workflow_one(self):
-        a = Apocrypha('tests/test-db.json', headless=True)
+        a = Apocrypha(testdb, headless=True)
 
         commands = [
             ['a', 'del'],

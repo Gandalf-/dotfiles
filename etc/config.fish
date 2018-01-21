@@ -113,8 +113,10 @@ test -f ~/.autojump/share/autojump/autojump.fish
   and . ~/.autojump/share/autojump/autojump.fish
 
 # DotFiles scripts
-test "$scripts"
-  and set PATH $scripts/bin $PATH
+if test "$scripts"
+  set PATH $scripts/bin $PATH
+  set -x PYTHONPATH $scripts/lib/python $PYTHONPATH
+end
 
 # vimwiki
 if test "$wiki_loc"
