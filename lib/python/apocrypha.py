@@ -38,11 +38,12 @@ class Apocrypha(object):
     def __init__(self, path, add_context=False, headless=False):
         ''' string, maybe bool, maybe bool -> Apocrypha
 
-        @path       full path to the database json file
-        @context    add context to output, instead of "value", "key = value"
-        @headless   don't write to stdout, save in self.output
+        @path           full path to the database json file
+        @add_context    add context to output
+        @headless       don't write to stdout, save in self.output
         '''
         self.add_context = add_context
+        self.cache = {}
         self.flush = False
         self.headless = headless
         self.output = []
@@ -77,6 +78,7 @@ class Apocrypha(object):
         ''' none -> none
 
         Normalize and write out the database, but only if self.flush is True
+        also clear the cache, because things may have changed
         '''
         if self.flush:
             self.normalize(self.db)
@@ -84,6 +86,9 @@ class Apocrypha(object):
             # write the updated values back out
             with open(self.path, 'w') as fd:
                 json.dump(self.db, fd, sort_keys=True)
+
+            self.cache = {}
+            self.flush = False
 
     def _action(self, base, keys, create=False):
         ''' dict, list of string, maybe bool -> none
@@ -383,7 +388,8 @@ class Apocrypha(object):
     def normalize(self, db):
         ''' dict -> none
 
-        Finds lists of a single element and converts them into singletons
+        Finds lists of a single element and converts them into singletons,
+        deletes key that don't have values
         '''
 
         for k, v in list(db.items()):

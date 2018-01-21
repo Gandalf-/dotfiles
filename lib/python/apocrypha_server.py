@@ -11,7 +11,7 @@ import os
 import socketserver
 import time
 
-db_server = None
+database = None
 db_path = os.path.expanduser('~') + '/.db.json'
 
 
@@ -21,7 +21,6 @@ class ApocryphaServer(apocrypha.Apocrypha):
         ''' filepath -> ApocryphaServer
 
         @path       full path to the database json file
-        @context    add context to output, instead of "value", "key = value"
 
         headless=True means that results get saved to self.output, which we
         return to the client instead of printing to stdout
@@ -38,7 +37,14 @@ class ApocryphaServer(apocrypha.Apocrypha):
         This overrides the default, which saves the database after giving the
         response to the user to only give the response
         '''
-        self._action(self.db, args, create=True)
+        key = ''.join(args)
+
+        if key in self.cache:
+            self.output = self.cache[key]
+
+        else:
+            self._action(self.db, args, create=True)
+            self.cache[key] = self.output
 
 
 class Handler(socketserver.BaseRequestHandler):
@@ -70,15 +76,15 @@ class Handler(socketserver.BaseRequestHandler):
 
         if len(args) > 0 and args[0] == '-c':
             args = args[1:]
-            db_server.add_context = True
+            database.add_context = True
 
         result = ''
         try:
             # send the arguments to the Apocrypha instance, read_only=True
             # means that we don't write out the changes immediately
 
-            db_server.action(args, read_only=True)
-            result = '\n'.join(db_server.output)
+            database.action(args, read_only=True)
+            result = '\n'.join(database.output)
 
         except apocrypha.ApocryphaError as error:
             # user, usage error
@@ -93,9 +99,9 @@ class Handler(socketserver.BaseRequestHandler):
         end = int(round(time.time() * 100000))
 
         # reset output, save changes if needed
-        db_server.add_context = False
-        db_server.output = []
-        db_server.save_db()
+        database.add_context = False
+        database.output = []
+        database.save_db()
 
         print('query: ({t:4}) {a}'.format(t=end-start, a=str(args)[:50]))
 
@@ -111,7 +117,7 @@ if __name__ == '__main__':
     host, port = '0.0.0.0', 9999
 
     # create the ApocryphaServer instance
-    db_server = ApocryphaServer(db_path)
+    database = ApocryphaServer(db_path)
 
     # Create the server, binding to localhost on port 9999
     server = Server((host, port), Handler)
