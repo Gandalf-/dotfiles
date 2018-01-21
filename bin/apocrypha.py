@@ -17,10 +17,21 @@ import sys
 
 
 class ApocryphaError(Exception):
+    '''
+    used by Apocrypha.error()
+    '''
     pass
 
 
 class Apocrypha(object):
+    '''
+    A flexible, json based database that supports
+    - strings, lists, dictionaries
+    - references to other keys
+    - arbitrary depth indexing and assignment
+    - symbolic links to other keys at any level
+    - server and client for performance
+    '''
 
     type_error = 'cannot index through value. {a} -> {b} -> ?, {b} :: value'
 
@@ -54,7 +65,7 @@ class Apocrypha(object):
         Perform the database actions required from the arguments, handle
         output and save changes if required
         '''
-        self._action(self.db, self.db, args, create=True)
+        self._action(self.db, args, create=True)
 
         if not self.headless:
             print('\n'.join(self.output))
@@ -67,7 +78,6 @@ class Apocrypha(object):
 
         Normalize and write out the database, but only if self.flush is True
         '''
-
         if self.flush:
             self.normalize(self.db)
 
@@ -75,8 +85,12 @@ class Apocrypha(object):
             with open(self.path, 'w') as fd:
                 json.dump(self.db, fd, sort_keys=True)
 
-    def _action(self, db, base, keys, create=False):
-        ''' dict, dict, list of string -> bool
+    def _action(self, base, keys, create=False):
+        ''' dict, list of string, maybe bool -> none
+
+        @base   current level of the database
+        @keys   keys or arguments to apply
+        @create whether to allow new elements to be added
 
         Move through the input arguments to
             - index further into the database
@@ -168,7 +182,7 @@ class Apocrypha(object):
 
             # wildcard, value -> key
             elif key == '@':
-                self.search(db, keys[i + 1], keys[:i])
+                self.search(self.db, keys[i + 1], keys[:i])
                 return
 
             # remove
@@ -255,15 +269,13 @@ class Apocrypha(object):
         # current value is a string
         if isinstance(base, str):
             self._action(
-                self.db, self.db,
-                base.split(' ') + args, create=create)
+                self.db, base.split(' ') + args, create=create)
 
         # current value is iterable
         else:
             for reference in base:
                 self._action(
-                    self.db, self.db,
-                    reference.split(' ') + args, create=create)
+                    self.db, reference.split(' ') + args, create=create)
 
     def display(self, value, context=None):
         ''' any, maybe string -> none
