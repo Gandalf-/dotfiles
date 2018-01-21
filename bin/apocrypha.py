@@ -52,7 +52,7 @@ class Apocrypha(object):
             with open(path, 'r+') as fd:
                 self.db = json.load(fd)
 
-        except (json.decoder.JSONDecodeError, FileNotFoundError):
+        except (ValueError, FileNotFoundError):
             print('could not find valid db, creating new')
             self.db = {}
 
@@ -153,7 +153,7 @@ class Apocrypha(object):
                 try:
                     right = json.loads(keys[i + 1])
 
-                except json.decoder.JSONDecodeError:
+                except ValueError:
                     self.error('malformed json')
 
                 if right:
