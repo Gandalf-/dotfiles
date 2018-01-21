@@ -253,7 +253,8 @@ autocli::make-reflective-functions() {
           $function_body
         esac
 
-        __ret=\$?; shift; shift \$__ret; let __shifts+=\$__ret+1
+        __ret=\$?; shift; shift \$__ret
+        (( __shifts += __ret + 1 ))
       done
       return \$__shifts
     }

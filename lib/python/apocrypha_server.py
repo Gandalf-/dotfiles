@@ -38,7 +38,7 @@ class ApocryphaServer(apocrypha.Apocrypha):
         This overrides the default, which saves the database after giving the
         response to the user to only give the response
         '''
-        self._action(self.db, self.db, args, create=True)
+        self._action(self.db, args, create=True)
 
 
 class Handler(socketserver.BaseRequestHandler):
