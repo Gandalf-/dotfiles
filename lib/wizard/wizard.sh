@@ -395,7 +395,7 @@ wizard_open() {
         xiwit xdg-open "$target"
 
       else
-        xdg-open "$target"
+        xdg-open "$target" >/dev/null 2>&1
       fi
     fi
 

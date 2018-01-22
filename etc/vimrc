@@ -420,7 +420,7 @@
   set backspace=indent,eol,start   " allow backspacing over everything
   set shiftwidth=2                 " Set 2 spaces for indenting
   set tabstop=2                    " Set 2 TAB stops
-  set softtabstop=2
+  set softtabstop=4
   set expandtab smarttab
   set autoindent smartindent nocindent
   set showmatch                    " Show matched brackets
