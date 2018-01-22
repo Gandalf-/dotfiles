@@ -33,8 +33,6 @@ class Apocrypha(object):
     - server and client for performance
     '''
 
-    type_error = 'cannot index through value. {a} -> {b} -> ?, {b} :: value'
-
     def __init__(self, path, add_context=False, headless=False):
         ''' string, maybe bool, maybe bool -> Apocrypha
 
@@ -105,144 +103,88 @@ class Apocrypha(object):
         last_base = {}
 
         for i, key in enumerate(keys):
+            left = keys[i - 1]      # string
+            right = keys[i + 1:]    # list of string
 
-            # assignment
             if key == '=':
-                left = keys[i - 1]
-                right = keys[i + 1:]
-
-                # single = string, multi = list
-                right = right[0] if len(right) == 1 else right
-
-                last_base[left] = right
-                self.flush = True
+                self.assign(last_base, left, right)
                 return
 
-            # append a value or values to a list
             elif key == '+':
-                left = keys[i - 1]      # string
-                right = keys[i + 1:]    # list of string
-
-                # creation of a new value
-                if not last_base[left]:
-                    if len(right) == 1:
-                        right = right[0]
-
-                    last_base[left] = right
-
-                # value exists but not a list, create list and add
-                elif not isinstance(last_base[left], list):
-                    last_base[left] = [last_base[left]] + right
-
-                # add to existing list
-                else:
-                    last_base[left] += right
-
-                self.flush = True
+                self.append(last_base, left, right)
                 return
 
-            # print the keys defined at this level
-            elif key == 'keys':
-                for base_key in base.keys():
-                    self.display(base_key)
-                return
-
-            # open up this level in Vim for modification
-            elif key == 'edit':
-                self.output = [json.dumps(base, indent=4, sort_keys=True)]
-                return
-
-            elif key == '--set':
-                left = keys[i - 1]
-
-                try:
-                    right = json.loads(keys[i + 1])
-
-                except ValueError:
-                    self.error('malformed json')
-
-                if right:
-
-                    if last_base:
-                        last_base[left] = right
-                    else:
-                        # global overwrite
-                        self.db = right
-
-                    self.flush = True
-                return
-
-            # remove a value from a list
             elif key == '-':
-                left = keys[i - 1]
-                right = keys[i + 1]
-
-                self.list_remove(left, right, last_base)
-
-                if len(last_base[left]) == 1:
-                    last_base[left] = last_base[left][0]
-
-                self.flush = True
+                self.remove(last_base, left, right)
                 return
 
-            # wildcard, value -> key
             elif key == '@':
                 self.search(self.db, keys[i + 1], keys[:i])
                 return
 
-            # remove
-            elif key == 'del':
-                del(last_base[keys[i - 1]])
+            elif key in ['-k', '--keys']:
+                self.keys(base, left)
+                return
 
+            elif key in ['-e', '--edit']:
+                self.output = [json.dumps(base, indent=4, sort_keys=True)]
+                return
+
+            elif key in ['-s', '--set']:
+                self.set(last_base, left, right[0])
+                return
+
+            elif key in ['-d', '--del']:
+                del(last_base[left])
                 self.flush = True
                 return
 
-            # index
-            else:
+            # indexing
 
-                # keep track of the level before so we can modify this level
-                last_base = base
-                key_is_reference = False
-                base_is_reference = False
+            # keep track of the level before so we can modify this level
+            last_base = base
+            key_is_reference = False
+            base_is_reference = False
 
-                if key[0] == '!':
-                    key = key[1:]
-                    key_is_reference = True
+            if key[0] == '!':
+                key = key[1:]
+                key_is_reference = True
 
-                if isinstance(base, str) and base[0] == '!':
-                    base = base[1:]
-                    base_is_reference = True
+            if isinstance(base, str) and base[0] == '!':
+                base = base[1:]
+                base_is_reference = True
 
-                try:
-                    if base_is_reference:
-                        # we're rebasing ourselves on the dereferenced value of
-                        # our current base. we keep all arguments
-                        #
-                        # this means that we're trying to index through a
-                        # reference
-                        self.dereference(base, keys[i:], create=True)
-                        return
+            try:
+                if base_is_reference:
+                    # we're rebasing ourselves on the dereferenced value of
+                    # our current base. we keep all arguments
+                    #
+                    # this means that we're trying to index through a
+                    # reference
+                    self.dereference(base, keys[i:], create=True)
+                    return
 
-                    base = base[key]
+                base = base[key]
 
-                    if key_is_reference:
-                        # this means we're trying to get the value of a
-                        # reference
-                        self.dereference(base, keys[i + 1:], True)
-                        return
+                if key_is_reference:
+                    # this means we're trying to get the value of a reference
+                    self.dereference(base, keys[i + 1:], True)
+                    return
 
-                except KeyError:
-                    if not create:
-                        self.error(key + ' not found')
+            except KeyError:
+                if not create:
+                    self.error(key + ' not found')
 
-                    # create a new key
-                    base[key] = {}
-                    base = base[key]
+                # create a new key
+                base[key] = {}
+                base = base[key]
 
-                except TypeError:
-                    self.error(Apocrypha.type_error.format(a=base, b=key))
+            except TypeError:
+                self.error(
+                    'cannot index through non-dict.'
+                    ' {a} -> {b} -> ?, {b} :: {t}'
+                    .format(a=left, b=key, t=type(key).__name__))
 
-        # context = keys[-1] if len(keys) > 0 else None
         self.display(base, ' = '.join(keys[:-1]))
 
     def dereference(self, base, args, create):
@@ -365,26 +307,6 @@ class Apocrypha(object):
         print(message)
         sys.exit(1)
 
-    def list_remove(self, left, right, base):
-        ''' string, string, dict -> none
-        '''
-        fuzzy = False
-        if right[0] == '`':
-            fuzzy = True
-            right = right[1:]
-
-        if not isinstance(base[left], list):
-            self.error('cannot subtract from non list value')
-
-        try:
-            if fuzzy:
-                right = [_ for _ in base[left] if right in _].pop()
-
-            base[left].remove(right)
-
-        except (IndexError, ValueError):
-            self.error('{a} not in {b}'.format(a=right, b=left))
-
     def normalize(self, db):
         ''' dict -> none
 
@@ -401,3 +323,96 @@ class Apocrypha(object):
 
             if isinstance(v, dict):
                 self.normalize(v)
+
+    def assign(self, last_base, left, right):
+        ''' dict of any, string, list of string -> none
+
+        assignment
+        '''
+        # single = string, multi = list
+        right = right[0] if len(right) == 1 else right
+
+        last_base[left] = right
+        self.flush = True
+
+    def append(self, last_base, left, right):
+        ''' dict of any, string, list of string -> none
+
+        append a value or values to a list or string
+        may create a new value
+        '''
+        ltype = type(last_base[left])
+
+        # creation of a new value
+        if not last_base[left]:
+            last_base[left] = right[0] if len(right) == 1 else right
+
+        # value exists but is a str, create list and add
+        elif ltype == str:
+            last_base[left] = [last_base[left]] + right
+
+        # left and right are lists
+        elif ltype == list:
+            last_base[left] += right
+
+        # attempt to append to dictionary, error
+        else:
+            self.error('cannot append to a dictionary')
+
+        self.flush = True
+
+    def keys(self, base, left):
+        ''' any -> none
+
+        print the keys defined at this level
+        '''
+        if not isinstance(base, dict):
+            self.error(
+                'cannot retrieve keys non-dict. {a} :: {t}'
+                .format(a=left, t=type(base).__name__))
+
+        for base_key in sorted(base.keys()):
+            self.display(base_key)
+
+    def set(self, last_base, left, right):
+        ''' dict of any, string, JSON string
+
+        set the entire sub tree for this value with JSON
+        '''
+        try:
+            right = json.loads(right)
+
+        except ValueError:
+            self.error('malformed json')
+
+        if right:
+
+            if last_base:
+                last_base[left] = right
+            else:
+                # global overwrite
+                self.db = right
+
+            self.flush = True
+
+    def remove(self, last_base, left, right):
+        ''' dict of any, string, list of string
+        '''
+        if not isinstance(last_base[left], list):
+            self.error(
+                'cannot subtract from non-list. {a} - {b}, {a} :: {t}'
+                .format(a=last_base[left],
+                        b=right,
+                        t=type(last_base[left]).__name__))
+
+        try:
+            for r in right:
+                last_base[left].remove(r)
+
+        except (IndexError, ValueError):
+            self.error('{a} not in {b}.'.format(a=right, b=left))
+
+        if len(last_base[left]) == 1:
+            last_base[left] = last_base[left][0]
+
+        self.flush = True

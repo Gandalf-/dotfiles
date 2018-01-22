@@ -7,6 +7,20 @@ from apocrypha import Apocrypha, ApocryphaError
 testdb = 'resources/test-db.json'
 
 
+def run(commands):
+    ''' list of list of string -> Apocrypha
+
+    runs the provided commands on a new Apocrypha instance, and then returns
+    the instance for inspection
+    '''
+    a = Apocrypha(testdb, headless=True)
+
+    for c in commands:
+        a.action(c, read_only=True)
+
+    return a
+
+
 class TestApocrypha(unittest.TestCase):
 
     def test_basics(self):
@@ -60,11 +74,11 @@ class TestApocryphaAssignDelete(unittest.TestCase):
     def test_delete(self):
         '''
         $ d one = two
-        $ d one del
+        $ d one --del
         $ d one
         '''
         a = Apocrypha(testdb, headless=True)
-        a.action(['removable', 'del'], read_only=True)
+        a.action(['removable', '--del'], read_only=True)
         self.assertFalse('removable' in a.db)
 
     def test_assign_through_reference(self):
@@ -86,54 +100,42 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         self.assertEqual(a.db['yellow'], 'hello')
 
     def test_dereference_list(self):
-        a = Apocrypha(testdb, headless=True)
 
-        commands = [
+        a = run([
             ['one', '=', 'two', 'three'],
             ['two', '=', 'hello'],
             ['three', '=', 'there'],
             ['!one'],
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['hello', 'there'])
 
     def test_deep_dereference(self):
-        a = Apocrypha(testdb, headless=True)
 
-        commands = [
+        a = run([
             ['one', '=', 'two three'],
             ['two', 'three', '=', 'four'],
             ['!one'],
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['four'])
 
     def test_deep_dereference_list(self):
-        a = Apocrypha(testdb, headless=True)
 
-        commands = [
+        a = run([
             ['one', '=', 'two three', 'four five'],
             ['two', 'three', '=', 'apple'],
             ['four', 'five', '=', 'pumpkin'],
             ['!one'],
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['apple', 'pumpkin'])
 
     def test_delete_through_reference(self):
-        a = Apocrypha(testdb, headless=True)
 
-        args = ['!animals', 'legs', 'del']
-        a.action(args, read_only=True)
+        a = run([
+            ['!animals', 'legs', '--del']
+        ])
 
         self.assertEqual(a.db['wolf'], {})
         self.assertEqual(a.db['octopus'], {})
@@ -143,31 +145,22 @@ class TestApocryphaAssignDelete(unittest.TestCase):
 class TestApocryphaSymlink(unittest.TestCase):
 
     def test_symlink(self):
-        a = Apocrypha(testdb, headless=True)
 
-        commands = [
+        a = run([
             ['one', '=', '!two'],
             ['two', '=', 'three'],
             ['one']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['three'])
 
     def test_symlink_list(self):
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
+        a = run([
             ['one', '=', '!two', '!three'],
             ['two', '=', 'apple'],
             ['three', '=', 'pumpkin'],
             ['one']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['apple', 'pumpkin'])
 
@@ -175,33 +168,23 @@ class TestApocryphaSymlink(unittest.TestCase):
         '''
         cannot assign through symlinks
         '''
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
-            ['one', '=', '!two', '!three'],
-            ['one', 'four', '=', 'apple'],
-        ]
-
         with self.assertRaises(ApocryphaError):
-            for c in commands:
-                a.action(c, read_only=True)
+            run([
+                ['one', '=', '!two', '!three'],
+                ['one', 'four', '=', 'apple'],
+            ])
 
     @unittest.skip
     def test_symlink_list_index(self):
         '''
         index through a list of symlink
         '''
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
+        a = run([
             ['one', '=', '!two', '!three'],
             ['two', 'sub', '=', 'apple'],
             ['three', 'sub', '=', 'pumpkin'],
             ['one', 'sub']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['apple', 'pumpkin'])
 
@@ -209,16 +192,11 @@ class TestApocryphaSymlink(unittest.TestCase):
         '''
         index through a symlink
         '''
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
+        a = run([
             ['one', '=', '!two'],
             ['two', 'sub', '=', 'apple'],
             ['one', 'sub']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['apple'])
 
@@ -226,123 +204,199 @@ class TestApocryphaSymlink(unittest.TestCase):
         pass
 
     def test_symlink_recursion(self):
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
-            ['a', 'del'],
+        a = run([
+            ['a', '--del'],
             ['a', 'b', '=', '!b'],
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, [])
 
 
-class TestApocryphaLists(unittest.TestCase):
+class TestApocryphaAppend(unittest.TestCase):
 
-    def test_list_append_create(self):
+    def test_append_create(self):
         ''' appending to a key that doesn't exist yet
         '''
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
+        a = run([
             ['unique', '+', 'hello'],
             ['unique']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['hello'])
         self.assertTrue(isinstance(a.db['unique'], str))
 
-    def test_list_append_create_with_space(self):
+    def test_append_create_with_space(self):
         ''' appending to a key that doesn't exist yet
         '''
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
+        a = run([
             ['unique', '+', 'hello there'],
             ['unique']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['hello there'])
         self.assertTrue(isinstance(a.db['unique'], str))
 
-    def test_list_append_to_string(self):
+    def test_append_to_string(self):
         '''
         appending to a string (singleton value) should convert it to a list
         '''
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
+        a = run([
             ['unique', '=', 'hello there'],
             ['unique', '+', 'apple sauce'],
             ['unique']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['hello there', 'apple sauce'])
         self.assertTrue(isinstance(a.db['unique'], list))
 
-    def test_list_append_to_list(self):
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
+    def test_append_to_list(self):
+        a = run([
             ['unique', '=', 'a'],
             ['unique', '+', 'b'],
             ['unique', '+', 'c'],
             ['unique']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         self.assertEqual(a.output, ['a', 'b', 'c'])
         self.assertTrue(isinstance(a.db['unique'], list))
 
-    def test_list_append_to_dict(self):
-        pass
+    def test_append_to_dict(self):
+        with self.assertRaises(ApocryphaError):
+            run([
+                ['dict', 'a', '=', '1'],
+                ['dict', 'b', '=', '1'],
+                ['dict', '+', 'hello']
+            ])
 
-    def test_list_subtract(self):
+
+class TestApocryphaRemove(unittest.TestCase):
+
+    def test_remove_string(self):
         '''
         list of any -> list to any
         '''
-        a = Apocrypha(testdb, headless=True)
+        a = run([
+            ['list', '=', 'a', 'b', 'c'],
+            ['list', '-', 'a'],
+        ])
 
-        args = ['animals', '-', 'bird']
-        a.action(args, read_only=True)
-        self.assertEqual(
-            a.db['animals'], ['wolf', 'octopus'])
+        self.assertEqual(a.db['list'], ['b', 'c'])
 
-    def test_list_subtract_to_string(self):
+    def test_remove_string_to_string(self):
         '''
-        list of any -> string
-            where len(list of any) == 2
         '''
-        a = Apocrypha(testdb, headless=True)
+        a = run([
+            ['list', '=', 'a', 'b', 'c'],
+            ['list', '-', 'a'],
+            ['list', '-', 'b'],
+        ])
 
-        args = ['list', '-', '2']
-        a.action(args, read_only=True)
+        self.assertEqual(a.db['list'], 'c')
 
-        self.assertEqual(a.db['list'], "1")
+    def test_remove_from_dict(self):
+        '''
+        '''
+        with self.assertRaises(ApocryphaError):
+            run([
+                ['list', 'a', '=', 'a', 'b', 'c'],
+                ['list', '-', 'a'],
+            ])
+
+    def test_remove_from_string(self):
+        '''
+        '''
+        with self.assertRaises(ApocryphaError):
+            run([
+                ['list', '=', 'c'],
+                ['list', '-', 'a'],
+            ])
+
+    def test_remove_non_existant(self):
+        '''
+        '''
+        with self.assertRaises(ApocryphaError):
+            run([
+                ['list', 'a', '=', 'a', 'b', 'c'],
+                ['list', '-', 'd'],
+            ])
+
+    def test_remove_multi(self):
+        '''
+        '''
+        a = run([
+            ['list', '=', 'a', 'b', 'c'],
+            ['list', '-', 'a', 'b'],
+        ])
+
+        self.assertEqual(a.db['list'], 'c')
 
 
 class TestApocryphaKeys(unittest.TestCase):
 
     def test_keys_on_dict(self):
-        pass
+        '''
+        list all the keys under this index
+        '''
+        a = run([
+            ['iron mountain', 'a', '=', '1'],
+            ['iron mountain', 'b', '=', '1'],
+            ['iron mountain', 'c', '=', '1'],
+            ['iron mountain', '--keys']
+        ])
+
+        self.assertEqual(
+            a.output, ['a', 'b', 'c'])
 
     def test_keys_on_list(self):
-        pass
+        '''
+        error to request keys on a list
+        '''
+        with self.assertRaises(ApocryphaError):
+            run([
+                ['list', '=', 'a', 'b'],
+                ['list', '--keys'],
+            ])
 
     def test_keys_on_value(self):
+        '''
+        error to request keys on a value
+        '''
+        with self.assertRaises(ApocryphaError):
+            run([
+                ['value', '=', 'b'],
+                ['value', '--keys'],
+            ])
+
+
+class TestApocryphaEdit(unittest.TestCase):
+    '''
+    d apple --edit
+
+    without an intelligent client, this just dumps the json value of the index
+    '''
+
+    def test_edit_list(self):
+        pass
+
+    def test_edit_dict(self):
+        pass
+
+    def test_edit_singleton(self):
+        pass
+
+
+class TestApocryphaSet(unittest.TestCase):
+    '''
+    d apple --set '["a", "b", "c"]'
+    '''
+
+    def test_set_list(self):
+        pass
+
+    def test_set_dict(self):
+        pass
+
+    def test_set_singleton(self):
         pass
 
 
@@ -377,27 +431,21 @@ class TestApocryphaErrors(unittest.TestCase):
             a.action(args, read_only=True)
 
     def test_index_into_value(self):
-        a = Apocrypha(testdb, headless=True)
-
-        args = ['green', 'nice', 'failure']
 
         with self.assertRaises(ApocryphaError):
-            a.action(args, read_only=True)
+            run([
+                ['green', 'nice', 'failure']
+            ])
 
 
 class TestApocryphaExtensive(unittest.TestCase):
 
     def test_workflow_one(self):
-        a = Apocrypha(testdb, headless=True)
-
-        commands = [
-            ['a', 'del'],
+        run([
+            ['a', '--del'],
             ['a', 'b', 'c', 'd', 'e', 'f', 'g', '=', '!b'],
             ['a']
-        ]
-
-        for c in commands:
-            a.action(c, read_only=True)
+        ])
 
         # we survived
         self.assertTrue(1 == 1)
