@@ -78,8 +78,10 @@ class Apocrypha(object):
         Normalize and write out the database, but only if self.flush is True
         also clear the cache, because things may have changed
         '''
+
+        self.normalize(self.db)
+
         if self.flush:
-            self.normalize(self.db)
 
             # write the updated values back out
             with open(self.path, 'w') as fd:
@@ -215,14 +217,25 @@ class Apocrypha(object):
 
         # current value is a string
         if isinstance(base, str):
+            if base in self.db:
+                target = [base]
+            else:
+                target = base.split(' ')
+
             self._action(
-                self.db, base.split(' ') + args, create=create)
+                self.db, target + args, create=create)
 
         # current value is iterable
         else:
             for reference in base:
+
+                if reference in self.db:
+                    target = [reference]
+                else:
+                    target = reference.split(' ')
+
                 self._action(
-                    self.db, reference.split(' ') + args, create=create)
+                    self.db, target + args, create=create)
 
     def display(self, value, context=None):
         ''' any, maybe string -> none
@@ -314,15 +327,26 @@ class Apocrypha(object):
         deletes key that don't have values
         '''
 
-        for k, v in list(db.items()):
-            if not v:
-                del(db[k])
+        leaf_removed = False
 
-            if isinstance(v, list) and len(v) == 1:
-                db[k] = v[0]
+        for key, value in list(db.items()):
+            if not value:
+                del(db[key])
+                leaf_removed = True
+                self.cache = {}
 
-            if isinstance(v, dict):
-                self.normalize(v)
+            type_key = type(value)
+
+            if type_key == list and len(value) == 1:
+                db[key] = value[0]
+
+            elif type_key == dict:
+                child_removed_value = self.normalize(value)
+
+                if child_removed_value:
+                    return self.normalize(db)
+
+        return leaf_removed
 
     def assign(self, last_base, left, right):
         ''' dict of any, string, list of string -> none
