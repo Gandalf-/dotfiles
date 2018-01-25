@@ -32,14 +32,9 @@ def edit_temp_file(temp_file):
 def main():
     ''' list of string -> io
     '''
-    rcfile = os.path.expanduser('~') + '/.apocrypharc'
     edit_mode = False
     remote = ('localhost', 9999)
     args = sys.argv[1:]
-
-    if os.path.exists(rcfile):
-        with open(rcfile, 'r') as fd:
-            remote = (fd.read(), 9999)
 
     # check for data in stdin
     if select.select([sys.stdin], [], [], 0.0)[0]:
@@ -63,9 +58,6 @@ def main():
     except ConnectionRefusedError:
         print('error: could not connect to server')
         sys.exit(1)
-
-    with open(rcfile, 'w+') as fd:
-        fd.write(remote[0])
 
     query = '\n'.join(args) + '\n'
     sock.sendall(query.encode('utf-8'))
