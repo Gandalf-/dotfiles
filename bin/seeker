@@ -1,0 +1,23 @@
+#!/bin/bash
+
+context=()
+
+while :; do
+  next="$(d "${context[@]}" --keys)"
+
+  case $next in
+    error*)
+      d "${context[@]}"
+      break
+      ;;
+  esac
+
+  next="$(d "${context[@]}"  --keys | fzf)"
+
+  if ! [[ $next ]]; then
+    d "${context[@]}"
+    break
+  fi
+
+  context+=( "$next" )
+done

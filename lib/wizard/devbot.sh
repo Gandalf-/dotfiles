@@ -164,7 +164,7 @@ wizard_devbot_list() {
       echo "$(( time / 3600 )) hours"
 
     else
-      echo "more than a day"
+      echo "$(( time / 86400 )) days"
     fi
   }
 
@@ -182,7 +182,7 @@ wizard_devbot_list() {
     echo -n "($type) "
     common::echo "$procedure"
     echo "  every $(translate-time "$interval")"
-    echo "  next $time from now"
+    echo "  next  $time from now"
     echo
 
   done < $schedule
