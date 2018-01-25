@@ -79,7 +79,11 @@ def main():
             sock.close()
             break
         else:
-            result += data.decode('utf-8')
+            try:
+                result += data.decode('utf-8')
+
+            except UnicodeDecodeError:
+                result = 'ERROR'
 
     # usual case
     if not edit_mode:
