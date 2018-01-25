@@ -1,107 +1,65 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
-import json
-import os
-import select
-import socket
-import subprocess
-import sys
-import time
+# client for apocrypha server
+#
+# arguments are delimited by newlines
 
+main() {
+  local edit_mode=0
+  local host=localhost
 
-def edit_temp_file(temp_file):
-    ''' string -> string
-    '''
-    subprocess.call(['vim', temp_file])
+  case $1 in
+    -h|--host)
+      host="$2"
+      shift 2
+      ;;
+  esac
 
-    with open(temp_file, 'r') as fd:
-        output = fd.read()
+  for arg in "$@"; do
+    case $arg in
+      -e|--edit)
+        edit_mode=1
+        ;;
+    esac
+  done
 
-    try:
-        output = json.dumps(json.loads(output))
+  if (( edit_mode )); then
 
-    except json.decoder.JSONDecodeError:
-        print('error: file has JSON formatting errors')
-        time.sleep(1)
-        edit_temp_file(temp_file)
+    local rest="${*:1:$(($#-1))}"
+    local name="/tmp/apocrypha-$rest.json"
 
-    else:
-        return output
+    for arg in "$@"; do
+      echo "$arg"
+    done |
+      nc "$host" 9999 > "$name"
 
+    vim "$name"
 
-def main():
-    ''' list of string -> io
-    '''
-    edit_mode = False
-    remote = ('localhost', 9999)
-    args = sys.argv[1:]
+    {
+      for arg in "$@"; do
+        case $arg in
+          -e|--edit)
+            ;;
+          *)
+            echo "$arg"
+            ;;
+        esac
+      done
 
-    # check for data in stdin
-    if select.select([sys.stdin], [], [], 0.0)[0]:
-        args += [sys.stdin.read()]
+      echo "--set"
+      while read -r line; do
+        echo "\"$line\""
+      done < "$name"
+    } | nc "$host" 9999
 
-    if args:
-        # using a non local server
-        if args[0] in ['-h', '--host'] and args[1]:
-            remote = (args[1], 9999)
-            args = args[2:]
+    rm "$name"
 
-        # check for edit mode before we make the query
-        if args and args[-1] in ['-e', '--edit']:
-            edit_mode = True
-            temp_file = '/tmp/apocrypha-' + '-'.join(args[:-1]) + '.json'
+  else
+    while [[ $1 ]]; do
+      echo "$1"; shift
+    done |
+      nc "$host" 9999
+  fi
+}
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        sock.connect(remote)
-
-    except ConnectionRefusedError:
-        print('error: could not connect to server')
-        sys.exit(1)
-
-    query = '\n'.join(args) + '\n'
-    sock.sendall(query.encode('utf-8'))
-    sock.shutdown(socket.SHUT_WR)
-
-    result = ''
-    while True:
-        data = sock.recv(1024)
-
-        if not data:
-            sock.close()
-            break
-        else:
-            try:
-                result += data.decode('utf-8')
-
-            except UnicodeDecodeError:
-                result = 'ERROR'
-
-    # usual case
-    if not edit_mode:
-        result = result.strip('\n')
-        if result:
-            print(result)
-        return
-
-    # user wants to edit
-    #   - write result to temp file
-    #   - open with vim
-    #   - send temp file back to server
-    with open(temp_file, 'w+') as fd:
-        fd.write(result)
-
-    output = edit_temp_file(temp_file)
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(remote)
-
-    query = args[:-1] + ['--set', output]
-    query = '\n'.join(query) + '\n'
-
-    sock.sendall(query.encode('utf-8'))
-    sock.close()
-
-
-if __name__ == '__main__':
-    main()
+main "$@"
