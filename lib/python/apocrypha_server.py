@@ -5,7 +5,6 @@ import os
 import socketserver
 import time
 
-database = None
 db_path = os.path.expanduser('~') + '/.db.json'
 
 
@@ -52,6 +51,7 @@ class Handler(socketserver.BaseRequestHandler):
     override the handle() method to implement communication to the
     client.
     '''
+
     def handle(self):
         ''' none -> none
 
@@ -74,7 +74,7 @@ class Handler(socketserver.BaseRequestHandler):
 
         if len(args) > 0 and args[0] == '-c':
             args = args[1:]
-            database.add_context = True
+            self.server.database.add_context = True
 
         result = ''
         try:
@@ -83,8 +83,8 @@ class Handler(socketserver.BaseRequestHandler):
             # saving the database ourselves after sending the response to the
             # client
 
-            database.action(args, read_only=True)
-            result = '\n'.join(database.output)
+            self.server.database.action(args, read_only=True)
+            result = '\n'.join(self.server.database.output)
 
         except apocrypha.ApocryphaError as error:
             # user, usage error
@@ -99,12 +99,14 @@ class Handler(socketserver.BaseRequestHandler):
         end = int(round(time.time() * 100000))
 
         # reset internal values, save changes if needed
-        database.add_context = False
-        database.output = []
-        database.maybe_save_db()
+        self.server.database.add_context = False
+        self.server.database.output = []
+        self.server.database.maybe_save_db()
 
-        print('query: ({t:4}) ({c:2}) {a}'
-              .format(t=end-start, c=len(database.cache), a=str(args)[:50]))
+        if not self.server.quiet:
+            print('query: ({t:4}) ({c:2}) {a}'
+                  .format(t=end-start, c=len(self.server.database.cache),
+                          a=str(args)[:50]))
 
 
 class Server(socketserver.TCPServer):
@@ -114,15 +116,19 @@ class Server(socketserver.TCPServer):
     '''
     allow_reuse_address = True
 
+    def __init__(self, server_address, RequestHandlerClass,
+                 database, quiet=False):
+        socketserver.TCPServer.__init__(
+            self, server_address, RequestHandlerClass)
+        self.database = database
+        self.quiet = quiet
+
 
 if __name__ == '__main__':
 
-    # create the ApocryphaServer instance, which inherits from Apocrypha
-    database = ApocryphaServer(db_path)
-
     # Create the tcp server
     host, port = '0.0.0.0', 9999
-    server = Server((host, port), Handler)
+    server = Server((host, port), Handler, ApocryphaServer(db_path))
 
     try:
         print('starting')

@@ -29,6 +29,14 @@ class TestApocrypha(unittest.TestCase):
         '''
         Apocrypha(testdb, headless=True)
 
+    def test_no_db(self):
+        a = Apocrypha('file-that-does-not-exist', headless=True)
+        self.assertEqual(a.db, {})
+
+    def test_bad_db(self):
+        with self.assertRaises(ApocryphaError):
+            Apocrypha('test_apocrypha.py', headless=True)
+
     def test_index(self):
         '''
         $ d a
@@ -418,6 +426,15 @@ class TestApocryphaSet(unittest.TestCase):
     d apple --set '["a", "b", "c"]'
     '''
 
+    def test_set_global(self):
+        a = run([
+            ['--set', '["a", "b", "c"]'],
+            []
+        ])
+
+        self.assertEqual(
+            a.output, ['a', 'b', 'c'])
+
     def test_set_list(self):
         a = run([
             ['list', '=', 'a b c d'],
@@ -459,13 +476,33 @@ class TestApocryphaSet(unittest.TestCase):
 class TestApocryphaSearch(unittest.TestCase):
 
     def test_search_list(self):
-        pass
+        a = run([
+            ['list', '=', 'haystack', 'haystack', 'needle'],
+            ['other', '=', 'haystack', 'haystack'],
+            ['@', 'needle'],
+        ])
+
+        self.assertEqual(
+            a.output, ['list'])
 
     def test_search_dict(self):
-        pass
+        a = run([
+            ['blue', 'berry', '=', 'octopus'],
+            ['blue', 'cobbler', '=', 'squid'],
+            ['@', 'squid'],
+        ])
+
+        self.assertEqual(
+            a.output, ['cobbler'])
 
     def test_error_search_singleton(self):
-        pass
+        a = run([
+            ['value', '=', 'needle'],
+            ['@', 'needle'],
+        ])
+
+        self.assertEqual(
+            a.output, ['value'])
 
 
 class TestApocryphaErrors(unittest.TestCase):
@@ -492,6 +529,25 @@ class TestApocryphaErrors(unittest.TestCase):
             run([
                 ['green', 'nice', 'failure']
             ])
+
+
+class TestNormalize(unittest.TestCase):
+
+    def test_remove_empty_dict(self):
+        d = {'a': {'b': {'c': {}}}}
+
+        a = Apocrypha(testdb, headless=True)
+
+        a.normalize(d)
+        self.assertEqual(d, {})
+
+    def test_list_to_singleton(self):
+        lis = {'a': ['1']}
+
+        a = Apocrypha(testdb, headless=True)
+
+        a.normalize(lis)
+        self.assertEqual(lis, {'a': '1'})
 
 
 class TestApocryphaExtensive(unittest.TestCase):

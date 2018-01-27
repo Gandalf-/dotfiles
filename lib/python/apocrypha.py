@@ -40,7 +40,6 @@ class Apocrypha(object):
                 self.db = json.load(fd)
 
         except FileNotFoundError:
-            print('could not find valid db, creating new')
             self.db = {}
 
         except ValueError:
