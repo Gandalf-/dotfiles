@@ -28,28 +28,24 @@ main() {
     local rest="${*:1:$(($#-1))}"
     local name="/tmp/apocrypha-$rest.json"
 
-    for arg in "$@"; do
-      echo "$arg"
-    done |
-      nc "$host" 9999 > "$name"
+    {
+      for arg in "${@:1:$(($#-1))}"; do
+        echo "$arg"
+      done
+
+      echo "--edit"
+    } | nc "$host" 9999 > "$name"
 
     vim "$name"
 
     {
-      for arg in "$@"; do
-        case $arg in
-          -e|--edit)
-            ;;
-          *)
-            echo "$arg"
-            ;;
-        esac
+      for arg in "${@:1:$(($#-1))}"; do
+        echo "$arg"
       done
 
       echo "--set"
-      while read -r line; do
-        echo "\"$line\""
-      done < "$name"
+      tr -d '\n' < "$name"; echo
+
     } | nc "$host" 9999
 
     rm "$name"

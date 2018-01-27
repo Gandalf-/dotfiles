@@ -376,13 +376,41 @@ class TestApocryphaEdit(unittest.TestCase):
     '''
 
     def test_edit_list(self):
-        pass
+        a = run([
+            ['list', '=', 'a b c d'],
+            ['list', '--edit']
+        ])
+
+        self.assertEqual(
+            a.output, ['"a b c d"'])
 
     def test_edit_dict(self):
-        pass
+        a = run([
+            ['dict', 'a', '=', '1'],
+            ['dict', 'b', '=', '2'],
+            ['dict', 'c', '=', '3'],
+            ['dict', '--edit'],
+        ])
+
+        self.assertEqual(
+            a.output, ['{\n    "a": "1",\n    "b": "2",\n    "c": "3"\n}'])
 
     def test_edit_singleton(self):
-        pass
+        a = run([
+            ['single', '=', '1'],
+            ['single', '--edit'],
+        ])
+
+        self.assertEqual(
+            a.output, ['"1"'])
+
+    def test_edit_none(self):
+        a = run([
+            ['unique key', '--edit'],
+        ])
+
+        self.assertEqual(
+            a.output, ['{}'])
 
 
 class TestApocryphaSet(unittest.TestCase):
@@ -391,13 +419,41 @@ class TestApocryphaSet(unittest.TestCase):
     '''
 
     def test_set_list(self):
-        pass
+        a = run([
+            ['list', '=', 'a b c d'],
+            ['list', '--set', '["a", "b", "c"]'],
+            ['list']
+        ])
+
+        self.assertEqual(
+            a.output, ['a', 'b', 'c'])
 
     def test_set_dict(self):
-        pass
+        a = run([
+            ['dict', '--set', '{"a":"1","b":"2"}'],
+            ['dict', 'a'],
+            ['dict', 'b']
+        ])
+
+        self.assertEqual(
+            a.output, ["1", "2"])
 
     def test_set_singleton(self):
-        pass
+        a = run([
+            ['single', '--set', '"hello"'],
+            ['single']
+        ])
+
+        self.assertEqual(
+            a.output, ['hello'])
+
+    def test_set_json_error(self):
+        a = Apocrypha(testdb, headless=True)
+
+        args = ['broken', '--set', 'gobbeldy gook']
+
+        with self.assertRaises(ApocryphaError):
+            a.action(args, read_only=True)
 
 
 class TestApocryphaSearch(unittest.TestCase):
