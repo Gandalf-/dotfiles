@@ -1,16 +1,5 @@
 #!/usr/bin/env python3
 
-'''
-Apocrypha
-
-    A flexible, json based database that supports
-    - strings, lists, dictionaries
-    - references to other keys
-    - arbitrary depth indexing and assignment
-    - symbolic links to other keys at any level
-    - server and client for performance
-'''
-
 import json
 import pprint
 import sys
@@ -30,7 +19,6 @@ class Apocrypha(object):
     - references to other keys
     - arbitrary depth indexing and assignment
     - symbolic links to other keys at any level
-    - server and client for performance
     '''
 
     def __init__(self, path, add_context=False, headless=False):
@@ -51,9 +39,12 @@ class Apocrypha(object):
             with open(path, 'r+') as fd:
                 self.db = json.load(fd)
 
-        except (ValueError, FileNotFoundError):
+        except FileNotFoundError:
             print('could not find valid db, creating new')
             self.db = {}
+
+        except ValueError:
+            self.error('could not parse database on disk')
 
     def action(self, args, read_only=False):
         ''' list of string, maybe bool -> none
@@ -70,9 +61,9 @@ class Apocrypha(object):
             print('\n'.join(self.output))
 
         if not read_only:
-            self.save_db()
+            self.maybe_save_db()
 
-    def save_db(self):
+    def maybe_save_db(self):
         ''' none -> none
 
         Normalize and write out the database, but only if self.flush is True
@@ -309,7 +300,8 @@ class Apocrypha(object):
         @message    description of the error that occurred
         #impure     self.output
 
-        Send an error to the user and stop execution
+        Send an error to the user and stop execution. In headless mode, errors
+        are appended to the class.output list
         '''
         message = 'error: ' + message
 
@@ -321,10 +313,19 @@ class Apocrypha(object):
         sys.exit(1)
 
     def normalize(self, db):
-        ''' dict -> none
+        ''' dict -> bool
+
+        @db     level of the database to normalize
 
         Finds lists of a single element and converts them into singletons,
-        deletes key that don't have values
+
+        deletes key that don't have values, returns true when a child was
+        deleted so the parent knows to recheck itself
+
+        this allows deeply nested dictionarys not ending in a value to be
+        removed in one call to normalize() on the root of the database
+
+            { a : { b : { c : {} } } } -> None
         '''
 
         leaf_removed = False
@@ -348,7 +349,7 @@ class Apocrypha(object):
 
         return leaf_removed
 
-    def assign(self, last_base, left, right):
+    def assign(self, base, left, right):
         ''' dict of any, string, list of string -> none
 
         assignment
@@ -356,28 +357,28 @@ class Apocrypha(object):
         # single = string, multi = list
         right = right[0] if len(right) == 1 else right
 
-        last_base[left] = right
+        base[left] = right
         self.flush = True
 
-    def append(self, last_base, left, right):
+    def append(self, base, left, right):
         ''' dict of any, string, list of string -> none
 
         append a value or values to a list or string
         may create a new value
         '''
-        ltype = type(last_base[left])
+        ltype = type(base[left])
 
         # creation of a new value
-        if not last_base[left]:
-            last_base[left] = right[0] if len(right) == 1 else right
+        if not base[left]:
+            base[left] = right[0] if len(right) == 1 else right
 
         # value exists but is a str, create list and add
         elif ltype == str:
-            last_base[left] = [last_base[left]] + right
+            base[left] = [base[left]] + right
 
         # left and right are lists
         elif ltype == list:
-            last_base[left] += right
+            base[left] += right
 
         # attempt to append to dictionary, error
         else:
@@ -398,8 +399,12 @@ class Apocrypha(object):
         for base_key in sorted(base.keys()):
             self.display(base_key)
 
-    def set(self, last_base, left, right):
+    def set(self, base, left, right):
         ''' dict of any, string, JSON string
+
+        @base  current level of the database
+        @left  index to modify
+        @right new value of the index, as a JSON string
 
         set the entire sub tree for this value with JSON
         '''
@@ -411,32 +416,38 @@ class Apocrypha(object):
 
         if right:
 
-            if last_base:
-                last_base[left] = right
+            if base:
+                base[left] = right
             else:
                 # global overwrite
                 self.db = right
 
             self.flush = True
 
-    def remove(self, last_base, left, right):
+    def remove(self, base, left, right):
         ''' dict of any, string, list of string
+
+        @base  current level of the database
+        @left  index to modify
+        @right elements to remove from left
+
+        remove all elements in the right from the left
         '''
-        if not isinstance(last_base[left], list):
+        if not isinstance(base[left], list):
             self.error(
                 'cannot subtract from non-list. {a} - {b}, {a} :: {t}'
-                .format(a=last_base[left],
+                .format(a=base[left],
                         b=right,
-                        t=type(last_base[left]).__name__))
+                        t=type(base[left]).__name__))
 
         try:
             for r in right:
-                last_base[left].remove(r)
+                base[left].remove(r)
 
         except (IndexError, ValueError):
             self.error('{a} not in {b}.'.format(a=right, b=left))
 
-        if len(last_base[left]) == 1:
-            last_base[left] = last_base[left][0]
+        if len(base[left]) == 1:
+            base[left] = base[left][0]
 
         self.flush = True

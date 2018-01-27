@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 
-'''
-Apocrypha Server
-
-    TCP network server that listens for database requests
-'''
-
 import apocrypha
 import os
 import socketserver
@@ -21,6 +15,9 @@ class ApocryphaServer(apocrypha.Apocrypha):
         ''' filepath -> ApocryphaServer
 
         @path       full path to the database json file
+
+        add_context=False is the default because context must be requested by
+        the client
 
         headless=True means that results get saved to self.output, which we
         return to the client instead of printing to stdout
@@ -72,6 +69,7 @@ class Handler(socketserver.BaseRequestHandler):
             else:
                 self.data += data
 
+        # arguments are delimited by newlines
         args = self.data.split('\n') if self.data else []
 
         if len(args) > 0 and args[0] == '-c':
@@ -81,7 +79,9 @@ class Handler(socketserver.BaseRequestHandler):
         result = ''
         try:
             # send the arguments to the Apocrypha instance, read_only=True
-            # means that we don't write out the changes immediately
+            # means that we don't write out the changes immediately. we handle
+            # saving the database ourselves after sending the response to the
+            # client
 
             database.action(args, read_only=True)
             result = '\n'.join(database.output)
@@ -98,28 +98,30 @@ class Handler(socketserver.BaseRequestHandler):
         self.request.sendall(result.encode('utf-8'))
         end = int(round(time.time() * 100000))
 
-        # reset output, save changes if needed
+        # reset internal values, save changes if needed
         database.add_context = False
         database.output = []
-        database.save_db()
+        database.maybe_save_db()
 
-        print('query: ({t:4}) {a}'.format(t=end-start, a=str(args)[:50]))
+        print('query: ({t:4}) ({c:2}) {a}'
+              .format(t=end-start, c=len(database.cache), a=str(args)[:50]))
 
 
 class Server(socketserver.TCPServer):
-    '''
-    TCPServer that allows address reuse
+    ''' none -> socketserver.TCPServer
+
+    allow address reuse for faster restarts
     '''
     allow_reuse_address = True
 
 
 if __name__ == '__main__':
-    host, port = '0.0.0.0', 9999
 
-    # create the ApocryphaServer instance
+    # create the ApocryphaServer instance, which inherits from Apocrypha
     database = ApocryphaServer(db_path)
 
-    # Create the server, binding to localhost on port 9999
+    # Create the tcp server
+    host, port = '0.0.0.0', 9999
     server = Server((host, port), Handler)
 
     try:
@@ -128,3 +130,7 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         print('exiting')
+
+    finally:
+        server.shutdown()
+        server.server_close()
