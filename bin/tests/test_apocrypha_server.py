@@ -14,6 +14,10 @@ class TestServer(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        '''
+        create an Apocrypha instance and server to handle connections
+        run the server in a thread so test cases may run
+        '''
         # create the ApocryphaServer instance, which inherits from Apocrypha
         TestServer.database = apocrypha_server.ApocryphaServer(
                 'resources/test-db.json')
@@ -33,6 +37,9 @@ class TestServer(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        '''
+        shutdown the server
+        '''
         TestServer.server.shutdown()
         TestServer.server.server_close()
 
