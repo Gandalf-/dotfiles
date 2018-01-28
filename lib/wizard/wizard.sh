@@ -315,7 +315,7 @@ wizard_update_apt() {
 
   common::sudo apt update
   common::sudo apt upgrade -y
-  common::sudo apt autoremove -y
+  common::sudo apt-get autoremove -y
 
   return $#
 }
