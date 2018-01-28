@@ -198,18 +198,6 @@ devbot::runner() {
 }
 
 
-devbot::save() {
-
-  # none -> none
-  #
-  # save the schedule to ~/.devbotrc minus the run timestamps
-
-  local schedule=~/.devbot/schedule
-  # TODO update to parse types
-  # cut -f 1,2,4- -d ' ' "$schedule" > ~/.devbotrc
-}
-
-
 devbot::eval() {
 
   # string ... -> none

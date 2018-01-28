@@ -64,10 +64,9 @@ wizard_devbot_edit() {
   devbot is paused while Vim is open.
   "
 
-  local schedule=~/.devbot/schedule
-
   wizard devbot kill
-  vim ~/.devbot/schedule
+
+  dclient devbot events --edit
 
   devbot::save
   wizard devbot start
@@ -148,8 +147,6 @@ wizard_devbot_list() {
   print out the current devbot schedule
   "
 
-  local schedule=~/.devbot/schedule
-
   translate-time() {
 
     local time="$1"
@@ -170,22 +167,22 @@ wizard_devbot_list() {
 
   echo
   while read -r event; do
-    # shellcheck disable=SC2206
-    local data=( $event )
-    local type="${data[0]}"
-    local interval="${data[1]}"
-    local when="${data[2]}"
-    local procedure="${data[*]:3}"
+    local type interval when action time
 
-    local time; time="$(translate-time $(( when - $(date '+%s') )) )"
+    type="$(d devbot events "$event" type)"
+    interval="$(d devbot events "$event" interval)"
+    when="$(d devbot events "$event" when)"
+    action="$(d devbot events "$event" action)"
+
+    time="$(translate-time $(( when - $(date '+%s') )) )"
 
     echo -n "($type) "
-    common::echo "$procedure"
+    common::echo "$action"
     echo "  every $(translate-time "$interval")"
     echo "  next  $time from now"
     echo
 
-  done < $schedule
+  done < <(d devbot events --keys)
 
   return $#
 }
