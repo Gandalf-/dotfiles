@@ -62,7 +62,7 @@ class Handler(socketserver.BaseRequestHandler):
         start = int(round(time.time() * 100000))
         self.data = ''
         while True:
-            data = self.request.recv(1024).strip().decode("utf-8")
+            data = self.request.recv(1024).decode("utf-8")
 
             if not data:
                 break
@@ -71,6 +71,7 @@ class Handler(socketserver.BaseRequestHandler):
 
         # arguments are delimited by newlines
         args = self.data.split('\n') if self.data else []
+        args = [arg for arg in args if arg]
 
         if len(args) > 0 and args[0] == '-c':
             args = args[1:]
@@ -104,9 +105,10 @@ class Handler(socketserver.BaseRequestHandler):
         self.server.database.maybe_save_db()
 
         if not self.server.quiet:
-            print('query: ({t:4}) ({c:2}) {a}'
-                  .format(t=end-start, c=len(self.server.database.cache),
-                          a=str(args)[:50]))
+            print('{t:.5f} {c:2} {a}'
+                  .format(t=(end - start) / 100000,
+                          c=len(self.server.database.cache),
+                          a=str(args)[:70]))
 
 
 class Server(socketserver.TCPServer):
