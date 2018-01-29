@@ -167,22 +167,22 @@ wizard_devbot_list() {
 
   echo
   while read -r event; do
-    local type interval when action time
+    local interval when action time
 
-    type="$(d devbot events "$event" type)"
+    # type="$(d devbot events "$event" type)"
     interval="$(d devbot events "$event" interval)"
     when="$(d devbot events "$event" when)"
     action="$(d devbot events "$event" action)"
 
     time="$(translate-time $(( when - $(date '+%s') )) )"
 
-    echo -n "($type) "
+    echo -n "($event) "
     common::echo "$action"
     echo "  every $(translate-time "$interval")"
     echo "  next  $time from now"
     echo
 
-  done < <(d devbot events --keys)
+  done < <(d devbot events --keys | sort)
 
   return $#
 }

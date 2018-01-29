@@ -374,14 +374,16 @@ wizard_build_vim() {
 
 wizard_open() {
 
-  common::required-help "$1" "
+  common::optional-help "$1" "
 
   open a file based on it's type and available programs
   "
 
+  timeout 0.1 read -r stdin
+
   local filetype
 
-  for target in "$@"; do
+  for target in "$@" "$stdin"; do
 
     # shellcheck disable=SC2076
     filetype="$(file -b "$target")"
@@ -391,7 +393,7 @@ wizard_open() {
 
     elif common::program-exists 'xdg-open'; then
 
-      if common::program-exists 'xiwit'; then
+      if common::program-exists 'xiwi'; then
         xiwit xdg-open "$target"
 
       else

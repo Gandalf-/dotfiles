@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   for (int i = 1; i < argc; i++) {
 
     memset(buffer, 0, buffer_size);
-    snprintf(buffer, buffer_size, "%s\n", argv[i]);
+    snprintf(buffer, buffer_size - 1, "%s\n", argv[i]);
     check(
         write(sockfd, buffer, strlen(buffer)) < 0,
         "error writing to socket");
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   memset(buffer, 0, buffer_size);
 
   // receive the response
-  while (read(sockfd, buffer, buffer_size) > 0) {
+  while (read(sockfd, buffer, buffer_size - 1) > 0) {
     printf("%s", buffer);
     memset(buffer, 0, buffer_size);
   }

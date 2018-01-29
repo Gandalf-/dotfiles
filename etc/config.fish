@@ -115,7 +115,7 @@ test -f ~/.autojump/share/autojump/autojump.fish
 # DotFiles scripts
 if test "$scripts"
   set PATH $scripts/bin $PATH
-  set -x PYTHONPATH $scripts/lib/python $PYTHONPATH
+  set -x PYTHONPATH $scripts/lib/python
 end
 
 # vimwiki

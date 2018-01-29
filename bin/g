@@ -52,7 +52,7 @@ while [[ $1 ]]; do
     phr) common::do "git push \"$2\" \"$3\""; shift 2;;
 
     su)
-      common::do git branch --set-upstream-to="${1:?g su [remote/branch]}"
+      common::do git branch --set-upstream-to="${2:?g su [remote/branch]}"
       shift
       ;;
     sc) common::do git diff --name-only --diff-filter=U;;
