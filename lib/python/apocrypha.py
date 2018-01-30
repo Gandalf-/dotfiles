@@ -174,8 +174,8 @@ class Apocrypha(object):
             except TypeError:
                 self.error(
                     'cannot index through non-dict.'
-                    ' {a} -> {b} -> ?, {b} :: {t}'
-                    .format(a=left, b=key, t=type(key).__name__))
+                    ' {a} -> {b} -> ?, {a} :: {t}'
+                    .format(a=left, b=key, t=type(base).__name__))
 
         self.display(base, ' = '.join(keys[:-1]))
 
@@ -255,7 +255,7 @@ class Apocrypha(object):
         # list
         elif value and isinstance(value, list):
             for elem in value:
-                if elem and elem[0] == '!':
+                if elem and isinstance(elem, str) and elem[0] == '!':
                     elem = elem[1:]
                     self.dereference(elem, [], False)
                 else:

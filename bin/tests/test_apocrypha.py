@@ -445,6 +445,15 @@ class TestApocryphaSet(unittest.TestCase):
         self.assertEqual(
             a.output, ['a', 'b', 'c'])
 
+    def test_set_list_of_dict(self):
+        a = run([
+            ['unique', '--set', '[{"a": "1"}, {"b": "2"}]'],
+            ['unique']
+        ])
+
+        self.assertEqual(
+            a.output, ['a', 'b', 'c'])
+
     def test_set_dict(self):
         a = run([
             ['dict', '--set', '{"a":"1","b":"2"}'],
