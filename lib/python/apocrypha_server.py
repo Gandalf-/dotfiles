@@ -33,7 +33,7 @@ class ApocryphaServer(apocrypha.Apocrypha):
         This overrides the default, which saves the database after giving the
         response to the user to only give the response
         '''
-        key = ''.join(args)
+        key = tuple(args)
 
         if key in self.cache:
             self.output = self.cache[key]
@@ -57,6 +57,7 @@ class Handler(socketserver.BaseRequestHandler):
 
         self.request is the TCP socket connected to the client
         '''
+        db = self.server.database
 
         # get query, parse into arguments
         start = int(round(time.time() * 100000))
@@ -75,7 +76,7 @@ class Handler(socketserver.BaseRequestHandler):
 
         if len(args) > 0 and args[0] == '-c':
             args = args[1:]
-            self.server.database.add_context = True
+            db.add_context = True
 
         result = ''
         try:
@@ -84,8 +85,8 @@ class Handler(socketserver.BaseRequestHandler):
             # saving the database ourselves after sending the response to the
             # client
 
-            self.server.database.action(args, read_only=True)
-            result = '\n'.join(self.server.database.output)
+            db.action(args, read_only=True)
+            result = '\n'.join(db.output)
 
         except apocrypha.ApocryphaError as error:
             # user, usage error
@@ -100,14 +101,15 @@ class Handler(socketserver.BaseRequestHandler):
         end = int(round(time.time() * 100000))
 
         # reset internal values, save changes if needed
-        self.server.database.add_context = False
-        self.server.database.output = []
-        self.server.database.maybe_save_db()
+        db.add_context = False
+        db.output = []
+        db.maybe_invalidate_cache(args)
+        db.maybe_save_db()
 
         if not self.server.quiet:
             print('{t:.5f} {c:2} {a}'
                   .format(t=(end - start) / 100000,
-                          c=len(self.server.database.cache),
+                          c=len(db.cache),
                           a=str(args)[:70]))
 
 

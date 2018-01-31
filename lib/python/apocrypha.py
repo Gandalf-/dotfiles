@@ -77,8 +77,27 @@ class Apocrypha(object):
             with open(self.path, 'w') as fd:
                 json.dump(self.db, fd, sort_keys=True)
 
-            self.cache = {}
             self.flush = False
+
+    def maybe_invalidate_cache(self, args):
+        ''' list of string -> none
+        '''
+
+        if not self.flush:
+            return
+
+        while args:
+
+            t_args = tuple(args)
+
+            if t_args in self.cache:
+                del(self.cache[t_args])
+
+            args = args[:-1]
+
+        root = tuple([])
+        if root in self.cache:
+            del(self.cache[root])
 
     def _action(self, base, keys, create=False):
         ''' dict, list of string, maybe bool -> none
