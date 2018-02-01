@@ -88,16 +88,22 @@ class Apocrypha(object):
 
         while args:
 
-            t_args = tuple(args)
+            # also need to clear any requests for keys at each level
+            for args_list in [args, args + ['-k'], args + ['--keys']]:
+                args_tuple = tuple(args_list)
 
-            if t_args in self.cache:
-                del(self.cache[t_args])
+                if args_tuple in self.cache:
+                    del(self.cache[args_tuple])
 
             args = args[:-1]
 
-        root = tuple([])
-        if root in self.cache:
-            del(self.cache[root])
+        # always have to clear the root level, which isn't represented in the
+        # input arguments list
+        for args_list in [[], ['-k'], ['--keys']]:
+            args_tuple = tuple(args_list)
+
+            if args_tuple in self.cache:
+                del(self.cache[args_tuple])
 
     def _action(self, base, keys, create=False):
         ''' dict, list of string, maybe bool -> none
