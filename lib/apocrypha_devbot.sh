@@ -26,10 +26,19 @@ devbot::task:handle() {
 
   local event="$1"
 
-  local interval when action
+  local interval when action require
   when="$(d devbot events "$event" when)"
 
   if (( when < $(date '+%s') )); then
+
+    require="$(d devbot events "$event" require)"
+
+    if [[ $require ]]; then
+      if ! eval "$require"; then
+        echo "task:handle $event requirement \"$require\" not met"
+        return
+      fi
+    fi
 
     # run the event, update time
     interval="$(d devbot events "$event" interval)"
@@ -38,7 +47,6 @@ devbot::task:handle() {
     [[ $action ]] || { echo "task:handle error: no action"; return; }
     d devbot events "$event" when = $(( interval + $(date '+%s') ))
     devbot::eval "$action"
-
   fi
 }
 

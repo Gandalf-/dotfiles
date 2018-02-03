@@ -358,7 +358,6 @@ class Apocrypha(object):
             if not value:
                 del(db[key])
                 leaf_removed = True
-                self.cache = {}
 
             type_key = type(value)
 
