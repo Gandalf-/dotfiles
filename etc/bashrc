@@ -1,34 +1,6 @@
 #~/.bashrc: executed by bash(1) for non-login shells.
 
-# where are we?
-if [[ $(hostname) == 'wkstn-avoecks' ]]; then
-  export DIMENSION=work
-
-	export QA=/usr/local/qa
-	export TOOLS=/usr/local/tools
-	export QALIB=$QA/lib
-	export PERL5LIB=$QA/lib
-	export PATH=$QA/bin:$QA/tests:$QA/linux/bin:$TOOLS:$PATH
-
-  scripts=~/cribshome/DotFiles/
-
-elif [[ $(whoami) == 'chronos' ]]; then
-  export DIMENSION=cros
-
-  scripts=/usr/local/home/DotFiles/bin/
-
-elif [[ -d ~/google_drive ]]; then
-  export DIMENSION=ubuntu
-
-  scripts=~/google_drive/personal/share/Public/DotFiles/
-
-else
-  export DIMENSION=unknown
-
-fi
-
-[[ $scripts ]] && \
-  set PATH ~/scripity-scripts/bin $PATH
+export PATH=~/DotFiles/bin:$PATH
 
 # If not running interactively, don't do anything else
 case $- in *i*) ;; *) return;; esac
