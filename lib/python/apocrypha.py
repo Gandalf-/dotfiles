@@ -23,20 +23,20 @@ class Apocrypha(object):
     '''
 
     def __init__(self, path, headless=True):
-        ''' string, maybe bool, maybe bool -> Apocrypha
+        ''' string, maybe bool -> Apocrypha
 
         @path           full path to the database json file
-        @add_context    add context to output
         @headless       don't write to stdout, save in self.output
         '''
         self.add_context = False
-        self.cache = {}
         self.dereference_occurred = False
-        self.flush = False
+        self.write_needed = False
         self.headless = headless
-        self.output = []
         self.path = path
-        self.timing = {}
+
+        self.output = []    # list of string
+        self.cache = {}     # dict of tuple of string
+        self.timing = {}    # dict of tuple of string
 
         try:
             with open(path, 'r+') as fd:
@@ -46,35 +46,37 @@ class Apocrypha(object):
             self.db = {}
 
         except ValueError:
-            self.error('could not parse database on disk')
+            self._error('could not parse database on disk')
+
+    def action(self, args):
+        ''' list of string -> none
+
+        may be overridden for custom behavior such as utilizing self.cache or
+        self.timing
+        '''
+        self._action(self.db, args, create=True)
 
     def reset(self):
         ''' none -> none
 
         restore internal values to defaults, used after action()
         '''
-        self.dereference_occurred = False
-        self.output = []
-        self.flush = False
         self.add_context = False
+        self.dereference_occurred = False
+        self.write_needed = False
 
-    def action(self, args):
-        ''' list of string -> none
-
-        may be overridden for custom behavior or to use the cache
-        '''
-        self._action(self.db, args, create=True)
+        self.output = []
 
     def maybe_save_db(self):
         ''' none -> none
 
-        Normalize and write out the database, but only if self.flush is True
-        also clear the cache, because things may have changed
+        Normalize and write out the database, but only if self.write_needed is
+        True also clear the cache, because things may have changed
         '''
 
         self.normalize(self.db)
 
-        if self.flush:
+        if self.write_needed:
 
             # write the updated values back out
             with open(self.path, 'w') as fd:
@@ -82,9 +84,26 @@ class Apocrypha(object):
 
     def maybe_invalidate_cache(self, args):
         ''' list of string -> none
+
+        If a write has occurred, we may need to invalidate some entries in
+        self.cache; we can invalidate only the necessary entries by inspecting
+        the arguments to the query
+
+        we also record the current time, so last modification time can be
+        queried with -t
+
+        given:
+            args = devbot events update when = 0
+
+        remove from the cache:
+            devbot events update when = 0
+            devbot events update when =
+            ..
+            devbot
+            []
         '''
 
-        if not self.flush:
+        if not self.write_needed:
             return
 
         while args:
@@ -110,6 +129,66 @@ class Apocrypha(object):
             if args_tuple in self.cache:
                 del(self.cache[args_tuple])
 
+    def normalize(self, db):
+        ''' dict -> bool
+
+        @db     level of the database to normalize
+
+        Finds lists of a single element and converts them into singletons,
+
+        deletes key that don't have values, returns true when a child was
+        deleted so the parent knows to recheck itself
+
+        this allows deeply nested dictionarys not ending in a value to be
+        removed in one call to normalize() on the root of the database
+
+            { a : { b : { c : {} } } } -> None
+        '''
+
+        child_removed = False
+
+        for child, leaf in list(db.items()):
+
+            # remove children without leaves
+            if not leaf:
+                del(db[child])
+                child_removed = True
+
+            tleaf = type(leaf)
+
+            # convert lists of a single element to singletons
+            if tleaf == list and len(leaf) == 1:
+                db[child] = leaf[0]
+
+            # recurse
+            elif tleaf == dict:
+                child_removed_child = self.normalize(leaf)
+
+                # if our child removed a child, they may now need to be removed
+                # if that was their only child; so we check ourselves again
+                if child_removed_child:
+                    return self.normalize(db)
+
+        return child_removed
+
+    def _error(self, message):
+        ''' string -> none | IO
+
+        @message    description of the error that occurred
+        #impure     self.output
+
+        Send an error to the user and stop execution. In headless mode, errors
+        are appended to the class.output list
+        '''
+        message = 'error: ' + message
+
+        if self.headless:
+            self.output += [message]
+            raise ApocryphaError(message)
+
+        print(message)
+        sys.exit(1)
+
     def _action(self, base, keys, create=False):
         ''' dict, list of string, maybe bool -> none
 
@@ -129,23 +208,23 @@ class Apocrypha(object):
             right = keys[i + 1:]    # list of string
 
             if key == '=':
-                self.assign(last_base, left, right)
+                self._assign(last_base, left, right)
                 return
 
             elif key == '+':
-                self.append(last_base, left, right)
+                self._append(last_base, left, right)
                 return
 
             elif key == '-':
-                self.remove(last_base, left, right)
+                self._remove(last_base, left, right)
                 return
 
             elif key == '@':
-                self.search(self.db, keys[i + 1], keys[:i])
+                self._search(self.db, keys[i + 1], keys[:i])
                 return
 
             elif key in ['-k', '--keys']:
-                self.keys(base, left)
+                self._keys(base, left)
                 return
 
             elif key in ['-e', '--edit']:
@@ -153,12 +232,12 @@ class Apocrypha(object):
                 return
 
             elif key in ['-s', '--set']:
-                self.set(last_base, left, right[0])
+                self._set(last_base, left, right[0])
                 return
 
             elif key in ['-d', '--del']:
                 del(last_base[left])
-                self.flush = True
+                self.write_needed = True
                 return
 
             # indexing
@@ -168,7 +247,7 @@ class Apocrypha(object):
             key_is_reference = False
             base_is_reference = False
 
-            if key[0] == '!':
+            if key and key[0] == '!':
                 key = key[1:]
                 key_is_reference = True
 
@@ -183,39 +262,38 @@ class Apocrypha(object):
                     #
                     # this means that we're trying to index through a
                     # reference
-                    self.dereference(base, keys[i:], create=True)
+                    self._dereference(base, keys[i:], create=True)
                     return
 
                 base = base[key]
 
                 if key_is_reference:
                     # this means we're trying to get the value of a reference
-                    self.dereference(base, keys[i + 1:], True)
+                    self._dereference(base, keys[i + 1:], True)
                     return
 
             except KeyError:
                 if not create:
-                    self.error(key + ' not found')
+                    self._error(key + ' not found')
 
                 # create a new key
                 base[key] = {}
                 base = base[key]
 
             except TypeError:
-                self.error(
+                self._error(
                     'cannot index through non-dict.'
                     ' {a} -> {b} -> ?, {a} :: {t}'
                     .format(a=left, b=key, t=type(base).__name__))
 
-        self.display(base, context=' = '.join(keys[:-1]))
+        self._display(base, context=' = '.join(keys[:-1]))
 
-    def dereference(self, base, args, create):
-        ''' list of string, int, dict, dict, bool -> none
+    def _dereference(self, base, args, create):
+        ''' dict, list of string, bool -> none
 
-        @keys   list of database keys to check
-        @i      position in the input keys
         @base   current object that we're working with, corresponds to a
                 "level" in the database
+        @args   list of database keys to check
         @create whether or not to add new indexes to the database, if false
                 will throw an error if an index that doesn't exist is accessed
 
@@ -258,7 +336,7 @@ class Apocrypha(object):
                 self._action(
                     self.db, target + args, create=create)
 
-    def display(self, value, context=None):
+    def _display(self, value, context=None):
         ''' any, maybe string -> none
 
         @value      string, list or dict to add to output
@@ -279,7 +357,7 @@ class Apocrypha(object):
         if value and isinstance(value, str):
             if value[0] == '!':
                 value = value[1:]
-                self.dereference(value, [], False)
+                self._dereference(value, [], False)
             else:
                 result += [base + str(value)]
 
@@ -288,7 +366,7 @@ class Apocrypha(object):
             for elem in value:
                 if elem and isinstance(elem, str) and elem[0] == '!':
                     elem = elem[1:]
-                    self.dereference(elem, [], False)
+                    self._dereference(elem, [], False)
                 else:
                     result += [base + str(elem)]
 
@@ -298,12 +376,12 @@ class Apocrypha(object):
 
         self.output += result
 
-    def search(self, base, key, context):
+    def _search(self, base, key, context):
         ''' any, string, list of string -> none
 
         @base       the object to search through
         @key        value to find
-        @context    additional information to pass onto display()
+        @context    additional information to pass onto _display()
 
         Recursively search through the base dictionary, print out all the keys
         that have the given value '''
@@ -312,7 +390,7 @@ class Apocrypha(object):
         if isinstance(base, list):
             for e in [_ for _ in base if _ == key]:
                 if e == key:
-                    self.display(
+                    self._display(
                         context[-1],
                         context=' = '.join(context[:-1]))
             return
@@ -320,79 +398,25 @@ class Apocrypha(object):
         # dict
         for k, v in base.items():
             if v == key:
-                self.display(
+                self._display(
                         k,
                         context=' = '.join(context))
 
             elif isinstance(v, dict) or isinstance(v, list):
-                self.search(v, key, context + [k])
+                self._search(v, key, context + [k])
 
-    def error(self, message):
-        ''' string -> none | IO
-
-        @message    description of the error that occurred
-        #impure     self.output
-
-        Send an error to the user and stop execution. In headless mode, errors
-        are appended to the class.output list
-        '''
-        message = 'error: ' + message
-
-        if self.headless:
-            self.output += [message]
-            raise ApocryphaError(message)
-
-        print(message)
-        sys.exit(1)
-
-    def normalize(self, db):
-        ''' dict -> bool
-
-        @db     level of the database to normalize
-
-        Finds lists of a single element and converts them into singletons,
-
-        deletes key that don't have values, returns true when a child was
-        deleted so the parent knows to recheck itself
-
-        this allows deeply nested dictionarys not ending in a value to be
-        removed in one call to normalize() on the root of the database
-
-            { a : { b : { c : {} } } } -> None
-        '''
-
-        leaf_removed = False
-
-        for key, value in list(db.items()):
-            if not value:
-                del(db[key])
-                leaf_removed = True
-
-            type_key = type(value)
-
-            if type_key == list and len(value) == 1:
-                db[key] = value[0]
-
-            elif type_key == dict:
-                child_removed_value = self.normalize(value)
-
-                if child_removed_value:
-                    return self.normalize(db)
-
-        return leaf_removed
-
-    def assign(self, base, left, right):
+    def _assign(self, base, left, right):
         ''' dict of any, string, list of string -> none
 
-        assignment
+        direct assignment, right side may be a list or string
         '''
         # single = string, multi = list
         right = right[0] if len(right) == 1 else right
 
         base[left] = right
-        self.flush = True
+        self.write_needed = True
 
-    def append(self, base, left, right):
+    def _append(self, base, left, right):
         ''' dict of any, string, list of string -> none
 
         append a value or values to a list or string
@@ -414,24 +438,24 @@ class Apocrypha(object):
 
         # attempt to append to dictionary, error
         else:
-            self.error('cannot append to a dictionary')
+            self._error('cannot append to a dictionary')
 
-        self.flush = True
+        self.write_needed = True
 
-    def keys(self, base, left):
+    def _keys(self, base, left):
         ''' any -> none
 
         print the keys defined at this level
         '''
         if not isinstance(base, dict):
-            self.error(
+            self._error(
                 'cannot retrieve keys non-dict. {a} :: {t}'
                 .format(a=left, t=type(base).__name__))
 
         for base_key in sorted(base.keys()):
-            self.display(base_key)
+            self._display(base_key)
 
-    def set(self, base, left, right):
+    def _set(self, base, left, right):
         ''' dict of any, string, JSON string
 
         @base  current level of the database
@@ -444,7 +468,7 @@ class Apocrypha(object):
             right = json.loads(right)
 
         except ValueError:
-            self.error('malformed json')
+            self._error('malformed json')
 
         if right:
 
@@ -454,9 +478,9 @@ class Apocrypha(object):
                 # global overwrite
                 self.db = right
 
-            self.flush = True
+            self.write_needed = True
 
-    def remove(self, base, left, right):
+    def _remove(self, base, left, right):
         ''' dict of any, string, list of string
 
         @base  current level of the database
@@ -466,7 +490,7 @@ class Apocrypha(object):
         remove all elements in the right from the left
         '''
         if not isinstance(base[left], list):
-            self.error(
+            self._error(
                 'cannot subtract from non-list. {a} - {b}, {a} :: {t}'
                 .format(a=base[left],
                         b=right,
@@ -477,9 +501,9 @@ class Apocrypha(object):
                 base[left].remove(r)
 
         except (IndexError, ValueError):
-            self.error('{a} not in {b}.'.format(a=right, b=left))
+            self._error('{a} not in {b}.'.format(a=right, b=left))
 
         if len(base[left]) == 1:
             base[left] = base[left][0]
 
-        self.flush = True
+        self.write_needed = True

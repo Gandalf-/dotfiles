@@ -14,14 +14,8 @@ class ApocryphaServer(apocrypha.Apocrypha):
         ''' filepath -> ApocryphaServer
 
         @path       full path to the database json file
-
-        add_context=False is the default because context must be requested by
-        the client
-
-        headless=True means that results get saved to self.output, which we
-        return to the client instead of printing to stdout
         '''
-        apocrypha.Apocrypha.__init__(self, path, headless=True)
+        apocrypha.Apocrypha.__init__(self, path)
 
     def action(self, args):
         ''' list of string, maybe bool -> none
@@ -34,11 +28,13 @@ class ApocryphaServer(apocrypha.Apocrypha):
         caching is not allowed for queries that include references or where
         context is requested
         '''
+        # request for timing information
         if args and args[-1] == '-t':
             key = tuple(args[:-1])
             self.output = [self.timing.get(key, '0')]
             return
 
+        # all other queries
         key = tuple(args)
 
         if key in self.cache:
@@ -51,7 +47,7 @@ class ApocryphaServer(apocrypha.Apocrypha):
                 self.cache[key] = self.output
 
 
-class Handler(socketserver.BaseRequestHandler):
+class ApocryphaHandler(socketserver.BaseRequestHandler):
     '''
     The request handler class for our server.
 
@@ -68,7 +64,7 @@ class Handler(socketserver.BaseRequestHandler):
         db = self.server.database
 
         # get query, parse into arguments
-        start = int(round(time.time() * 100000))
+        start_time = int(round(time.time() * 100000))
         self.data = ''
         while True:
             data = self.request.recv(1024).decode("utf-8")
@@ -78,19 +74,16 @@ class Handler(socketserver.BaseRequestHandler):
             else:
                 self.data += data
 
-        # arguments are delimited by newlines
+        # arguments are delimited by newlines, remove empty elements
         args = self.data.split('\n') if self.data else []
-        args = [arg for arg in args if arg]
+        args = list(filter(None, args))
 
-        if len(args) > 0 and args[0] == '-c':
+        if args and args[0] == '-c':
             args = args[1:]
             db.add_context = True
 
         result = ''
         try:
-            # send the arguments to the Apocrypha instance. we handle saving
-            # the database ourselves after sending the response to the client
-
             db.action(args)
             result = '\n'.join(db.output)
 
@@ -104,7 +97,9 @@ class Handler(socketserver.BaseRequestHandler):
 
         # send reply to client
         self.request.sendall(result.encode('utf-8'))
-        end = int(round(time.time() * 100000))
+
+        end_time = int(round(time.time() * 100000))
+        query_duration = (end_time - start_time) / 100000
 
         # reset internal values, save changes if needed
         db.maybe_invalidate_cache(args)
@@ -113,9 +108,7 @@ class Handler(socketserver.BaseRequestHandler):
 
         if not self.server.quiet:
             print('{t:.5f} {c:2} {a}'
-                  .format(t=(end - start) / 100000,
-                          c=len(db.cache),
-                          a=str(args)[:70]))
+                  .format(t=query_duration, c=len(db.cache), a=str(args)[:70]))
 
 
 class Server(socketserver.TCPServer):
@@ -137,7 +130,11 @@ if __name__ == '__main__':
 
     # Create the tcp server
     host, port = '0.0.0.0', 9999
-    server = Server((host, port), Handler, ApocryphaServer(db_path))
+
+    server = Server(
+        (host, port),
+        ApocryphaHandler,
+        ApocryphaServer(db_path))
 
     try:
         print('starting')
