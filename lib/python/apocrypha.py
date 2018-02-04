@@ -3,6 +3,7 @@
 import json
 import pprint
 import sys
+import time
 
 
 class ApocryphaError(Exception):
@@ -21,19 +22,21 @@ class Apocrypha(object):
     - symbolic links to other keys at any level
     '''
 
-    def __init__(self, path, add_context=False, headless=False):
+    def __init__(self, path, headless=True):
         ''' string, maybe bool, maybe bool -> Apocrypha
 
         @path           full path to the database json file
         @add_context    add context to output
         @headless       don't write to stdout, save in self.output
         '''
-        self.add_context = add_context
+        self.add_context = False
         self.cache = {}
+        self.dereference_occurred = False
         self.flush = False
         self.headless = headless
         self.output = []
         self.path = path
+        self.timing = {}
 
         try:
             with open(path, 'r+') as fd:
@@ -45,22 +48,22 @@ class Apocrypha(object):
         except ValueError:
             self.error('could not parse database on disk')
 
-    def action(self, args, read_only=False):
-        ''' list of string, maybe bool -> none
+    def reset(self):
+        ''' none -> none
 
-        @args       arguments from the user
-        @read_only  do not write changes to the database file
+        restore internal values to defaults, used after action()
+        '''
+        self.dereference_occurred = False
+        self.output = []
+        self.flush = False
+        self.add_context = False
 
-        Perform the database actions required from the arguments, handle
-        output and save changes if required
+    def action(self, args):
+        ''' list of string -> none
+
+        may be overridden for custom behavior or to use the cache
         '''
         self._action(self.db, args, create=True)
-
-        if not self.headless:
-            print('\n'.join(self.output))
-
-        if not read_only:
-            self.maybe_save_db()
 
     def maybe_save_db(self):
         ''' none -> none
@@ -77,8 +80,6 @@ class Apocrypha(object):
             with open(self.path, 'w') as fd:
                 json.dump(self.db, fd, sort_keys=True)
 
-            self.flush = False
-
     def maybe_invalidate_cache(self, args):
         ''' list of string -> none
         '''
@@ -92,6 +93,8 @@ class Apocrypha(object):
             for args_list in [args, args + ['-k'], args + ['--keys']]:
                 args_tuple = tuple(args_list)
 
+                self.timing[args_tuple] = str(int(time.time()))
+
                 if args_tuple in self.cache:
                     del(self.cache[args_tuple])
 
@@ -101,6 +104,8 @@ class Apocrypha(object):
         # input arguments list
         for args_list in [[], ['-k'], ['--keys']]:
             args_tuple = tuple(args_list)
+
+            self.timing[args_tuple] = str(int(time.time()))
 
             if args_tuple in self.cache:
                 del(self.cache[args_tuple])
@@ -202,7 +207,7 @@ class Apocrypha(object):
                     ' {a} -> {b} -> ?, {a} :: {t}'
                     .format(a=left, b=key, t=type(base).__name__))
 
-        self.display(base, ' = '.join(keys[:-1]))
+        self.display(base, context=' = '.join(keys[:-1]))
 
     def dereference(self, base, args, create):
         ''' list of string, int, dict, dict, bool -> none
@@ -229,6 +234,7 @@ class Apocrypha(object):
             $ d !pointer
             value
         '''
+        self.dereference_occurred = True
 
         # current value is a string
         if isinstance(base, str):
@@ -307,13 +313,16 @@ class Apocrypha(object):
             for e in [_ for _ in base if _ == key]:
                 if e == key:
                     self.display(
-                        context[-1], context=' = '.join(context[:-1]))
+                        context[-1],
+                        context=' = '.join(context[:-1]))
             return
 
         # dict
         for k, v in base.items():
             if v == key:
-                self.display(k, context=' = '.join(context))
+                self.display(
+                        k,
+                        context=' = '.join(context))
 
             elif isinstance(v, dict) or isinstance(v, list):
                 self.search(v, key, context + [k])

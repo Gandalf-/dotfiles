@@ -21,18 +21,24 @@ class ApocryphaServer(apocrypha.Apocrypha):
         headless=True means that results get saved to self.output, which we
         return to the client instead of printing to stdout
         '''
-        apocrypha.Apocrypha.__init__(
-            self, path, add_context=False, headless=True)
+        apocrypha.Apocrypha.__init__(self, path, headless=True)
 
-    def action(self, args, read_only=False):
+    def action(self, args):
         ''' list of string, maybe bool -> none
 
         @args       arguments from the user
-        @read_only  do not write changes to the database file
 
         This overrides the default, which saves the database after giving the
         response to the user to only give the response
+
+        caching is not allowed for queries that include references or where
+        context is requested
         '''
+        if args and args[-1] == '-t':
+            key = tuple(args[:-1])
+            self.output = [self.timing.get(key, '0')]
+            return
+
         key = tuple(args)
 
         if key in self.cache:
@@ -40,7 +46,9 @@ class ApocryphaServer(apocrypha.Apocrypha):
 
         else:
             self._action(self.db, args, create=True)
-            self.cache[key] = self.output
+
+            if not (self.add_context or self.dereference_occurred):
+                self.cache[key] = self.output
 
 
 class Handler(socketserver.BaseRequestHandler):
@@ -80,12 +88,10 @@ class Handler(socketserver.BaseRequestHandler):
 
         result = ''
         try:
-            # send the arguments to the Apocrypha instance, read_only=True
-            # means that we don't write out the changes immediately. we handle
-            # saving the database ourselves after sending the response to the
-            # client
+            # send the arguments to the Apocrypha instance. we handle saving
+            # the database ourselves after sending the response to the client
 
-            db.action(args, read_only=True)
+            db.action(args)
             result = '\n'.join(db.output)
 
         except apocrypha.ApocryphaError as error:
@@ -101,10 +107,9 @@ class Handler(socketserver.BaseRequestHandler):
         end = int(round(time.time() * 100000))
 
         # reset internal values, save changes if needed
-        db.add_context = False
-        db.output = []
         db.maybe_invalidate_cache(args)
         db.maybe_save_db()
+        db.reset()
 
         if not self.server.quiet:
             print('{t:.5f} {c:2} {a}'

@@ -165,24 +165,25 @@ wizard_devbot_list() {
     fi
   }
 
-  echo
-  while read -r event; do
-    local interval when action time
-
-    # type="$(d devbot events "$event" type)"
-    interval="$(d devbot events "$event" interval)"
-    when="$(d devbot events "$event" when)"
-    action="$(d devbot events "$event" action)"
-
-    time="$(translate-time $(( when - $(date '+%s') )) )"
-
-    echo -n "($event) "
-    common::echo "$action"
-    echo "  every $(translate-time "$interval")"
-    echo "  next  $time from now"
+  {
     echo
+    while read -r event; do
+      local interval when action time
 
-  done < <(d devbot events --keys | sort)
+      interval="$(d devbot events "$event" interval)"
+      when="$(d devbot events "$event" when)"
+      action="$(d devbot events "$event" action)"
 
+      time="$(translate-time $(( when - $(date '+%s') )) )"
+
+      common::echo "$action"
+      echo "  every $(translate-time "$interval")"
+      echo "  next  $time from now"
+      echo
+
+    done < <(d devbot events --keys | sort)
+  } > /dev/shm/devbot-list
+
+  cat /dev/shm/devbot-list
   return $#
 }

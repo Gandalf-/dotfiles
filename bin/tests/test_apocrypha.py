@@ -13,10 +13,10 @@ def run(commands):
     runs the provided commands on a new Apocrypha instance, and then returns
     the instance for inspection
     '''
-    a = Apocrypha(testdb, headless=True)
+    a = Apocrypha(testdb)
 
     for c in commands:
-        a.action(c, read_only=True)
+        a.action(c)
 
     return a
 
@@ -27,22 +27,22 @@ class TestApocrypha(unittest.TestCase):
         '''
         we can open the database and nothing explodes
         '''
-        Apocrypha(testdb, headless=True)
+        Apocrypha(testdb)
 
     def test_no_db(self):
-        a = Apocrypha('file-that-does-not-exist', headless=True)
+        a = Apocrypha('file-that-does-not-exist')
         self.assertEqual(a.db, {})
 
     def test_bad_db(self):
         with self.assertRaises(ApocryphaError):
-            Apocrypha('test_apocrypha.py', headless=True)
+            Apocrypha('test_apocrypha.py')
 
     def test_index(self):
         '''
         $ d a
         123
         '''
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
         a.action(['a'])
         self.assertEqual(a.output, ['123'])
 
@@ -51,7 +51,7 @@ class TestApocrypha(unittest.TestCase):
         $ d sub apple
         red
         '''
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
         a.action(['sub', 'apple'])
         self.assertEqual(a.output, ['red'])
 
@@ -62,7 +62,7 @@ class TestApocrypha(unittest.TestCase):
         $ d !two
         a b c
         '''
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
         a.action(['!colors'])
         self.assertEqual(a.output, ['nice'])
 
@@ -75,8 +75,8 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         $ d one
         two
         '''
-        a = Apocrypha(testdb, headless=True)
-        a.action(['assign', '=', '123'], read_only=True)
+        a = Apocrypha(testdb)
+        a.action(['assign', '=', '123'])
         self.assertEqual(a.db['assign'], '123')
 
     def test_delete(self):
@@ -85,8 +85,8 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         $ d one --del
         $ d one
         '''
-        a = Apocrypha(testdb, headless=True)
-        a.action(['removable', '--del'], read_only=True)
+        a = Apocrypha(testdb)
+        a.action(['removable', '--del'])
         self.assertFalse('removable' in a.db)
 
     def test_assign_through_reference(self):
@@ -98,10 +98,10 @@ class TestApocryphaAssignDelete(unittest.TestCase):
         $ d three
         four
         '''
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
 
         args = ['!colors', '=', 'hello']
-        a.action(args, read_only=True)
+        a.action(args)
 
         self.assertEqual(a.db['green'], 'hello')
         self.assertEqual(a.db['blue'], 'hello')
@@ -452,7 +452,7 @@ class TestApocryphaSet(unittest.TestCase):
         ])
 
         self.assertEqual(
-            a.output, ['a', 'b', 'c'])
+            a.output, ["{'a': '1'}", "{'b': '2'}"])
 
     def test_set_dict(self):
         a = run([
@@ -474,12 +474,12 @@ class TestApocryphaSet(unittest.TestCase):
             a.output, ['hello'])
 
     def test_set_json_error(self):
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
 
         args = ['broken', '--set', 'gobbeldy gook']
 
         with self.assertRaises(ApocryphaError):
-            a.action(args, read_only=True)
+            a.action(args)
 
 
 class TestApocryphaSearch(unittest.TestCase):
@@ -517,20 +517,20 @@ class TestApocryphaSearch(unittest.TestCase):
 class TestApocryphaErrors(unittest.TestCase):
 
     def test_list_subtract_error(self):
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
 
         args = ['list', '-', 'applesauce']
 
         with self.assertRaises(ApocryphaError):
-            a.action(args, read_only=True)
+            a.action(args)
 
     def test_list_subtract_non_list(self):
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
 
         args = ['green', '-', 'applesauce']
 
         with self.assertRaises(ApocryphaError):
-            a.action(args, read_only=True)
+            a.action(args)
 
     def test_index_into_value(self):
 
@@ -545,7 +545,7 @@ class TestNormalize(unittest.TestCase):
     def test_remove_empty_dict(self):
         d = {'a': {'b': {'c': {}}}}
 
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
 
         a.normalize(d)
         self.assertEqual(d, {})
@@ -553,7 +553,7 @@ class TestNormalize(unittest.TestCase):
     def test_list_to_singleton(self):
         lis = {'a': ['1']}
 
-        a = Apocrypha(testdb, headless=True)
+        a = Apocrypha(testdb)
 
         a.normalize(lis)
         self.assertEqual(lis, {'a': '1'})
