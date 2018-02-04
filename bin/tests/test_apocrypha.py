@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from apocrypha import Apocrypha, ApocryphaError
+from apocrypha.core import Apocrypha, ApocryphaError
 
 
 testdb = 'resources/test-db.json'

@@ -186,7 +186,7 @@ class Apocrypha(object):
             self.output += [message]
             raise ApocryphaError(message)
 
-        print(message)
+        print(message, file=sys.stderr)
         sys.exit(1)
 
     def _action(self, base, keys, create=False):

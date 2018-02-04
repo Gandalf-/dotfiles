@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import apocrypha
+import apocrypha.core as apocrypha
 import os
 import socketserver
 import time
-
-db_path = os.path.expanduser('~') + '/.db.json'
 
 
 class ApocryphaServer(apocrypha.Apocrypha):
@@ -67,7 +65,7 @@ class ApocryphaHandler(socketserver.BaseRequestHandler):
         start_time = int(round(time.time() * 100000))
         self.data = ''
         while True:
-            data = self.request.recv(1024).decode("utf-8")
+            data = self.request.recv(1024).decode('utf-8')
 
             if not data:
                 break
@@ -129,7 +127,9 @@ class Server(socketserver.TCPServer):
 if __name__ == '__main__':
 
     # Create the tcp server
-    host, port = '0.0.0.0', 9999
+    host = '0.0.0.0'
+    port = 9999
+    db_path = os.path.expanduser('~') + '/.db.json'
 
     server = Server(
         (host, port),
