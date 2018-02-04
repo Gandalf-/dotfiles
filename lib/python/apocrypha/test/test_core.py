@@ -4,16 +4,17 @@ import unittest
 from apocrypha.core import Apocrypha, ApocryphaError
 
 
-testdb = 'resources/test-db.json'
+testdb = 'test/test-db.json'
 
 
-def run(commands):
+def run(commands, add_context=False):
     ''' list of list of string -> Apocrypha
 
     runs the provided commands on a new Apocrypha instance, and then returns
     the instance for inspection
     '''
     a = Apocrypha(testdb)
+    a.add_context = add_context
 
     for c in commands:
         a.action(c)
@@ -35,7 +36,7 @@ class TestApocrypha(unittest.TestCase):
 
     def test_bad_db(self):
         with self.assertRaises(ApocryphaError):
-            Apocrypha('test_apocrypha.py')
+            Apocrypha('test/test_core.py')
 
     def test_index(self):
         '''
@@ -65,6 +66,15 @@ class TestApocrypha(unittest.TestCase):
         a = Apocrypha(testdb)
         a.action(['!colors'])
         self.assertEqual(a.output, ['nice'])
+
+    def test_context(self):
+        a = run([
+            ['unique', 'two', 'three', '=', '2'],
+            ['unique', 'three', 'four' '=', '2'],
+            ['@', '2'],
+        ], add_context=True)
+
+        self.assertEqual(a.output, ['unique = two = three'])
 
 
 class TestApocryphaAssignDelete(unittest.TestCase):
@@ -324,8 +334,8 @@ class TestApocryphaRemove(unittest.TestCase):
         '''
         with self.assertRaises(ApocryphaError):
             run([
-                ['list', 'a', '=', 'a', 'b', 'c'],
-                ['list', '-', 'd'],
+                ['new list', 'a', '=', 'a', 'b', 'c'],
+                ['new list', 'a', '-', 'd'],
             ])
 
     def test_remove_multi(self):

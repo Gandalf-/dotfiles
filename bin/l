@@ -1,2 +1,2 @@
 #!/bin/sh
-ls --color=auto "$@"
+ls --color=auto "$@" --ignore='*.pyc' --ignore='__pycache__'

@@ -7,10 +7,12 @@ failures=0
 
 declare -A shell_ignore
 shell_ignore[../wizard]=1
-shell_ignore[../d]=1
 shell_ignore[../pydo]=1
+shell_ignore[../d]=1
+shell_ignore[../d.c]=1
+shell_ignore[../Makefile]=1
 
-for file in ../* ../../lib/*.sh; do
+for file in ../* ../../lib/{,**/}*.sh; do
 
   [[ ${shell_ignore[$file]} ]] && continue
   [[ -f "$file" ]] || continue
@@ -24,7 +26,7 @@ for file in ../* ../../lib/*.sh; do
 done
 
 # linting with pylint and flake8
-for file in ../d ../../lib/python/*.py; do
+for file in ../../lib/python/{,**/}*.py; do
 
   [[ -f "$file" ]] || continue
 

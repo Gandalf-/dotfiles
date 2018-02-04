@@ -379,6 +379,7 @@ wizard_open() {
   open a file based on it's type and available programs
   "
 
+  stdin=''
   timeout 0.1 read -r stdin
 
   local filetype

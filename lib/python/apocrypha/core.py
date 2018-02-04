@@ -388,11 +388,10 @@ class Apocrypha(object):
 
         # list
         if isinstance(base, list):
-            for e in [_ for _ in base if _ == key]:
-                if e == key:
-                    self._display(
-                        context[-1],
-                        context=' = '.join(context[:-1]))
+            for _ in [_ for _ in base if _ == key]:
+                self._display(
+                    context[-1],
+                    context=' = '.join(context[:-1]))
             return
 
         # dict
@@ -470,15 +469,13 @@ class Apocrypha(object):
         except ValueError:
             self._error('malformed json')
 
-        if right:
+        if base:
+            base[left] = right
+        else:
+            # global overwrite
+            self.db = right
 
-            if base:
-                base[left] = right
-            else:
-                # global overwrite
-                self.db = right
-
-            self.write_needed = True
+        self.write_needed = True
 
     def _remove(self, base, left, right):
         ''' dict of any, string, list of string
@@ -500,7 +497,7 @@ class Apocrypha(object):
             for r in right:
                 base[left].remove(r)
 
-        except (IndexError, ValueError):
+        except ValueError:
             self._error('{a} not in {b}.'.format(a=right, b=left))
 
         if len(base[left]) == 1:
