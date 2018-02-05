@@ -8,7 +8,31 @@ import sys
 import time
 
 
-def query(args, host='localhost', port=9999, produce_json=False):
+class Client(object):
+
+    def __init__(self, host='localhost', port=9999):
+        self.host = host
+        self.port = port
+
+    def get(self, *keys, default=None):
+        ''' string ... -> string | list | dict | none
+        '''
+        result = query(keys, host=self.host, port=self.port, raw=True)
+
+        if not result:
+            return default
+
+        return result
+
+    def set(self, *keys, value):
+        ''' a :: string | list | dict | none => string ..., a -> a
+        '''
+        return query(
+                list(keys) + ['--set', json.dumps(value)],
+                host=self.host, port=self.port)
+
+
+def query(args, host='localhost', port=9999, raw=False):
     ''' list of string -> string | dict | list
 
     send a query to an Apocrypha server, either returning a list of strings or
@@ -17,8 +41,9 @@ def query(args, host='localhost', port=9999, produce_json=False):
     remote = (host, port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(remote)
+    args = list(args)
 
-    if produce_json and args and args[-1] not in ['-e', '--edit']:
+    if raw and args and args[-1] not in ['-e', '--edit']:
         args += ['--edit']
 
     message = '\n'.join(args) + '\n'
@@ -42,8 +67,11 @@ def query(args, host='localhost', port=9999, produce_json=False):
 
     result = list(filter(None, result.split('\n')))
 
-    if produce_json:
-        return json.loads(''.join(result))
+    if raw:
+        if result:
+            return json.loads(''.join(result))
+        else:
+            return None
 
     else:
         return result

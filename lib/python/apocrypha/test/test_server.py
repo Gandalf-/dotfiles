@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 
 import apocrypha.client
-import json
 import threading
 import unittest
 
 from apocrypha.server import ApocryphaServer, ApocryphaHandler, Server
 
 
-def query(args, produce_json=False):
+def query(args, raw=False):
     ''' list of string -> string
     '''
     return apocrypha.client.query(
-        args, port=49999, produce_json=produce_json)
+        args, port=49999, raw=raw)
 
 
 class TestServer(unittest.TestCase):
@@ -80,16 +79,24 @@ class TestServer(unittest.TestCase):
 
     def test_strict(self):
         result = query(['-s', 'gadzooks'])
-
         self.assertEqual(result, ['error: gadzooks not found'])
 
     def test_context(self):
         result = query(['-c', '@', 'red'])
         self.assertEqual(result, ['sub = apple'])
 
-    def test_query_json(self):
-        result = query(['octopus'], produce_json=True)
+    def test_query_json_dict(self):
+        result = query(['octopus'], raw=True)
         self.assertEqual(result, {'legs': 8})
+        self.assertTrue(type(result) == dict)
+
+    def test_query_json_list(self):
+        result = query(['colors'], raw=True)
+        self.assertTrue(type(result) == list)
+
+    def test_query_json_string(self):
+        result = query(['apple'], raw=True)
+        self.assertTrue(type(result) == str)
 
     def test_timing(self):
         result = query(['-t', 'wolf', 'legs'])
