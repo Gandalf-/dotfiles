@@ -192,19 +192,17 @@ class TestApocryphaSymlink(unittest.TestCase):
                 ['one', 'four', '=', 'apple'],
             ])
 
-    @unittest.skip
     def test_symlink_list_index(self):
         '''
         index through a list of symlink
         '''
-        a = run([
-            ['one', '=', '!two', '!three'],
-            ['two', 'sub', '=', 'apple'],
-            ['three', 'sub', '=', 'pumpkin'],
-            ['one', 'sub']
-        ])
-
-        self.assertEqual(a.output, ['apple', 'pumpkin'])
+        with self.assertRaises(ApocryphaError):
+            run([
+                ['one', '=', '!two', '!three'],
+                ['two', 'sub', '=', 'apple'],
+                ['three', 'sub', '=', 'pumpkin'],
+                ['one', 'sub']
+            ])
 
     def test_symlink_index(self):
         '''

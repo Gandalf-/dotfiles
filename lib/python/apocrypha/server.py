@@ -27,9 +27,9 @@ class ApocryphaServer(apocrypha.Apocrypha):
         context is requested
         '''
         # request for timing information
-        if args and args[-1] == '-t':
-            key = tuple(args[:-1])
-            self.output = [self.timing.get(key, '0')]
+        if args and args[0] == '-t':
+            key = tuple(args[1:])
+            self.output = self.timing.get(key, '0') + '\n'
             return
 
         # all other queries
@@ -39,9 +39,20 @@ class ApocryphaServer(apocrypha.Apocrypha):
             self.output = self.cache[key]
 
         else:
-            self._action(self.db, args, create=True)
+            self._action(self.db, args)
 
-            if not (self.add_context or self.dereference_occurred):
+            if self.output:
+                self.output = '\n'.join(self.output) + '\n'
+            else:
+                self.output = ''
+
+            # do not cache if context was added, a dereference was required to
+            # get the result or the query contained an operator
+            cache = not (self.add_context or self.dereference_occurred)
+            cache = cache and not (
+                    apocrypha.Apocrypha.operators.intersection(set(args)))
+
+            if cache:
                 self.cache[key] = self.output
 
 
@@ -53,6 +64,24 @@ class ApocryphaHandler(socketserver.BaseRequestHandler):
     override the handle() method to implement communication to the
     client.
     '''
+
+    def parse_arguments(self):
+
+        # arguments are delimited by newlines, remove empty elements
+        args = self.data.split('\n') if self.data else []
+        args = list(filter(None, args))
+
+        while args and args[0] in ['-c', '--context', '-s', '--strict']:
+
+            if args[0] == '-c':
+                self.server.database.add_context = True
+
+            if args[0] == '-s':
+                self.server.database.strict = True
+
+            args = args[1:]
+
+        return args
 
     def handle(self):
         ''' none -> none
@@ -72,26 +101,16 @@ class ApocryphaHandler(socketserver.BaseRequestHandler):
             else:
                 self.data += data
 
-        # arguments are delimited by newlines, remove empty elements
-        args = self.data.split('\n') if self.data else []
-        args = list(filter(None, args))
-
-        if args and args[0] == '-c':
-            args = args[1:]
-            db.add_context = True
+        args = self.parse_arguments()
 
         result = ''
         try:
             db.action(args)
-            result = '\n'.join(db.output)
+            result = db.output
 
         except apocrypha.ApocryphaError as error:
             # user, usage error
             result = str(error)
-
-        finally:
-            if result:
-                result += '\n'
 
         # send reply to client
         self.request.sendall(result.encode('utf-8'))

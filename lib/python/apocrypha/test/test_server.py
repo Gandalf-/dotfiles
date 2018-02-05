@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import apocrypha.client
+import json
 import threading
 import unittest
 
@@ -76,6 +77,28 @@ class TestServer(unittest.TestCase):
         query(['pizza', '-d'])
         self.assertNotIn(('pizza',), TestServer.database.cache)
         self.assertNotIn((), TestServer.database.cache)
+
+    def test_strict(self):
+        result = query(['-s', 'gadzooks'])
+
+        self.assertEqual(result, ['error: gadzooks not found'])
+
+    def test_context(self):
+        result = query(['-c', '@', 'red'])
+        self.assertEqual(result, ['sub = apple'])
+
+    def test_query_json(self):
+        result = query(['octopus'], produce_json=True)
+        self.assertEqual(result, {'legs': 8})
+
+    def test_timing(self):
+        result = query(['-t', 'wolf', 'legs'])
+        self.assertEqual(result, ['0'])
+
+        query(['wolf', 'legs', '=', '4'])
+
+        result = query(['-t', 'wolf', 'legs'])
+        self.assertNotEqual(result, ['0'])
 
 
 if __name__ == '__main__':

@@ -22,6 +22,15 @@ class Apocrypha(object):
     - symbolic links to other keys at any level
     '''
 
+    operators = {
+        '=', '+', '-', '@', '-k', '--keys', '-e', '--edit', '-s',
+        '--set', '-d', '--del'}
+
+    read_ops = {
+        '-e', '--edit', '-k', '--keys'}
+
+    write_ops = operators - read_ops
+
     def __init__(self, path, headless=True):
         ''' string, maybe bool -> Apocrypha
 
@@ -33,6 +42,7 @@ class Apocrypha(object):
         self.write_needed = False
         self.headless = headless
         self.path = path
+        self.strict = False
 
         self.output = []    # list of string
         self.cache = {}     # dict of tuple of string
@@ -54,7 +64,7 @@ class Apocrypha(object):
         may be overridden for custom behavior such as utilizing self.cache or
         self.timing
         '''
-        self._action(self.db, args, create=True)
+        self._action(self.db, args)
 
     def reset(self):
         ''' none -> none
@@ -63,6 +73,7 @@ class Apocrypha(object):
         '''
         self.add_context = False
         self.dereference_occurred = False
+        self.strict = False
         self.write_needed = False
 
         self.output = []
@@ -109,25 +120,21 @@ class Apocrypha(object):
         while args:
 
             # also need to clear any requests for keys at each level
-            for args_list in [args, args + ['-k'], args + ['--keys']]:
-                args_tuple = tuple(args_list)
-
-                self.timing[args_tuple] = str(int(time.time()))
-
-                if args_tuple in self.cache:
-                    del(self.cache[args_tuple])
-
-            args = args[:-1]
-
-        # always have to clear the root level, which isn't represented in the
-        # input arguments list
-        for args_list in [[], ['-k'], ['--keys']]:
-            args_tuple = tuple(args_list)
+            args_tuple = tuple(args)
 
             self.timing[args_tuple] = str(int(time.time()))
 
             if args_tuple in self.cache:
                 del(self.cache[args_tuple])
+
+            args = args[:-1]
+
+        # always have to clear the root level, which isn't represented in the
+        # input arguments list
+        self.timing[()] = str(int(time.time()))
+
+        if () in self.cache:
+            del(self.cache[()])
 
     def normalize(self, db):
         ''' dict -> bool
@@ -189,12 +196,11 @@ class Apocrypha(object):
         print(message, file=sys.stderr)
         sys.exit(1)
 
-    def _action(self, base, keys, create=False):
+    def _action(self, base, keys):
         ''' dict, list of string, maybe bool -> none
 
         @base   current level of the database
         @keys   keys or arguments to apply
-        @create whether to allow new elements to be added
 
         Move through the input arguments to
             - index further into the database
@@ -207,53 +213,59 @@ class Apocrypha(object):
             left = keys[i - 1]      # string
             right = keys[i + 1:]    # list of string
 
-            if key == '=':
-                self._assign(last_base, left, right)
-                return
+            if key in Apocrypha.operators:
+                if key == '=':
+                    self._assign(last_base, left, right)
+                    return
 
-            elif key == '+':
-                self._append(last_base, left, right)
-                return
+                elif key == '+':
+                    self._append(last_base, left, right)
+                    return
 
-            elif key == '-':
-                self._remove(last_base, left, right)
-                return
+                elif key == '-':
+                    self._remove(last_base, left, right)
+                    return
 
-            elif key == '@':
-                self._search(self.db, keys[i + 1], keys[:i])
-                return
+                elif key == '@':
+                    self._search(self.db, keys[i + 1], keys[:i])
+                    return
 
-            elif key in ['-k', '--keys']:
-                self._keys(base, left)
-                return
+                elif key in ['-k', '--keys']:
+                    self._keys(base, left)
+                    return
 
-            elif key in ['-e', '--edit']:
-                self.output = [json.dumps(base, indent=4, sort_keys=True)]
-                return
+                elif key in ['-e', '--edit']:
+                    self.output = [json.dumps(base, indent=4, sort_keys=True)]
+                    return
 
-            elif key in ['-s', '--set']:
-                self._set(last_base, left, right[0])
-                return
+                elif key in ['-s', '--set']:
+                    self._set(last_base, left, right[0])
+                    return
 
-            elif key in ['-d', '--del']:
-                del(last_base[left])
-                self.write_needed = True
-                return
+                elif key in ['-d', '--del']:
+                    del(last_base[left])
+                    self.write_needed = True
+                    return
 
             # indexing
 
             # keep track of the level before so we can modify this level
             last_base = base
-            key_is_reference = False
-            base_is_reference = False
 
-            if key and key[0] == '!':
-                key = key[1:]
-                key_is_reference = True
+            try:
+                key_is_reference = False
+                base_is_reference = False
 
-            if isinstance(base, str) and base[0] == '!':
-                base = base[1:]
-                base_is_reference = True
+                if key[0] == '!':
+                    key = key[1:]
+                    key_is_reference = True
+
+                if base[0] == '!':
+                    base = base[1:]
+                    base_is_reference = True
+
+            except (IndexError, KeyError):
+                pass
 
             try:
                 if base_is_reference:
@@ -262,18 +274,18 @@ class Apocrypha(object):
                     #
                     # this means that we're trying to index through a
                     # reference
-                    self._dereference(base, keys[i:], create=True)
+                    self._dereference(base, keys[i:])
                     return
 
                 base = base[key]
 
                 if key_is_reference:
                     # this means we're trying to get the value of a reference
-                    self._dereference(base, keys[i + 1:], True)
+                    self._dereference(base, right)
                     return
 
             except KeyError:
-                if not create:
+                if self.strict:
                     self._error(key + ' not found')
 
                 # create a new key
@@ -288,14 +300,12 @@ class Apocrypha(object):
 
         self._display(base, context=' = '.join(keys[:-1]))
 
-    def _dereference(self, base, args, create):
+    def _dereference(self, base, args):
         ''' dict, list of string, bool -> none
 
         @base   current object that we're working with, corresponds to a
                 "level" in the database
         @args   list of database keys to check
-        @create whether or not to add new indexes to the database, if false
-                will throw an error if an index that doesn't exist is accessed
 
         Dereferences always start at the top level of the database, hence the
             action(db, db, ...)
@@ -322,7 +332,7 @@ class Apocrypha(object):
                 target = base.split(' ')
 
             self._action(
-                self.db, target + args, create=create)
+                self.db, target + args)
 
         # current value is iterable
         else:
@@ -334,7 +344,7 @@ class Apocrypha(object):
                     target = reference.split(' ')
 
                 self._action(
-                    self.db, target + args, create=create)
+                    self.db, target + args)
 
     def _display(self, value, context=None):
         ''' any, maybe string -> none
@@ -357,7 +367,7 @@ class Apocrypha(object):
         if value and isinstance(value, str):
             if value[0] == '!':
                 value = value[1:]
-                self._dereference(value, [], False)
+                self._dereference(value, [])
             else:
                 result += [base + str(value)]
 
@@ -366,7 +376,7 @@ class Apocrypha(object):
             for elem in value:
                 if elem and isinstance(elem, str) and elem[0] == '!':
                     elem = elem[1:]
-                    self._dereference(elem, [], False)
+                    self._dereference(elem, [])
                 else:
                     result += [base + str(elem)]
 
@@ -397,9 +407,7 @@ class Apocrypha(object):
         # dict
         for k, v in base.items():
             if v == key:
-                self._display(
-                        k,
-                        context=' = '.join(context))
+                self._display(k, context=' = '.join(context))
 
             elif isinstance(v, dict) or isinstance(v, list):
                 self._search(v, key, context + [k])
