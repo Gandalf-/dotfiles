@@ -9,12 +9,11 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   set title
   set langmenu=en_US      " Sets languages
-  set sh=bash             " So vim plays nice with fish
-  set ff=unix             " No crazy DOS line endings please
+  set shell=bash          " So vim plays nice with fish
+  set fileformat=unix     " No crazy DOS line endings please
   set history=300         " Sets how many lines of history VIM has to remember
   set autoread            " Pick up changes from outside this vim session
   set fileformat=unix     " Use Unix line endings
-  set nocompatible        " Use Vim settings, because IMproved
   set confirm             " Ask to save instead of complaining
 
   set splitbelow splitright
@@ -47,7 +46,7 @@
     endif
 
     filetype off
-    set rtp+=~/.vim/bundle/Vundle.vim
+    set runtimepath+=~/.vim/bundle/Vundle.vim
 
     try
       call vundle#begin()
@@ -184,8 +183,6 @@
 
       " <BS>: close popup and delete backword char.
         inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-
-      autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     endif
 
   " neosnippet
@@ -222,7 +219,7 @@
   " General
     colorscheme desert
     set t_Co=256
-    set number wrap tw=79 showcmd
+    set number wrap textwidth=79 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
   " Fonts
@@ -232,8 +229,16 @@
       endif
     endif
 
-  " Resize vim windows when overall window size changes
-    autocmd VimResized * wincmd =
+  " ui autocommands
+    augroup ui_commands
+      autocmd!
+
+      " Resize vim windows when overall window size changes
+      autocmd VimResized * wincmd =
+
+      " cursor line
+      autocmd InsertEnter,InsertLeave * set cursorline!
+    augroup end
 
   " Be as wild as possible
     set wildmode=full wildmenu
@@ -254,7 +259,6 @@
   " Cursor line
     set cursorline              " Handy line so we know where we are
     highlight CursorLine cterm=NONE ctermbg=234 ctermfg=NONE
-    autocmd InsertEnter,InsertLeave * set cul!
 
   " Window split
     set fillchars+=vert:│
@@ -292,14 +296,20 @@
         %s/\s\+$//e
         call cursor(l, c)
     endfun
+
+  " misc autocommands
+  augroup misc_commands
+    autocmd!
+
+  " clear whitespace
     autocmd FileType scheme,vimwiki,markdown,conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
-  " File specific
+
+  " make uses tabs
     autocmd FileType make setlocal noexpandtab
 
-  " Avoid dumb markdown extension
-    " if has("*vimwiki")
-    "   autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
-    " endif
+  " Make pylint happy
+    autocmd BufNewFile,BufRead *.py setlocal tabstop=4
+  augroup end
 
   " silver searcher-ing
     if executable('ag')
@@ -397,9 +407,6 @@
     noremap :! :!clear;
     noremap :make :!clear; make
 
-  " Make pylint happy
-    autocmd BufNewFile,BufRead *.py setlocal tabstop=4
-
   " Delete empty buffers
     function! DeleteEmptyBuffers()
       let [i, n; empty] = [1, bufnr('$')]
@@ -422,7 +429,7 @@
   set tabstop=2                    " Set 2 TAB stops
   set softtabstop=4
   set expandtab smarttab
-  set autoindent smartindent nocindent
+  set autoindent nocindent
   set showmatch                    " Show matched brackets
 
   " Detect tabs or spaces
@@ -441,41 +448,11 @@
         endif
     endfunction
 
-    " Call the function after opening a buffer
+  augroup tabs_or_spaces_group
+    autocmd!
+  " Call the function after opening a buffer
     autocmd BufReadPost * call TabsOrSpaces()
-
-  "set completeopt=menu,menuone
-  "set pumheight=3
-  "
-  " Autocompletion with tab!
-  "function! Tab_Or_Complete()
-  "  if col('.')>1 && strpart( getline('.'), col('.')-2, 3 ) =~ '^\w'
-  "    return "\<C-N>"
-  "  else
-  "    return "\<Tab>"
-  "  endif
-  "endfunction
-  "inoremap <silent> <Tab> <C-R>=Tab_Or_Complete()<CR>
-
-  " Auto complete whole lines with ctrl-l !
-  "inoremap <C-L> <C-X><C-L>
-
-  "autocmd InsertEnter * set noshowmode
-  "autocmd InsertLeave * set showmode
-  "
-  "" automatic autocompletion
-  "function! s:skinny_insert(char)
-  "  if !pumvisible() && !exists('s:skinny_complete') && getline('.')[col('.') - 2].a:char =~# '\k\k'
-  "    let s:skinny_complete = 1
-  "      noautocmd call feedkeys("\<C-n>\<C-p>", "nt")
-  "  endif
-  "endfunction
-  "
-  "augroup SkinnyAutoComplete
-  "  autocmd!
-  "  autocmd InsertCharPre * silent! call <SID>skinny_insert(v:char)
-  "  autocmd CompleteDone * silent! if exists('s:skinny_complete') | unlet s:skinny_complete | endif
-  "augroup END
+  augroup end
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Macros
@@ -645,6 +622,9 @@
       endif
     endfunction
 
+  " macro autocommands
+  augroup macro_commands
+    autocmd!
     autocmd FileType python  nmap <leader>r :!clear;python %<cr>
     autocmd FileType scheme  nmap <leader>r :!clear;racket %<cr>
     autocmd FileType sh      nmap <leader>r :!clear;bash %<cr>
@@ -663,6 +643,7 @@
     autocmd FileType sh
           \ nnoremap <leader>y :!tmux send-keys -t right
           \ 'bash %' C-m<cr><cr>
+  augroup end
 
   " Experiment
     nnoremap / /\v
