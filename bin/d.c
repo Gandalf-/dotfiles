@@ -13,10 +13,12 @@
   if (condition) { perror(message); exit(1); }
 
 
-int create_socket(char *host, int port) {
-
+int create_socket(host, port)
+  char *host;
+  int   port;
+{
   struct sockaddr_in serv_addr;
-  struct hostent *server = gethostbyname(host);
+  struct hostent    *server = gethostbyname(host);
 
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   check(sockfd < 0, "error opening socket");
@@ -34,12 +36,13 @@ int create_socket(char *host, int port) {
   return sockfd;
 }
 
-int main(int argc, char *argv[]) {
-
-  int buffer_size = 1024;
+int main(argc, argv)
+  int    argc;
+  char **argv;
+{
+  int  buffer_size = 1024;
   char buffer[buffer_size];
-
-  int sockfd = create_socket("localhost", 9999);
+  int  sockfd = create_socket("localhost", 9999);
 
   // send all the arguments to the server, deliminated by newlines
   for (int i = 1; i < argc; i++) {
@@ -57,6 +60,7 @@ int main(int argc, char *argv[]) {
 
   // receive the response
   while (read(sockfd, buffer, buffer_size - 1) > 0) {
+
     printf("%s", buffer);
     memset(buffer, 0, buffer_size);
   }

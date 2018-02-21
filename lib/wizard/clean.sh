@@ -4,6 +4,22 @@
 #
 #   remove unnecessary files or packages intelligently
 
+wizard_clean_every-other() {
+
+  common::optional-help "$1" "
+
+  delete every other file in the current directory
+  "
+
+  local delete=0
+
+  for file in *; do
+
+    (( delete )) && rm -v "$file"
+    delete=$(( ! delete ))
+
+  done
+}
 
 common::require 'dpkg' &&
 wizard_clean_boot() {

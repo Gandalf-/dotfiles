@@ -116,6 +116,7 @@ test -f ~/.autojump/share/autojump/autojump.fish
 if test "$scripts"
   set PATH $scripts/bin $PATH
   set -x PYTHONPATH $scripts/lib/python
+  set -x PYTHONSTARTUP $scripts/etc/pythonrc
 end
 
 # vimwiki
