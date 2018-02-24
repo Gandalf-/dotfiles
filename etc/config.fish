@@ -37,7 +37,7 @@ function postexec_test --on-event fish_postexec
   # d fish-history "$epoc" dir = "$directory"
   # d fish-history "$epoc" cmd = "$argv"
   # d fish-history "$epoc" status = "$status"
-  d fish-history "$argv" epoc + "$epoc"
+  d fish-history (string split ' ' "$argv") epoc + "$epoc"
 end
 
 # Location
