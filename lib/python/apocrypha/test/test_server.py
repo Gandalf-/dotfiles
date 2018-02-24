@@ -4,6 +4,7 @@ import apocrypha.client
 import threading
 import unittest
 
+from apocrypha.core import ApocryphaError
 from apocrypha.server import ApocryphaServer, ApocryphaHandler, Server
 
 
@@ -43,6 +44,8 @@ class TestServer(unittest.TestCase):
         TestServer.server_thread.daemon = True
         TestServer.server_thread.start()
 
+        TestServer.db = apocrypha.client.Client(port=49999)
+
     @classmethod
     def tearDownClass(cls):
         '''
@@ -51,12 +54,7 @@ class TestServer(unittest.TestCase):
         TestServer.server.shutdown()
         TestServer.server.server_close()
 
-    def test_assign(self):
-        query(['apple', '=', 'sauce'])
-        result = query(['apple'])
-
-        self.assertEqual(result, ['sauce'])
-
+    # server tests
     def test_cache_hit(self):
         query(['pizza', '=', 'sauce'])
         query(['pizza'])
@@ -77,9 +75,25 @@ class TestServer(unittest.TestCase):
         self.assertNotIn(('pizza',), TestServer.database.cache)
         self.assertNotIn((), TestServer.database.cache)
 
+    def test_timing(self):
+        result = query(['-t', 'wolf', 'legs'])
+        self.assertEqual(result, ['0'])
+
+        query(['wolf', 'legs', '=', '4'])
+
+        result = query(['-t', 'wolf', 'legs'])
+        self.assertNotEqual(result, ['0'])
+
+    # client tests - query
+    def test_assign(self):
+        query(['apple', '=', 'sauce'])
+        result = query(['apple'])
+
+        self.assertEqual(result, ['sauce'])
+
     def test_strict(self):
-        result = query(['-s', 'gadzooks'])
-        self.assertEqual(result, ['error: gadzooks not found'])
+        with self.assertRaises(ApocryphaError):
+            query(['-s', 'gadzooks'])
 
     def test_context(self):
         result = query(['-c', '@', 'red'])
@@ -98,14 +112,164 @@ class TestServer(unittest.TestCase):
         result = query(['apple'], raw=True)
         self.assertTrue(type(result) == str)
 
-    def test_timing(self):
-        result = query(['-t', 'wolf', 'legs'])
-        self.assertEqual(result, ['0'])
+    # client tests - Client
+    def test_get_string(self):
+        self.assertEqual(
+            TestServer.db.get('green'), 'nice')
 
-        query(['wolf', 'legs', '=', '4'])
+        self.assertEqual(
+            TestServer.db.get('octopus', 'legs'), 8)
 
-        result = query(['-t', 'wolf', 'legs'])
-        self.assertNotEqual(result, ['0'])
+    # get
+    def test_get_list(self):
+        self.assertEqual(
+            TestServer.db.get('animals'),
+            ['wolf', 'octopus', 'bird'])
+
+    def test_get_dict(self):
+        self.assertEqual(
+            TestServer.db.get('octopus'),
+            {'legs': 8})
+
+    def test_get_non_existant(self):
+        self.assertEqual(
+            TestServer.db.get('yahoo', 'foobar'),
+            None)
+
+    def test_get_default(self):
+        '''
+        when a key doesn't exist, default=<something> determines what to
+        respond with
+        '''
+        self.assertEqual(
+            TestServer.db.get('yahoo', 'foobar', default={}),
+            {})
+
+        self.assertEqual(
+            TestServer.db.get('yahoo', 'foobar', default=[]),
+            [])
+
+        self.assertEqual(
+            TestServer.db.get('yahoo', 'foobar', default='abc'),
+            'abc')
+
+    def test_get_error(self):
+        with self.assertRaises(ApocryphaError):
+            TestServer.db.get('animals', 'octopus')
+
+    def test_get_cast_to_list(self):
+        self.assertEqual(
+            TestServer.db.get('green', cast=list),
+            ['nice'])
+
+    def test_get_cast_to_str(self):
+        self.assertEqual(
+            TestServer.db.get('animals', cast=str),
+            "['wolf', 'octopus', 'bird']")
+
+    def test_get_cast_to_set(self):
+        self.assertEqual(
+            TestServer.db.get('animals', cast=set),
+            {'wolf', 'octopus', 'bird'})
+
+    # keys
+    def test_keys(self):
+        self.assertEqual(
+            TestServer.db.keys('octopus'), ['legs'])
+
+    def test_keys_non_existant(self):
+        self.assertEqual(
+            TestServer.db.keys('yahoo', 'foobar'), [])
+
+    def test_keys_error(self):
+        with self.assertRaises(ApocryphaError):
+            TestServer.db.keys('animals', 'octopus')
+
+    # remove
+    def test_remove(self):
+        TestServer.db.set('test list', value=['a', 'b', 'c'])
+        TestServer.db.remove('test list', value='a')
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            ['b', 'c'])
+
+    def test_remove_list(self):
+        TestServer.db.set('test list', value=['a', 'b', 'c'])
+        TestServer.db.remove('test list', value=['a', 'b'])
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            'c')
+
+    def test_remove_error(self):
+        with self.assertRaises(ApocryphaError):
+            TestServer.db.remove('octopus', value='sandwich')
+
+    # append
+    def test_append(self):
+        TestServer.db.delete('test list')
+
+        TestServer.db.append('test list', value='apple')
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            'apple')
+
+        TestServer.db.append('test list', value='blue')
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            ['apple', 'blue'])
+
+    def test_append_list(self):
+        TestServer.db.delete('test list')
+
+        TestServer.db.append('test list', value=['a', 'b'])
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            ['a', 'b'])
+
+        TestServer.db.append('test list', value=['c', 'd'])
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            ['a', 'b', 'c', 'd'])
+
+    def test_append_non_existant(self):
+        TestServer.db.delete('test list')
+
+        TestServer.db.append('test list', value=['a', 'b'])
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            ['a', 'b'])
+
+    def test_append_error(self):
+        with self.assertRaises(ApocryphaError):
+            TestServer.db.append('octopus', value='sandwich')
+
+    # set
+    def test_set(self):
+        TestServer.db.set('test item', value='hello')
+        self.assertEqual(
+            TestServer.db.get('test item'),
+            'hello')
+
+    def test_set_list(self):
+        TestServer.db.set('test list', value=['hello', 'there'])
+        self.assertEqual(
+            TestServer.db.get('test list'),
+            ['hello', 'there'])
+
+    def test_set_error(self):
+        with self.assertRaises(ApocryphaError):
+            TestServer.db.set('hello', value=set())
+
+    # delete
+    def test_delete(self):
+        TestServer.db.set('test item', value='hello')
+        self.assertEqual(
+            TestServer.db.get('test item'),
+            'hello')
+        TestServer.db.delete('test item')
+        self.assertEqual(
+            TestServer.db.get('test item'),
+            None)
 
 
 if __name__ == '__main__':

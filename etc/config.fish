@@ -27,6 +27,19 @@ function    ..; builtin cd ../;      command ls --color=auto ; end
 function   ...; builtin cd ../../;   command ls --color=auto ; end
 function  ....; builtin cd ../../../;command ls --color=auto ; end
 
+function preexec_test --on-event fish_preexec
+  set -g directory (pwd)
+  set -g epoc (date +%s)
+  set -g branch (git branch 2> /dev/null)
+end
+
+function postexec_test --on-event fish_postexec
+  # d fish-history "$epoc" dir = "$directory"
+  # d fish-history "$epoc" cmd = "$argv"
+  # d fish-history "$epoc" status = "$status"
+  d fish-history "$argv" epoc + "$epoc"
+end
+
 # Location
 #===========================
 

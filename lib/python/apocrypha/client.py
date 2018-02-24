@@ -7,6 +7,8 @@ import subprocess
 import sys
 import time
 
+from apocrypha.core import ApocryphaError
+
 
 class Client(object):
 
@@ -14,22 +16,98 @@ class Client(object):
         self.host = host
         self.port = port
 
-    def get(self, *keys, default=None):
-        ''' string ... -> string | list | dict | none
+    def get(self, *keys, default=None, cast=None):
+        ''' string ..., maybe any, maybe any -> string | list | dict | none
+
+        retrieve a given key, if the key is not found `default` will be
+        returned instead
+
+            values = db.get('devbot', 'events', default={})
+            root   = db.get()
         '''
+        keys = list(keys) if keys else ['']
+
         result = query(keys, host=self.host, port=self.port, raw=True)
 
         if not result:
             return default
 
-        return result
+        elif cast:
+            try:
+                if isinstance(result, str):
+                    result = [result]
+                return cast(result)
+
+            except ValueError:
+                raise ApocryphaError(
+                    'error: unable to case to ' + str(cast))
+
+        else:
+            return result
+
+    def keys(self, *keys):
+        ''' string ... -> list of string | none
+
+            keys = db.keys('devbot', 'events')
+            root = db.keys()
+        '''
+        keys = list(keys) if keys else ['']
+        return query(keys + ['--keys'], host=self.host, port=self.port)
+
+    def delete(self, *keys):
+        ''' string ... -> none
+        '''
+        keys = list(keys) if keys else ['']
+        query(keys + ['--del'], host=self.host, port=self.port)
+
+    def append(self, *keys, value):
+        ''' string ..., str | list of str -> none
+        '''
+        keys = list(keys) if keys else ['']
+
+        if isinstance(value, str):
+            value = [value]
+
+        try:
+            query(keys + ['+'] + value, host=self.host, port=self.port)
+
+        except ValueError:
+            raise ApocryphaError('error: {v} is not a str or list')
+
+    def remove(self, *keys, value):
+        ''' string ..., str | list of str -> none
+        '''
+        keys = list(keys) if keys else ['']
+
+        if isinstance(value, str):
+            value = [value]
+
+        if type(value) not in [str, list]:
+            raise ApocryphaError('error: {v} is not a str or list')
+
+        query(keys + ['-'] + value, host=self.host, port=self.port)
 
     def set(self, *keys, value):
-        ''' a :: string | list | dict | none => string ..., a -> a
+        ''' string ..., string | list | dict | none -> none
+
+        set a value for a given key, creating if necessary. can be used to
+        delete keys if value={}
+
+            events = {'key': 'value'}
+            db.set('devbot', 'events', value=events)
+            db.set('devbot', 'events', value={})
         '''
-        return query(
-                list(keys) + ['--set', json.dumps(value)],
-                host=self.host, port=self.port)
+        keys = list(keys) if keys else ['']
+
+        try:
+            value = json.dumps(value)
+
+            query(keys + ['--set', value],
+                  host=self.host, port=self.port)
+
+        except (TypeError, ValueError):
+            raise ApocryphaError(
+                'error: cannot set values that are not JSON serializable')
 
 
 def query(args, host='localhost', port=9999, raw=False):
@@ -66,15 +144,13 @@ def query(args, host='localhost', port=9999, raw=False):
         sock.close()
 
     result = list(filter(None, result.split('\n')))
+    if result and 'error:' in result[0]:
+        raise ApocryphaError(result[0])
 
     if raw:
-        if result:
-            return json.loads(''.join(result))
-        else:
-            return None
+        result = json.loads(''.join(result)) if result else None
 
-    else:
-        return result
+    return result
 
 
 def _edit_temp_file(temp_file):
