@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 
+import random
 import shutil
 import subprocess
 import os
 
+normal = 10
+low = 5
+high = 20
 
-def produce_git():
-    ''' none -> none
+
+def produce_git(options):
+    ''' set of tuple -> none
 
     git related suggestions
     '''
 
     if not os.path.exists('.git'):
         return
-    print('git status')
+    options.add(
+        ('git status', normal))
 
     git_status = subprocess.check_output(
         ['git', 'status', '--porcelain']).decode('utf-8').split('\n')
@@ -27,30 +33,33 @@ def produce_git():
 
         if status[1] in ['M', '?']:
             # modified but not added
-            print('git add {f}'.format(f=filename))
+            options.add(
+                ('git add {f}'.format(f=filename), normal))
             modified_not_added = True
 
         elif status[0] in ['M', 'A']:
             # added but not commited
-            print('git commit -m "updates to {f}"'.format(f=filename))
-            print('git reset HEAD {f}'.format(f=filename))
+            options.add(
+                ('git commit -m "updates to {f}"'.format(f=filename), normal))
+            options.add(
+                ('git reset HEAD {f}'.format(f=filename), low))
             add_not_commited = True
 
     if modified_not_added:
-        print('git diff')
+        options.add(('git diff', low))
 
     if add_not_commited:
-        print('git diff --cached')
+        options.add(('git diff --cached', low))
 
     # porcelain doesn't tell us about commits that need to be pushed
     git_status = subprocess.check_output(
         ['git', 'status']).decode('utf-8')
 
     if 'Your branch is ahead of' in git_status:
-        print('git push')
+        options.add(('git push', normal))
 
 
-def produce_insync():
+def produce_insync(options):
     ''' none -> none
 
     insync related suggestions
@@ -63,17 +72,38 @@ def produce_insync():
         ['insync-headless', 'get_status']).decode('utf-8')
 
     if insync_status == 'ERROR':
-        print('insync-headless retry_errors')
+        options.add(('insync-headless retry_errors', normal))
 
     elif insync_status == 'SHARE':
-        print('insync-headless reject_all_new_shares austin.voecks@gmail.com')
+        options.add(
+            ('insync-headless reject_all_new_shares austin.voecks@gmail.com',
+             normal))
+
+
+def produce_human(options):
+    ''' none -> none
+
+    suggestions to take a break, drink some water, etc
+    '''
+
+    if random.randint(0, 10) == 0:
+        options.add(('echo take a break!', low))
+
+    if random.randint(0, 15) == 0:
+        options.add(('echo drink some water!', low))
 
 
 def main():
     '''
     '''
-    produce_git()
-    produce_insync()
+    options = set()
+
+    produce_git(options)
+    produce_insync(options)
+    produce_human(options)
+
+    for option in options:
+        print(option[0])
 
 
 if __name__ == '__main__':
