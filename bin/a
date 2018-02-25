@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# shellcheck disable=SC1090
+
+root="$(dirname "${BASH_SOURCE[0]}")"/..
+source "${root}/lib/common.sh"
+
+wizard_assistant() {
+
+  common::optional-help "$1" "
+
+  provide some commands that might be useful to run based on the current
+  context
+  "
+
+  local selection
+  selection="$(assistant | fzf --cycle --multi --height=10)"
+
+  [[ $selection ]] || exit 0
+
+  while read -r selection; do
+    eval "$selection"
+  done <<< "$selection"
+
+  wizard_assistant "$@"
+  return $#
+}
+
+wizard_assistant "$@"

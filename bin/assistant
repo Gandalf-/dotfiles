@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+
+import shutil
+import subprocess
+import os
+
+
+def produce_git():
+    ''' none -> none
+
+    git related suggestions
+    '''
+
+    if not os.path.exists('.git'):
+        return
+    print('git status')
+
+    git_status = subprocess.check_output(
+        ['git', 'status', '--porcelain']).decode('utf-8').split('\n')
+    statuses = [_ for _ in git_status if _]
+
+    modified_not_added = False
+    add_not_commited = False
+
+    for status in statuses:
+        filename = status.split(' ')[-1]
+
+        if status[1] in ['M', '?']:
+            # modified but not added
+            print('git add {f}'.format(f=filename))
+            modified_not_added = True
+
+        elif status[0] in ['M', 'A']:
+            # added but not commited
+            print('git commit -m "updates to {f}"'.format(f=filename))
+            print('git reset HEAD {f}'.format(f=filename))
+            add_not_commited = True
+
+    if modified_not_added:
+        print('git diff')
+
+    if add_not_commited:
+        print('git diff --cached')
+
+    # porcelain doesn't tell us about commits that need to be pushed
+    git_status = subprocess.check_output(
+        ['git', 'status']).decode('utf-8')
+
+    if 'Your branch is ahead of' in git_status:
+        print('git push')
+
+
+def produce_insync():
+    ''' none -> none
+
+    insync related suggestions
+    '''
+
+    if not shutil.which('insync-headless'):
+        return
+
+    insync_status = subprocess.check_output(
+        ['insync-headless', 'get_status']).decode('utf-8')
+
+    if insync_status == 'ERROR':
+        print('insync-headless retry_errors')
+
+    elif insync_status == 'SHARE':
+        print('insync-headless reject_all_new_shares austin.voecks@gmail.com')
+
+
+def main():
+    '''
+    '''
+    produce_git()
+    produce_insync()
+
+
+if __name__ == '__main__':
+    main()
