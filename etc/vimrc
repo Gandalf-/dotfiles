@@ -132,6 +132,8 @@
             \ "ext": '.md',}]
     endif
 
+    autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
+
     nmap <Leader>wn <Plug>VimwikiNextLink
     nmap <Leader>wp <Plug>VimwikiPrevLink
 
