@@ -56,6 +56,7 @@ else if test -d ~/Documents/DotFiles
   set wiki_loc  ~/google_drive/personal/wiki/index.md
 
   set -gx DIMENSION gallium
+  set PATH ~/.local/bin $PATH
 
 # personal
 else if test -d ~/google_drive
