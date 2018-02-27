@@ -1,18 +1,144 @@
 # DotFiles
+A huge variety of scripts, configuration files, shell libaries for ease of use, development, configuration and information gathering on Linux, BSDs and WSL. 
 
-- configuration files for *vim*, *tmux*, *bash*, *irssi*, *fish*, *pylint*, *git*. 
-- a number of scripts, described below
+- `bin` a number of scripts, the most complex are described below
+   - [apocrypha](#Apocrypha) a lightweight, flexible JSON server and client
+   - [g](#g) a git wrapper for chaining commands together
+   - [qcrypt](#qcrypt) simple file or directory encryption and decryption for the CLI
+   - [wizard](#Wizard) an extensible, menu driven snippet organizer
 
-## g
+- `etc` my configuration files for [Vim](https://github.com/vim/vim), [Tmux](https://github.com/tmux/tmux), [Bash](https://www.gnu.org/software/bash/), [Irssi](https://irssi.org/), [Fish](https://github.com/fish-shell/fish-shell) and [Pylint](https://www.pylint.org/)
 
-Examples
+- `lib` shell, fish and python libraries that make all this work
+    - [autocli](#autocli) a bash code generation library that inspects functions to create menus
+
+# Apocrypha
+A flexible JSON database that supports a wide variety of operations. Add `lib/python/` to your `$PYTHONPATH` environment variable and then start the database server with `python3 -m apocrypha_server`. `bin/d` is the default client. You can connect to remote servers using `d` with the `-h` or `--host` flag. It will remember the last argument as the default server until you provide it again.
+
+The following are the supported database operations:
+
+### index 
+
+  index further into the database through a key, then recursively display all
+  keys and values under the key. this is the usual way to traverse the database and gather information
 ```
-$ g s
-$ g dh 2
-$ g s d a cm 'Update readme' f pl - ph
+  (dict a, str b, b in a) => a b -> IO
+
+  $ d apples granny = good
+  $ d apples
+  {'granny': 'good'}
+  $ d apples granny
+  good
 ```
 
-Usage
+### +
+
+  append a list or string to an existing string or list. create the left side
+  if it doesn't already exist
+```
+  (none a | str a | list a, str b | list b) => a + b -> none | error
+
+  $ d toppings = mushrooms
+  $ d toppings + pineapple
+  $ d toppings
+  mushrooms
+  pineapple
+```
+
+### -
+  remove one or more elements from a list. if the resulting list now only
+  contains one element, it's converted to a singleton
+```
+  (list a, str b | list b, b in a) => a - b -> none | error
+
+  $ d sweets = cake pie pizza
+  $ d sweets - pizza
+  $ d sweets
+  cake
+  pie
+```
+
+### =
+  assign the value of an element. if multiple arguments are given on the
+  right side of the assignment, the result is list assignment
+```
+  (any a, str b | list b) => a = b -> none
+
+  $ d apple = sauce pie
+  $ d apple
+  sauce
+  pie
+```
+
+### @
+  recursively search the current level for a value. displays all the keys
+  that correspond have the value's value
+```
+  (str a) => IO
+
+  $ d rasp = berry
+  $ d blue = berry
+  $ d @ berry
+  rasp
+  blue
+```
+### -k, --keys
+  show the keys immediately under this value. doesn't recursively print all
+  keys and values underneathe
+```
+  dict a => a --keys -> IO | error
+
+  $ d stone sand = weak
+  $ d stone lime = tough
+  $ d stone --keys
+  sand
+  lime
+```
+### -s, --set
+  replace the value of an index with raw JSON
+```
+  (any a, str b, JSON b) => a --set b -> none | error
+
+  $ d pasta --set '["spaghetti", "lasgna"]'
+  $ d pasta
+  spaghetti
+  lasagna
+```
+### -e, --edit
+  dump the raw JSON value of a key. used by a client to allow modification in
+  an editor and placement back in the database with --set
+```
+  any a => a --edit -> IO
+
+  $ d pasta = spaghetti
+  $ d pasta --edit
+```
+### -d, --del
+  delete any element from it's parent dictionary
+```
+  any a => a --del -> none
+
+  $ d apple sauce = good
+  $ d apple pie = great
+  $ d apple sauce --del
+  $ d apple
+  {'pie': 'great'}
+```
+
+# g
+A wrapper around git that allows any number of supported commands to be chained together. If any command fails, the rest will not be run. This allows common workflows to be written out all at once with terse abbreviations to save time and typing.
+
+### Examples and equivalent git commands:
+```
+$ g s 
+$ # git status
+$ g dh 2 
+$ # git diff HEAD~2
+$ g s d a cm 'Update readme' f pl - ph 
+$ # git status; git diff; git add -A; git commit -m 'Update readme'; git fetch; git pull; git push
+```
+
+### Usage
 ```
   g - super git wrapper
     !  : toggle confirmation
@@ -47,37 +173,45 @@ Usage
 ```
 
 
-## wizard
+# Wizard
 
-Examples
+Wizard leverages `lib/autocli.sh` to organize any number of commands into a tree menu structure. The user defines bash functions that are interpreted into options in menus based on their names.
 ```
-$ wizard show disk --help
-$ w s d
-$ wizard update pip --help
-$ w u p
+wizard_show_disk() {
+  df -h
+}
+```
+The function above creates the following command: `wizard show disk`, which can be shortened to `w s d` or any other combination of unambiguous substrings. Wizard comes with dozens of predefined functions, and is easily extensible so users can add their own.
+
+### Example usage
+```
+$ w sh
+wizard show
+
+  disk
+  history
+  largest-packages
+  next-break
+  progress
+  weather
+
+$ w show disk
+Filesystem               Size  Used Avail Use% Mounted on
+/dev/sda1                 35G   12G   22G  36% /
+devtmpfs                 7.8G     0  7.8G   0% /dev
+shmfs                    7.8G   80M  7.8G   1% /dev/shm
+tmp                      7.8G  3.1M  7.8G   1% /tmp
+tmpfs                    1.6G   16K  1.6G   1% /run
+tmpfs                    5.0M     0  5.0M   0% /run/lock
+run                      7.8G  704K  7.8G   1% /var/host/dbus
+/dev/mapper/encstateful   11G  135M   11G   2% /var/host/timezone
+/dev/root                1.7G  1.6G  169M  91% /lib/modules/3.14.0
+media                    7.8G     0  7.8G   0% /var/host/media
+none                     7.8G     0  7.8G   0% /sys/fs/cgroup
+none                     7.8G  4.0K  7.8G   1% /sys/fs/selinux
 ```
 
-Usage
-```
-wizard (-q | -s | -e)                       
-
-  add ...                                   
-  bookmark                                  
-  clean ...                                 
-  do ...                                    
-  install ...                               
-  insync ...                                
-  make ...                                  
-  mirror ...                                
-  open                                      
-  pkg ...                                   
-  quick ...                                 
-  show ...                                  
-  start ...                                 
-  update ... 
-```
-
-## qcrypt
+# qcrypt
 Full featured command line encryption with OpenSSL
 
 `usage: qcrypt (-a|-e|-d) target`

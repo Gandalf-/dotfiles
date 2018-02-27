@@ -6,6 +6,7 @@
 #
 #   All the intermediary functions are produced by auto_cli.sh
 
+
 wizard_make_hash() {
 
   head -c 50 /dev/urandom | md5sum | cut -f 1 -d ' '
@@ -15,11 +16,14 @@ wizard_make_hash() {
 common::require 'mount' &&
 wizard_make_tmpfs() {
 
-  common::required_help "$1" "[target directory]
+  common::required-help "$1" "[target directory]
 
-  create a tmpfs in the target directory
+  create a tmpfs in the target directory. this doesn't overwrite the target
+  directory if it exists; it will be available again after you unmount the
+  tmpfs
 
     wizard make tmpfs /usr/local/tmp/tmpfs
+    wizard make tmpfs ~/.stack
   "
 
   local target="$1"
@@ -28,7 +32,52 @@ wizard_make_tmpfs() {
   common::sudo \
     mount -t tmpfs \
     -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
-    tmpfs_"$(basename $target)" "$target"
+    tmpfs_"$(basename "$target")" "$target"
+
+  return $#
+}
+
+
+common::require 'git' 'mount' &&
+wizard_make_tmpfs-git-clone() {
+
+  common::required-help "$1" "[name] (git repo)
+
+  clone a repo into a new tmpfs directory.
+
+  useful for cloning, make, install, delete work flows
+
+    w make tmpfs-git-clone haskell
+    w make tmpfs-git-clone https://github.com/danilop/yas3fs.git
+  "
+
+  is_repo() {
+    [[ $1 =~ github ]]
+  }
+
+  name_from_repo() {
+    # https://github.com/danilop/yas3fs.git -> yas3fs
+
+    # shellcheck disable=2206
+    local array=( ${1//\// } )
+    local name="${array[ $(( ${#array[@]} - 1)) ]}"
+    result="${name%.*}"
+  }
+
+  # given just a repo url
+  if is_repo "$1"; then
+    name_from_repo "$1"
+    local name="$result"
+    local repo="$1"
+
+  # just a name, try my github
+  else
+    local name="$1"
+    local repo="https://github.com/Gandalf-/$name.git"
+  fi
+
+  wizard_make_tmpfs "$name"
+  common::do git clone --depth 1 "$repo" "$name"
 
   return $#
 }
@@ -37,9 +86,10 @@ wizard_make_tmpfs() {
 common::require 'mount' &&
 wizard_make_mirror() {
 
-  common::required_help "$2" "[source] [target]
+  common::required-help "$2" "[source] [target]
 
   mirror a root directory (source) into a tmpfs directory (target)
+  once created, wizard mirror ... commands allow syncing, pushing and pulling
 
     wizard make mirror ~/google_drive /usr/local/tmp/
   "
@@ -54,9 +104,9 @@ wizard_make_mirror() {
   common::sudo \
     mount -t tmpfs \
     -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
-    tmpfs_"$(basename $source)" "$target"
+    tmpfs_"$(basename "$source")" "$target"
 
-  common::do cp -r "$source"/\* "$target"
+  common::do cp -ar "$source"/\* "$target"
 
   return $#
 }
@@ -64,7 +114,7 @@ wizard_make_mirror() {
 
 if common::program-exists 'tmux'; then
   wizard_make_session() {
-    common::optional_help "$1" "[name]
+    common::optional-help "$1" "[name]
 
   create a new tmux session and move to it
     "

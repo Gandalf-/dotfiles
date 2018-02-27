@@ -21,4 +21,5 @@ function fish_user_key_bindings
   bind -M insert \cr fzf-history-widget
   bind -M insert \ec fzf-cd-widget
   bind -M insert \eb cb
+  bind -M insert \ew fzf-seeker
 end

@@ -2,7 +2,7 @@
 
 wizard_quick_shell() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   open a throw away shell file
   "
@@ -14,7 +14,7 @@ wizard_quick_shell() {
 
 wizard_quick_python() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   open a throw away python file
   "
@@ -27,7 +27,7 @@ wizard_quick_python() {
 
 wizard_quick_c()
 {
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   open a throw away c file
   "

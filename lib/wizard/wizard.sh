@@ -6,23 +6,124 @@
 #
 #   All the intermediary functions are produced by auto_cli.sh
 
-__name=""
 
+wizard_hunt() {
+
+  common::optional-help "$1" "(-#) (pid or process name)
+
+  find processes and send them a signal, default SIGTERM
+
+    wizard hunt
+    wizard hunt -9
+    wizard hunt vim
+    wizard hunt -HUP apache
+  "
+
+  local signal=-TERM
+  local nargs=$#
+  case $1 in -*) signal="$1"; shift ;; esac
+
+  while read -r process; do
+    local pid; pid="$(awk '{print $1}' <<< "$process")"
+    kill "$signal" "$pid"
+
+  done < <(
+    # shellcheck disable=SC2009
+    if [[ $1 ]]; then
+      ps ax | grep "$1"
+    else
+      ps ax
+    fi | cut -c 1-250 | fzf -m --cycle
+    )
+
+  return "$nargs"
+}
 
 wizard_regenerate() {
 
-  auto_wizard | grep -v 'work_wizard' # don't care that work_wizard not found
-  echo 'done'
+  # safely tell the script to rewrite itself. running auto_wizard in the middle
+  # of a wizard call will break the script (since it's overwriting itself)
+
+  common::optional-help "$1" "
+
+  regenerate wizard using auto_wizard, without clobbering ourselves
+  "
+
+  ( sleep .5
+    auto_wizard | grep -v 'scripity'
+  ) &
+
+  disown
+  exit 0
+}
+
+
+wizard_git_fetch() {
+
+  common::optional-help "$1" "
+
+  recursively discover git directories under the current working directory,
+  fetch all branches
+  "
+
+  common::check-network || common::error "no network connection"
+
+  while read -r directory; do
+    (
+      local dir; dir="$(dirname "$directory")"
+      cd "$dir" || exit
+      git fetch --quiet --all --recurse-submodules --prune
+      echo "$dir"
+    ) &
+
+  done < <(find . -name .git) | sort
+  wait
+
+  return $#
+}
+
+
+wizard_git_report() {
+
+  common::optional-help "$1" "
+
+  recursively discover git directories under the current working directory,
+  print out a small human readable report on their status
+  "
+
+  while read -r directory; do
+    (
+      local dir; dir="$(dirname "$directory")"
+      cd "$dir" || exit
+      local status; status="$(git status)"
+
+      grep -q 'Your branch is ahead of' <<< "$status" &&
+        echo "$dir has local commits not pushed to remote"
+
+      grep -q 'can be fast-forwarded' <<< "$status" &&
+        echo "$dir can be fast-forwarded"
+
+      grep -q 'Changes not staged for commit' <<< "$status" &&
+        echo "$dir has uncommited, modified files"
+
+      grep -q 'Untracked files' <<< "$status" &&
+        echo "$dir has untracked files"
+
+    ) &
+
+  done < <(find . -name .git) | sort
+  wait
+
+  return $#
 }
 
 
 wizard_macro() {
 
-  common::optional_help "$1" "(amount)
+  common::optional-help "$1" "(amount)
 
-  replay a portion of fish history in the current terminal
-
-    the order of selection in fzf matters
+  replay a portion of fish history in the current terminal. the order of
+  selection in fzf matters
   "
 
   while read -r command; do
@@ -36,8 +137,14 @@ wizard_macro() {
 
 common::require 'ffmpeg' &&
 wizard_transcode_movies() {
-  #
-  local preset=slow
+
+  common::required-help "$1" "[file.avi ...]
+
+  convert all input files to mp4 using ffmpeg, asks for confirmation before
+  deleting the source file
+  "
+
+  local preset=veryslow
 
   echo "Processing: $*"
   for file in "$@"; do
@@ -48,7 +155,7 @@ wizard_transcode_movies() {
       || common::error "failed on \"$file\". Giving up"
 
     common::echo "Waiting..."; sleep 5
-    common::do rm "$file"
+    common::do rm -i "$file"
   done
 
   return $#
@@ -57,10 +164,11 @@ wizard_transcode_movies() {
 
 wizard_file_remove-trailing-whitespace() {
 
-  common::required_help "$1" "[file ...]
+  common::required-help "$1" "[file ...]
 
   remove trailing whitespace in the target files
   "
+
   while [[ $1 ]]; do
     common::do sed -i 's/[ \t]*$//' "$1"
     shift
@@ -73,7 +181,7 @@ wizard_file_remove-trailing-whitespace() {
 common::require 'service' 'ntpd' &&
 wizard_sync_time() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   synchonrize the system clock with NTP
   "
@@ -86,7 +194,7 @@ wizard_sync_time() {
 
 wizard_file_pin-to-home() {
 
-  common::required_help "$1" "[target]
+  common::required-help "$1" "[target]
 
   create a symbolic link in the home directory to [target]
   "
@@ -105,27 +213,62 @@ wizard_chromeos_swap-search-escape() {
 common::require 'dpkg' &&
 wizard_show_largest-packages() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   list all packages installed, sorted by size
+
+    $ w s lp | head -n 50
   "
 
   # shellcheck disable=SC2016
   dpkg-query -Wf '${Installed-Size}\t${Package}\n' \
-    | sort -n
+    | sort -nr
 }
 
 
 wizard_start_http-server() {
 
-  python -m SimpleHTTPServer
+  common::optional-help "$1" "(arguments)
+
+  start an http server
+  "
+
+python3 -c "
+from http.server import SimpleHTTPRequestHandler, test
+import argparse
+
+class InlineHandler(SimpleHTTPRequestHandler):
+
+    def end_headers(self):
+        mimetype = self.guess_type(self.path)
+        is_file = not self.path.endswith('/')
+        print(mimetype, is_file)
+
+        # This part adds extra headers for some file types.
+        if is_file and mimetype in ['text/plain', 'application/octet-stream']:
+            self.send_header('Content-Type', 'text/plain')
+            self.send_header('Content-Disposition', 'inline')
+        super().end_headers()
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--bind', '-b', default='', metavar='ADDRESS',
+                        help='Specify alternate bind address '
+                             '[default: all interfaces]')
+    parser.add_argument('port', action='store',
+                        default=8000, type=int,
+                        nargs='?',
+                        help='Specify alternate port [default: 8000]')
+    args = parser.parse_args()
+    test(InlineHandler, port=args.port, bind=args.bind)
+"
   return 0
 }
 
 
 wizard_frequencies() {
 
-  common::required_help "$1" "[amount]
+  common::required-help "$1" "[amount]
 
   count the occurances of each input line
   "
@@ -140,7 +283,7 @@ wizard_frequencies() {
 
 wizard_ratio() {
 
-  common::required_help "$1" "[amount]
+  common::required-help "$1" "[amount]
 
   count the occurances of each input line, produce ratio data
   "
@@ -159,9 +302,11 @@ wizard_ratio() {
 common::require 'python' &&
 wizard_parse_json() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   pipe in json and pretty print it
+
+    $ curl remote.com/file.json | w parse json
   "
 
   python -m json.tool
@@ -171,102 +316,12 @@ wizard_parse_json() {
 common::require "xmllint" &&
 wizard_parse_xml() {
 
-  common::required_help "$1" "< file.xml
+  common::required-help "$1" "< file.xml
 
   pipe in a file an pretty print XML
   "
 
   xmllint --format -
-}
-
-
-common::require 'dpkg' &&
-wizard_clean_boot() {
-
-  common::optional_help "$1" "
-
-  safely cleans up old Linux kernel versions from /boot
-  "
-
-  dpkg --list \
-    | grep linux-image \
-    | awk '{ print $2 }' \
-    | sort -V \
-    | sed -n '/'"$(uname -r)"'/q;p' \
-    | xargs sudo apt-get -y purge
-
-  return $#
-}
-
-
-common::require 'dpkg' &&
-wizard_clean_apt() {
-
-  common::optional_help "$1" "
-
-  force purge removed apt packages
-  "
-
-  dpkg --list \
-    | grep "^rc" \
-    | cut -d " " -f 3 \
-    | xargs sudo dpkg --purge \
-    || common::color_error "Looks like there's nothing to clean!"
-}
-
-
-wizard_clean_files() {
-
-  local fixed dry=0 counter=0 usage="
-  $__name [-d|--dry]
-
-  smart remove duplicate file names and intermediary file types
-  "
-
-  case "$1" in
-    -d|--dry) dry=1 ;;
-    *)        common::error "$usage" ;;
-  esac
-
-  while read -r file; do
-    fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
-
-    # make sure the file still exists
-    if [[ -e "$file" ]] ; then
-
-      if [[ -f "$fixed" ]]; then
-        echo "remove dup: $file"
-        (( dry )) \
-          || rm "$file" \
-          || exit
-
-      else
-        echo "rename dup: $file"
-        (( dry )) \
-          || mv "$file" "$fixed" \
-          || exit
-      fi
-
-      let counter++
-    fi
-  done < <(find . -regex '.*([0-9]+).*')
-
-  while read -r file; do
-    echo "remove: $file"
-
-    (( dry )) \
-      || rm "$file" \
-      || exit
-    let counter++
-
-  done < <(find . -regex '.*\.\(pyc\|class\|o\|bak\)')
-
-  if (( dry )); then
-    echo "Would have cleaned up $counter files"
-  else
-    echo "Cleaned up $counter files"
-  fi
-  return 1
 }
 
 
@@ -284,83 +339,85 @@ wizard_update_platform() {
 common::require "apt" &&
 wizard_update_apt() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   update all apt packages
   "
+
+  common::check-network || common::error "no network connection"
+
   common::sudo apt update
   common::sudo apt upgrade -y
-  common::sudo apt-get autoremove
+  common::sudo apt-get autoremove -y
+
+  return $#
 }
 
 
 common::require "pip" &&
 wizard_update_pip() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   update all python packages installed by pip
   "
+  common::check-network || common::error "no network connection"
+
   sudo -H pip freeze --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \
     | xargs -n1 sudo -H pip install -U
+
+  return $#
 }
 
 
 common::require "wget" "pip" "apt" &&
-wizard_build_vim () {
-  # compile and install the latest vim
+wizard_build_vim() {
 
-  echo "installing vim"
-  wizard_install_lua
+  common::optional-help "$1" "
 
-  # common::sudo apt-get build-dep vim-gnome
-  common::sudo apt-get install \
-    libncurses5-dev libgnome2-dev libgnomeui-dev \
-    libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
-    libcairo2-dev libx11-dev libxpm-dev libxt-dev \
-    silversearcher-ag python-pip unzip
+  install all possible Vim dedependencies with apt, then download master.zip,
+  compile and install with all feaures enabled
+  "
 
   common::sudo -H pip install pylint flake8
 
-  common::do cd /tmp/
-  common::do wget -N 'https://github.com/vim/vim/archive/master.zip'
-  common::do unzip master.zip
-  common::do cd vim-master
+  common::do cd ~/
+	wizard_make_tmpfs-git-clone https://github.com/vim/vim.git
+  common::do cd vim
 
   common::do ./configure \
     --with-features=huge \
     --with-lua-prefix=/usr/local \
-    --with-lua-jit=yes \
     --enable-multibyte \
     --enable-rubyinterp=yes \
     --enable-pythoninterp=yes \
-    --with-python-config-dir=/usr/lib/python2.7/config \
     --enable-python3interp=yes \
-    --with-python3-config-dir=/usr/lib/python3.5/config \
     --enable-perlinterp=yes \
     --enable-luainterp=yes \
     --enable-gui=auto \
     --enable-cscope \
-    --prefix=/usr
+    --prefix=/usr/local
 
-  common::do \
-    make -j "$(getconf _NPROCESSORS_ONLN)" CFLAGS='"-oFast -march=native"'
+  common::do make -j CFLAGS='"-oFast -march=native"'
   common::sudo make install
-  echo "done"
 }
 
 
 wizard_open() {
 
-  common::required_help "$1" "
+  common::optional-help "$1" "
 
   open a file based on it's type and available programs
   "
+
+  stdin=''
+  timeout 0.1 read -r stdin
+
   local filetype
 
-  for target in "$@"; do
+  for target in "$@" "$stdin"; do
 
     # shellcheck disable=SC2076
     filetype="$(file -b "$target")"
@@ -370,11 +427,11 @@ wizard_open() {
 
     elif common::program-exists 'xdg-open'; then
 
-      if common::program-exists 'xiwit'; then
+      if common::program-exists 'xiwi'; then
         xiwit xdg-open "$target"
 
       else
-        xdg-open "$target"
+        xdg-open "$target" >/dev/null 2>&1
       fi
     fi
 
@@ -386,7 +443,7 @@ wizard_open() {
 common::require "sshd" &&
 wizard_start_sshd() {
 
-  common::optional_help "$1" "
+  common::optional-help "$1" "
 
   start sshd on Chrome OS
   "
@@ -401,18 +458,18 @@ wizard_start_sshd() {
 # shellcheck disable=SC2034,SC2154,SC2016
 {
 meta_head[wizard_make_file]='
-common::required_help "$1" "[language] [file name]
+common::required-help "$1" "[language] [file name]
 $__usage
 "
 '
 meta_head[wizard_make_project]='
-common::required_help "$1" "[language] [project name]
+common::required-help "$1" "[language] [project name]
 $__usage
 "
 '
 
 meta_head[wizard]='
-common::required_help "$1" "(-q | -s | -e)
+common::required-help "$1" "(-q | -s | -e)
 $__usage
 "
 

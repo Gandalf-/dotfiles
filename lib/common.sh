@@ -1,27 +1,90 @@
 #!/bin/bash
 
 # common
+#
 #   commonly useful functions across all scripts
 
 DEBUG=${DEBUG:-0}
-green="\033[01;32m"
-normal="\033[00m"
-PLATFORM="$(uname)"
+DNSSERVER=''
 
-export PLATFORM
 
-common::open-link() {
+common::verify-global() {
 
-  google-chrome "$1" 2>/dev/null >/dev/null &
+  # string -> none || exit
+  #
+  # check if a variable is defined
+
+  local global="$1"
+
+  [[ ${!global} ]] ||
+    common::error "$global not defined in ~/.wizardrc.
+
+  run \"wizard help ${global//_/-}\" for more information
+  "
 }
+
+
+common::process-exists() {
+
+  # pid -> bool
+  #
+  # check if a process is running
+
+  kill -0 "$1"
+}
+
+
+common::file-not-empty() {
+
+  # file -> bool
+  #
+  # check if a file's size is non zero
+
+  [[ -s "$1" ]]
+}
+
+common::dir-exists() {
+
+  # path -> bool
+  #
+  # check if a directory exists
+
+  [[ -d "$1" ]]
+}
+
+
+common::inplace-file-op() {
+
+  # file, string -> none
+  #
+  # common::inplace-file-op words.txt "grep -o . | sort | uniq -c"
+
+  local file="$1"; shift
+  local copy="$file".copy
+  local ops="$*"
+
+  mv "$file" "$copy"
+  eval "cat $copy | $ops > $file"
+  rm "$copy"
+}
+
+
+common::check-network() {
+
+  # none -> bool
+
+  nc -w 1 -z "$DNSSERVER" 53
+}
+
 
 common::file-exists() {
   # check if a file exists
   #
   # common::file-exists $filename && echo "yes"
 
-  [[ -f "$1" ]]
+  [[ -e "$1" ]]
 }
+
 
 common::require() {
 
@@ -42,14 +105,25 @@ common::require() {
   return 0
 }
 
+
 common::program-exists() {
 
   which "$1" >/dev/null 2>/dev/null
 }
 
+
 common::contains() {
   [[ $1 =~ $2 ]]
 }
+
+
+common::program-exists "google-chrome" &&
+common::open-link() {
+  # open a link in chrome
+
+  google-chrome "$1" 2>/dev/null >/dev/null &
+}
+
 
 common::debug() {
   # only run the arguments if the DEBUG flag is set
@@ -59,40 +133,46 @@ common::debug() {
   (( "$DEBUG" )) && eval "$*"
 }
 
+
 common::clone() {
+  # clone a repository to a location
 
-  common::required_help "$2" "[target] [location]"
+  local target="${1?target required}"
+  local location="${2?location required}"
 
-  local target="$1"
-  local location="$2"
+  [[ -d "$location" ]] || common::error "location doesn't exist!"
 
-  [[ -d "$location" ]] || \
-    common::do git clone --depth 1 "$target" "$location"
+  common::do git clone --depth 1 "$target" "$location"
 }
 
-common::required_help() {
+
+common::required-help() {
   # produce help message when $1 is required
   #
-  # common::required_help "$1" "[some arguments]
+  # common::required-help "$1" "[some arguments]
   # this is some help text!
   # "
 
-  caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
-  case $1 in ""|-h|--help) common::error "
+  local caller="${FUNCNAME[1]//_/ }"
+
+  case $1 in ''|-h|--help) common::error "
 ${caller} ${*:2}";; esac
 }
 
-common::optional_help() {
+
+common::optional-help() {
   # produce help message when $1 may be nothing
   #
-  # common::optional_help "$1" "
+  # common::optional-help "$1" "
   # this function doesn't take any arguments!
   # "
 
-  caller="$(tr '_' ' ' <<< "${FUNCNAME[1]}")"
+  local caller="${FUNCNAME[1]//_/ }"
+
   case $1 in -h|--help) common::error "
 ${caller} ${*:2}";; esac
 }
+
 
 common::return() {
   # force a return code
@@ -101,6 +181,7 @@ common::return() {
 
   return "$1"
 }
+
 
 common::error() {
   # print a message and exit with failure
@@ -111,23 +192,27 @@ common::error() {
   exit 1
 }
 
-common::color_error() {
+
+common::color-error() {
   # print a colored message and exit with failure
   #
-  # common:color_error "something went very wrong"
+  # common:color-error "something went very wrong"
 
   common::echo "$@"
   exit 1
 }
+
 
 common::echo() {
   # print a colored message
   #
   # common:echo "something happened"
 
+  # shellcheck disable=SC1117
   local green="\033[01;32m" normal="\033[00m"
-  printf "%b%s%b\n" "$green" "$*" "$normal"
+  printf "%b%s%b"\\n "$green" "$*" "$normal"
 }
+
 
 common::wait-until() {
   # keep running a command sequence until it passes
@@ -142,15 +227,14 @@ common::wait-until() {
   echo
 }
 
+
 common::do() {
   # print what we're about to do, then do it
   #
   # common::do rm -rf /tmp/*
 
-  local green="\033[01;32m" normal="\033[00m"
-
   if ! (( "$AUTO" )); then
-    printf "%b%s%b\n" "$green" "$*" "$normal"
+    common::echo "$*"
   fi
 
   if (( "$CONFIRM" )); then
@@ -163,23 +247,25 @@ common::do() {
 
   elif (( "$QUIET" )); then
     eval "${@/ \"\"/}" >/dev/null \
-      || common::color_error "error running \"$*\""
+      || common::color-error "error running \"$*\""
 
   elif (( "$SILENT" )); then
     eval "${@/ \"\"/}" >/dev/null 2>/dev/null \
-      || common::color_error "error running \"$*\""
+      || common::color-error "error running \"$*\""
 
   else
     eval "${@/ \"\"/}" \
-      || common::color_error "error running \"$*\""
+      || common::color-error "error running \"$*\""
   fi
 }
+
 
 common::sudo() {
   # print what we're about to do, then sudo do it
 
   common::do "sudo" "$@"
 }
+
 
 common::confirm() {
   # ask for confirmation with a message, if they reply n or N, exit

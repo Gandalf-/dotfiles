@@ -1,4 +1,9 @@
+bin/d
 bin/wizard
 *.nfs*
 etc/gitconfig
 lib/fish/completions/w.fish
+__pycache__
+*.pyc
+.coverage
+htmlcov
