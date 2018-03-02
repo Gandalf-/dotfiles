@@ -44,6 +44,7 @@ class TestApocrypha(unittest.TestCase):
         123
         '''
         a = Apocrypha(testdb)
+        a.action(['a', '=', '123'])
         a.action(['a'])
         self.assertEqual(a.output, ['123'])
 

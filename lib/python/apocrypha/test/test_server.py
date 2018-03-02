@@ -56,12 +56,28 @@ class TestServer(unittest.TestCase):
 
     # server tests
     def test_cache_hit(self):
+
+        # write operations don't update the cache
         query(['pizza', '=', 'sauce'])
+        self.assertNotIn(('pizza',), TestServer.database.cache)
+
+        # get operations do
         query(['pizza'])
+
+        self.assertIn(('pizza',), TestServer.database.cache)
         result = query(['pizza'])
 
         self.assertEqual(result, ['sauce'])
-        self.assertTrue(len(TestServer.database.cache) > 0)
+        self.assertIn(('pizza',), TestServer.database.cache)
+
+    def test_cache_deep_hit(self):
+        query(['a', '-d'])
+        query(['a', 'b', 'c', 'd', 'e', '=', 'f'])
+        query(['a', 'b', 'c', 'd', 'e'])
+
+        self.assertIn(
+                ('a', 'b', 'c', 'd', 'e'),
+                TestServer.database.cache)
 
     def test_cache_invalidate(self):
         query(['pizza', '=', 'sauce'])
@@ -74,6 +90,40 @@ class TestServer(unittest.TestCase):
         query(['pizza', '-d'])
         self.assertNotIn(('pizza',), TestServer.database.cache)
         self.assertNotIn((), TestServer.database.cache)
+
+    def test_cache_invalidate_parent(self):
+        query(['one layer', 'two layer', '=', 'cake'])
+
+        query(['one layer', 'two layer'])
+        self.assertIn(('one layer', 'two layer'), TestServer.database.cache)
+
+        query(['one layer'])
+        self.assertIn(('one layer',), TestServer.database.cache)
+
+        # both parent and child are in cache, now change the child and make
+        # sure the parent is also invalidated
+
+        query(['one layer', 'two layer', '=', 'goop'])
+
+        self.assertNotIn(('one layer', 'two layer'), TestServer.database.cache)
+        self.assertNotIn(('one layer',), TestServer.database.cache)
+
+    def test_cache_invalidate_child(self):
+        query(['one layer', 'two layer', '=', 'cake'])
+
+        query(['one layer', 'two layer'])
+        self.assertIn(('one layer', 'two layer'), TestServer.database.cache)
+
+        query(['one layer'])
+        self.assertIn(('one layer',), TestServer.database.cache)
+
+        # both parent and child are in cache, now change the parent and make
+        # sure the child is also invalidated
+
+        query(['one layer', '-d'])
+
+        self.assertNotIn(('one layer', 'two layer'), TestServer.database.cache)
+        self.assertNotIn(('one layer',), TestServer.database.cache)
 
     def test_timing(self):
         result = query(['-t', 'wolf', 'legs'])
@@ -172,6 +222,10 @@ class TestServer(unittest.TestCase):
             TestServer.db.get('animals', cast=set),
             {'wolf', 'octopus', 'bird'})
 
+    def test_get_cast_to_error(self):
+        with self.assertRaises(ApocryphaError):
+            TestServer.db.get('animals', cast=dict)
+
     # keys
     def test_keys(self):
         self.assertEqual(
@@ -242,6 +296,10 @@ class TestServer(unittest.TestCase):
     def test_append_error(self):
         with self.assertRaises(ApocryphaError):
             TestServer.db.append('octopus', value='sandwich')
+
+    def test_append_type_error(self):
+        with self.assertRaises(ApocryphaError):
+            TestServer.db.append('octopus', value={'a': 1})
 
     # set
     def test_set(self):

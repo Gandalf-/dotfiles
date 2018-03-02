@@ -71,7 +71,7 @@ class Client(object):
         try:
             query(keys + ['+'] + value, host=self.host, port=self.port)
 
-        except ValueError:
+        except (TypeError, ValueError):
             raise ApocryphaError('error: {v} is not a str or list')
 
     def remove(self, *keys, value):

@@ -71,7 +71,7 @@ class ApocryphaHandler(socketserver.BaseRequestHandler):
         args = self.data.split('\n') if self.data else []
         args = list(filter(None, args))
 
-        while args and args[0] in ['-c', '--context', '-s', '--strict']:
+        while args and args[0] in {'-c', '--context', '-s', '--strict'}:
 
             if args[0] == '-c':
                 self.server.database.add_context = True

@@ -114,9 +114,18 @@ class Apocrypha(object):
             []
         '''
 
+        # nothing to invalidate if not a write operation
         if not self.write_needed:
             return
 
+        # invalidate children
+        args_tuple = tuple(args)
+
+        for element in dict(self.cache):
+            if args_tuple < element:
+                del(self.cache[element])
+
+        # invalidate parents
         while args:
 
             # also need to clear any requests for keys at each level
@@ -161,14 +170,14 @@ class Apocrypha(object):
                 del(db[child])
                 child_removed = True
 
-            tleaf = type(leaf)
+            type_of_leaf = type(leaf)
 
             # convert lists of a single element to singletons
-            if tleaf == list and len(leaf) == 1:
+            if type_of_leaf == list and len(leaf) == 1:
                 db[child] = leaf[0]
 
             # recurse
-            elif tleaf == dict:
+            elif type_of_leaf == dict:
                 child_removed_child = self.normalize(leaf)
 
                 # if our child removed a child, they may now need to be removed
@@ -288,7 +297,7 @@ class Apocrypha(object):
                 if self.strict:
                     self._error(key + ' not found')
 
-                # create a new key
+                # create a new key, if unused, it'll be cleaned by normalize()
                 base[key] = {}
                 base = base[key]
 
