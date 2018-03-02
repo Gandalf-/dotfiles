@@ -118,6 +118,12 @@ class Apocrypha(object):
         if not self.write_needed:
             return
 
+        # strip off the write operator and it's arguments
+        for i, arg in enumerate(args):
+            if arg in Apocrypha.write_ops:
+                args = args[:i]
+                break
+
         # invalidate children
         args_tuple = tuple(args)
 

@@ -79,6 +79,13 @@ class TestServer(unittest.TestCase):
                 ('a', 'b', 'c', 'd', 'e'),
                 TestServer.database.cache)
 
+    def test_cache_update_for_json(self):
+        query(['pizza', '=', 'sauce'])
+        value = query(['pizza', '--edit'])
+
+        self.assertIn(('pizza', '--edit',), TestServer.database.cache)
+        self.assertEqual(value, ['"sauce"'])
+
     def test_cache_invalidate(self):
         query(['pizza', '=', 'sauce'])
 
@@ -303,10 +310,10 @@ class TestServer(unittest.TestCase):
 
     # set
     def test_set(self):
+
         TestServer.db.set('test item', value='hello')
-        self.assertEqual(
-            TestServer.db.get('test item'),
-            'hello')
+        value = TestServer.db.get('test item')
+        self.assertEqual(value, 'hello')
 
     def test_set_list(self):
         TestServer.db.set('test list', value=['hello', 'there'])
