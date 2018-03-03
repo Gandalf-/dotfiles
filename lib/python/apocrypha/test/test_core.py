@@ -549,6 +549,177 @@ class TestApocryphaErrors(unittest.TestCase):
             ])
 
 
+class TestCache(unittest.TestCase):
+
+    def test_add(self):
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['key'])
+
+        self.assertEqual(
+            a.cache, {('key',): 'value'})
+
+    def test_add_deep(self):
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['apple', 'blue', 'berry'])
+
+        self.assertEqual(
+            a.cache, {('apple', 'blue', 'berry'): 'value'})
+
+    def test_add_read_op(self):
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['key'])
+
+        for op in Apocrypha.read_ops:
+            a.maybe_cache(['apple', op])
+
+        output = {
+            ('apple', '-e'): 'value', ('apple', '--keys'): 'value',
+            ('apple', '-k'): 'value', ('apple', '--edit'): 'value',
+            ('key',): 'value'}
+
+        self.assertEqual(a.cache, output)
+
+    def test_write_op_not_added(self):
+        a = Apocrypha(testdb)
+
+        for op in Apocrypha.write_ops:
+            a.maybe_cache(['apple', op, 'value'])
+            self.assertEqual(a.cache, {})
+
+    def test_invalidate_with_overwrite(self):
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['key'])
+        self.assertEqual(a.cache, {('key',): 'value'})
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['key', '=', 'new value'])
+        self.assertEqual(a.cache, {})
+
+    def test_invalidate_with_delete(self):
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['key'])
+        self.assertEqual(a.cache, {('key',): 'value'})
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['key', '-d'])
+        self.assertEqual(a.cache, {})
+
+    def test_invalidate_with_set(self):
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['key'])
+        self.assertEqual(a.cache, {('key',): 'value'})
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['key', '--set', 'new value'])
+        self.assertEqual(a.cache, {})
+
+    def test_invalidate_children(self):
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['one', 'two three', 'four'])
+        a.maybe_cache(['one', 'two three'])
+        self.assertEqual(
+            a.cache,
+            {('one', 'two three', 'four'): 'value',
+             ('one', 'two three'): 'value'})
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['one', '-d'])
+        self.assertEqual(a.cache, {})
+
+    def test_invalidate_root_child(self):
+        '''
+        both children of a non root key are invalidated when the parent changed
+        '''
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['one', 'two three', 'four'])
+        a.maybe_cache(['two', 'two three', 'five'])
+        a.maybe_cache(['three'])
+
+        self.assertEqual(
+            a.cache,
+            {('one', 'two three', 'four'): 'value',
+             ('two', 'two three', 'five'): 'value',
+             ('three',): 'value'})
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['one', '-d'])
+        self.assertEqual(
+            a.cache,
+            {('two', 'two three', 'five'): 'value',
+             ('three',): 'value'})
+
+    def test_invalidate_children_non_root(self):
+        '''
+        both children of a non root key are invalidated when the parent changed
+        '''
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['one', 'two three', 'four'])
+        a.maybe_cache(['one', 'two three', 'five'])
+        a.maybe_cache(['one'])
+        self.assertEqual(
+            a.cache,
+            {('one', 'two three', 'four'): 'value',
+             ('one', 'two three', 'five'): 'value',
+             ('one',): 'value'})
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['one', 'two three', '-d'])
+        self.assertEqual(a.cache, {})
+
+    def test_invalidate_children_non_root_read_op(self):
+        '''
+        both children of a non root key are invalidated when the parent changed
+        '''
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['one', 'two three', 'four'])
+        a.maybe_cache(['one', '--keys'])
+        a.maybe_cache(['one'])
+        a.maybe_cache(['two'])
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['one', 'two three', '-d'])
+        self.assertEqual(a.cache, {('two',): 'value'})
+
+    def test_invalidate_siblings_not_effected(self):
+        '''
+        invalidating one child doesn't affect the other children
+        '''
+        a = Apocrypha(testdb)
+
+        a.output = 'value'
+        a.maybe_cache(['one', 'two three', 'four'])
+        a.maybe_cache(['one', 'apple', 'sauce'])
+        self.assertEqual(
+            a.cache,
+            {('one', 'two three', 'four'): 'value',
+             ('one', 'apple', 'sauce'): 'value'})
+
+        a.write_needed = True
+        a.maybe_invalidate_cache(['one', 'two three', '-d'])
+        self.assertEqual(
+            a.cache, {('one', 'apple', 'sauce'): 'value'})
+
+
 class TestNormalize(unittest.TestCase):
 
     def test_remove_empty_dict(self):

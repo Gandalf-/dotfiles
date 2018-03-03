@@ -7,6 +7,8 @@ import unittest
 from apocrypha.core import ApocryphaError
 from apocrypha.server import ApocryphaServer, ApocryphaHandler, Server
 
+db = apocrypha.client.Client()
+
 
 def query(args, raw=False):
     ''' list of string -> string
@@ -55,6 +57,7 @@ class TestServer(unittest.TestCase):
         TestServer.server.server_close()
 
     # server tests
+    #   caching
     def test_cache_hit(self):
 
         # write operations don't update the cache
@@ -79,13 +82,6 @@ class TestServer(unittest.TestCase):
                 ('a', 'b', 'c', 'd', 'e'),
                 TestServer.database.cache)
 
-    def test_cache_update_for_json(self):
-        query(['pizza', '=', 'sauce'])
-        value = query(['pizza', '--edit'])
-
-        self.assertIn(('pizza', '--edit',), TestServer.database.cache)
-        self.assertEqual(value, ['"sauce"'])
-
     def test_cache_invalidate(self):
         query(['pizza', '=', 'sauce'])
 
@@ -99,6 +95,9 @@ class TestServer(unittest.TestCase):
         self.assertNotIn((), TestServer.database.cache)
 
     def test_cache_invalidate_parent(self):
+        '''
+        changing a child key invalidates all of it's parents
+        '''
         query(['one layer', 'two layer', '=', 'cake'])
 
         query(['one layer', 'two layer'])
@@ -116,6 +115,9 @@ class TestServer(unittest.TestCase):
         self.assertNotIn(('one layer',), TestServer.database.cache)
 
     def test_cache_invalidate_child(self):
+        '''
+        changing a parent key invalidates all of it's direct children
+        '''
         query(['one layer', 'two layer', '=', 'cake'])
 
         query(['one layer', 'two layer'])
@@ -132,6 +134,49 @@ class TestServer(unittest.TestCase):
         self.assertNotIn(('one layer', 'two layer'), TestServer.database.cache)
         self.assertNotIn(('one layer',), TestServer.database.cache)
 
+    @unittest.skip('unknown issue')
+    def test_cache_doesnt_effect_sibling(self):
+        db.delete('one layer')
+
+        db.set('one layer', 'two layer', value='cake')
+        db.set('one layer', 'apple layer', value='sauce')
+        print(TestServer.database.db)
+
+        self.assertEqual(
+            db.get('one layer', 'two layer'), 'cake')
+        self.assertEqual(
+            db.get('one layer', 'apple layer'), 'sauce')
+        self.assertEqual(
+            db.get('one layer'), {'two layer': 'cake', 'apple layer': 'sauce'})
+
+        print(TestServer.database.cache)
+        self.assertIn(('one layer',), TestServer.database.cache)
+        self.assertIn(('one layer', 'two layer',), TestServer.database.cache)
+        self.assertIn(('one layer', 'apple layer',), TestServer.database.cache)
+
+    def test_cache_top_level_read_operators(self):
+        '''
+        make sure --keys, --edit on root are invalidated correctly
+        '''
+        pass
+
+    def test_cache_top_level_write_operators(self):
+        '''
+        writing to root clears the entire cache
+        '''
+        pass
+
+    def test_cache_write_ops_not_cached(self):
+        pass
+
+    def test_cache_read_ops_are_cached(self):
+        query(['pizza', '=', 'sauce'])
+        value = query(['pizza', '--edit'])
+
+        self.assertIn(('pizza', '--edit',), TestServer.database.cache)
+        self.assertEqual(value, ['"sauce"'])
+
+    #  timing
     def test_timing(self):
         result = query(['-t', 'wolf', 'legs'])
         self.assertEqual(result, ['0'])

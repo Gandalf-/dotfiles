@@ -46,14 +46,7 @@ class ApocryphaServer(apocrypha.Apocrypha):
             else:
                 self.output = ''
 
-            # do not cache if context was added, a dereference was required to
-            # get the result or the query contained a write operator
-            cache = not (self.add_context or self.dereference_occurred)
-            cache = cache and not (
-                    apocrypha.Apocrypha.write_ops.intersection(set(args)))
-
-            if cache:
-                self.cache[key] = self.output
+            self.maybe_cache(args)
 
 
 class ApocryphaHandler(socketserver.BaseRequestHandler):

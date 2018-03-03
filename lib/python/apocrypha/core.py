@@ -93,6 +93,20 @@ class Apocrypha(object):
             with open(self.path, 'w') as fd:
                 json.dump(self.db, fd, sort_keys=True)
 
+    def maybe_cache(self, args):
+        ''' list of string -> none
+        '''
+        key = tuple(args)
+
+        # do not cache if context was added, a dereference was required to
+        # get the result or the query contained a write operator
+        cache = not (self.add_context or self.dereference_occurred)
+        cache = cache and not (
+                Apocrypha.write_ops.intersection(set(args)))
+
+        if cache:
+            self.cache[key] = self.output
+
     def maybe_invalidate_cache(self, args):
         ''' list of string -> none
 
@@ -113,6 +127,16 @@ class Apocrypha(object):
             devbot
             []
         '''
+        def sublist(ls1, ls2):
+            '''
+            '''
+            for i, element in enumerate(ls1):
+                try:
+                    if ls2[i] != element:
+                        return False
+                except IndexError:
+                    return False
+            return True
 
         # nothing to invalidate if not a write operation
         if not self.write_needed:
@@ -128,7 +152,13 @@ class Apocrypha(object):
         args_tuple = tuple(args)
 
         for element in dict(self.cache):
-            if args_tuple < element:
+
+            # strip of read operators, so child + --keys, --edit are caught
+            if element and element[-1] in Apocrypha.read_ops:
+                element = element[:-1]
+
+            # if the arguments are a subset of element, remove it
+            if sublist(args_tuple, element) and element in self.cache:
                 del(self.cache[element])
 
         # invalidate parents
@@ -142,6 +172,13 @@ class Apocrypha(object):
             if args_tuple in self.cache:
                 del(self.cache[args_tuple])
 
+            # also have to check for parent + --keys, --edit
+            for operator in Apocrypha.read_ops:
+                op_tuple = tuple(args + [operator])
+
+                if op_tuple in self.cache:
+                    del(self.cache[op_tuple])
+
             args = args[:-1]
 
         # always have to clear the root level, which isn't represented in the
@@ -150,6 +187,12 @@ class Apocrypha(object):
 
         if () in self.cache:
             del(self.cache[()])
+
+        for op in Apocrypha.read_ops:
+            op_tuple = tuple([op])
+
+            if op_tuple in self.cache:
+                del(self.cache[op_tuple])
 
     def normalize(self, db):
         ''' dict -> bool
