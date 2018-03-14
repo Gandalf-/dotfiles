@@ -107,92 +107,19 @@ class Apocrypha(object):
         if cache:
             self.cache[key] = self.output
 
-    def maybe_invalidate_cache(self, args):
+    def maybe_invalidate_cache(self):
         ''' list of string -> none
 
         If a write has occurred, we may need to invalidate some entries in
         self.cache; we can invalidate only the necessary entries by inspecting
         the arguments to the query
-
-        we also record the current time, so last modification time can be
-        queried with -t
-
-        given:
-            args = devbot events update when = 0
-
-        remove from the cache:
-            devbot events update when = 0
-            devbot events update when =
-            ..
-            devbot
-            []
         '''
-        def sublist(ls1, ls2):
-            '''
-            '''
-            for i, element in enumerate(ls1):
-                try:
-                    if ls2[i] != element:
-                        return False
-                except IndexError:
-                    return False
-            return True
 
         # nothing to invalidate if not a write operation
         if not self.write_needed:
             return
 
-        # strip off the write operator and it's arguments
-        for i, arg in enumerate(args):
-            if arg in Apocrypha.write_ops:
-                args = args[:i]
-                break
-
-        # invalidate children
-        args_tuple = tuple(args)
-
-        for element in dict(self.cache):
-
-            # strip of read operators, so child + --keys, --edit are caught
-            if element and element[-1] in Apocrypha.read_ops:
-                element = element[:-1]
-
-            # if the arguments are a subset of element, remove it
-            if sublist(args_tuple, element) and element in self.cache:
-                del(self.cache[element])
-
-        # invalidate parents
-        while args:
-
-            # also need to clear any requests for keys at each level
-            args_tuple = tuple(args)
-
-            self.timing[args_tuple] = str(int(time.time()))
-
-            if args_tuple in self.cache:
-                del(self.cache[args_tuple])
-
-            # also have to check for parent + --keys, --edit
-            for operator in Apocrypha.read_ops:
-                op_tuple = tuple(args + [operator])
-
-                if op_tuple in self.cache:
-                    del(self.cache[op_tuple])
-
-            args = args[:-1]
-
-        # always have to clear the root level, which isn't represented in the
-        # input arguments list
-        self.timing[()] = str(int(time.time()))
-
-        if () in self.cache:
-            del(self.cache[()])
-
-        for op in Apocrypha.read_ops:
-            op_tuple = tuple([op])
-
-            if op_tuple in self.cache:
-                del(self.cache[op_tuple])
+        self.cache = {}
 
     def normalize(self, db):
         ''' dict -> bool

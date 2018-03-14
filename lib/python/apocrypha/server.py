@@ -112,7 +112,7 @@ class ApocryphaHandler(socketserver.BaseRequestHandler):
         query_duration = (end_time - start_time) / 100000
 
         # reset internal values, save changes if needed
-        db.maybe_invalidate_cache(args)
+        db.maybe_invalidate_cache()
         db.maybe_save_db()
         db.reset()
 

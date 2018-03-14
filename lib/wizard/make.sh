@@ -153,7 +153,7 @@ EOF
 
 wizard_make_file_python() {
   cat > "$1.py" << EOF
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import sys
 

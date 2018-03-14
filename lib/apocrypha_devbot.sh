@@ -25,8 +25,8 @@ devbot::task:handle() {
   common::debug "task:handle $*"
 
   local event="$1"
-
   local interval when action require
+
   when="$(d devbot events "$event" when)"
 
   if (( when < $(date '+%s') )); then

@@ -215,7 +215,6 @@
     let g:ale_echo_msg_warning_str = '▲'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
 
-
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => UI
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -299,6 +298,10 @@
         %s/\s\+$//e
         call cursor(l, c)
     endfun
+
+  " terminal!
+    tnoremap <ESC><ESC> <C-\><C-N>
+    nnoremap <leader>T :terminal fish<CR>
 
   " misc autocommands
   augroup misc_commands
