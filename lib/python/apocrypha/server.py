@@ -82,9 +82,10 @@ class ApocryphaHandler(socketserver.BaseRequestHandler):
         self.request is the TCP socket connected to the client
         '''
         db = self.server.database
+        milliseconds = 10 ** 5
 
         # get query, parse into arguments
-        start_time = int(round(time.time() * 100000))
+        start_time = int(round(time.time() * milliseconds))
         self.data = ''
         while True:
             data = self.request.recv(1024).decode('utf-8')
@@ -108,8 +109,8 @@ class ApocryphaHandler(socketserver.BaseRequestHandler):
         # send reply to client
         self.request.sendall(result.encode('utf-8'))
 
-        end_time = int(round(time.time() * 100000))
-        query_duration = (end_time - start_time) / 100000
+        end_time = int(round(time.time() * milliseconds))
+        query_duration = (end_time - start_time) / milliseconds
 
         # reset internal values, save changes if needed
         db.maybe_invalidate_cache()

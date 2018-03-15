@@ -7,6 +7,16 @@
 #   All the intermediary functions are produced by auto_cli.sh
 
 
+wizard_switch() {
+
+  local selection; selection="$(wizard show projects | fzf --cycle)"
+
+  [[ $selection ]] || common::error "no selection made"
+  wizard make session "$selection"
+
+  return $#
+}
+
 wizard_hunt() {
 
   common::optional-help "$1" "(-#) (pid or process name)

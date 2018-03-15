@@ -120,8 +120,11 @@ if common::program-exists 'tmux'; then
     "
 
     name="${*:-$RANDOM}"
-    tmux new -d -s "$name"
+
+    tmux list-sessions | grep -q "$name" \
+      || tmux new-session -d -s "$name"
     tmux switch-client -t "$name"
+
     return $#
   }
 

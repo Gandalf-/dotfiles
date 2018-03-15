@@ -1,5 +1,15 @@
 #!/bin/env bash
 
+wizard_show_projects() {
+
+  while read -r project; do
+
+    printf '%-15s %s\n' \
+      "$project" "$(d "$project" desc)"
+
+  done < <(d projects)
+}
+
 wizard_show_next-break() {
 
   common::optional-help "$1" "[--script | break period]
