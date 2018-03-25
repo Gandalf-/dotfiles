@@ -1,5 +1,7 @@
 # DotFiles
-A huge variety of scripts, configuration files, shell libaries for ease of use, development, configuration and information gathering on Linux, BSDs and WSL. 
+
+A huge variety of scripts, configuration files, shell libaries for ease of use,
+development, configuration and information gathering on Linux, BSDs and WSL.
 
 - `bin` a number of scripts, the most complex are described below
    - [apocrypha](#Apocrypha) a lightweight, flexible JSON server and client
@@ -7,134 +9,37 @@ A huge variety of scripts, configuration files, shell libaries for ease of use, 
    - [qcrypt](#qcrypt) simple file or directory encryption and decryption for the CLI
    - [wizard](#Wizard) an extensible, menu driven snippet organizer
 
-- `etc` my configuration files for [Vim](https://github.com/vim/vim), [Tmux](https://github.com/tmux/tmux), [Bash](https://www.gnu.org/software/bash/), [Irssi](https://irssi.org/), [Fish](https://github.com/fish-shell/fish-shell) and [Pylint](https://www.pylint.org/)
+- `etc` my configuration files for [Vim](https://github.com/vim/vim),
+  [Tmux](https://github.com/tmux/tmux),
+  [Bash](https://www.gnu.org/software/bash/), [Irssi](https://irssi.org/),
+  [Fish](https://github.com/fish-shell/fish-shell) and
+  [Pylint](https://www.pylint.org/)
 
 - `lib` shell, fish and python libraries that make all this work
     - [autocli](#autocli) a bash code generation library that inspects functions to create menus
 
 # Apocrypha
-A flexible JSON database that supports a wide variety of operations. Add `lib/python/` to your `$PYTHONPATH` environment variable and then start the database server with `python3 -m apocrypha_server`. `bin/d` is the default client. You can connect to remote servers using `d` with the `-h` or `--host` flag. It will remember the last argument as the default server until you provide it again.
 
-The following are the supported database operations:
+A flexible JSON database that supports a wide variety of operations. Start the
+database server with `python3 -m apocrypha_server`. `bin/d` is the default
+client. You can connect to remote servers using `d` with the `-h` or `--host`
+flag. It will remember the last argument as the default server until you
+provide it again.
 
-### index 
+Apocrypha is now hosted separately
+[here](https://github.com/Gandalf-/apocrypha) and available on pip with `pip install apocrypha`
 
-  index further into the database through a key, then recursively display all
-  keys and values under the key. this is the usual way to traverse the database and gather information
-```
-  (dict a, str b, b in a) => a b -> IO
-
-  $ d apples granny = good
-  $ d apples
-  {'granny': 'good'}
-  $ d apples granny
-  good
-```
-
-### +
-
-  append a list or string to an existing string or list. create the left side
-  if it doesn't already exist
-```
-  (none a | str a | list a, str b | list b) => a + b -> none | error
-
-  $ d toppings = mushrooms
-  $ d toppings + pineapple
-  $ d toppings
-  mushrooms
-  pineapple
-```
-
-### -
-  remove one or more elements from a list. if the resulting list now only
-  contains one element, it's converted to a singleton
-```
-  (list a, str b | list b, b in a) => a - b -> none | error
-
-  $ d sweets = cake pie pizza
-  $ d sweets - pizza
-  $ d sweets
-  cake
-  pie
-```
-
-### =
-  assign the value of an element. if multiple arguments are given on the
-  right side of the assignment, the result is list assignment
-```
-  (any a, str b | list b) => a = b -> none
-
-  $ d apple = sauce pie
-  $ d apple
-  sauce
-  pie
-```
-
-### @
-  recursively search the current level for a value. displays all the keys
-  that correspond have the value's value
-```
-  (str a) => IO
-
-  $ d rasp = berry
-  $ d blue = berry
-  $ d @ berry
-  rasp
-  blue
-```
-### -k, --keys
-  show the keys immediately under this value. doesn't recursively print all
-  keys and values underneathe
-```
-  dict a => a --keys -> IO | error
-
-  $ d stone sand = weak
-  $ d stone lime = tough
-  $ d stone --keys
-  sand
-  lime
-```
-### -s, --set
-  replace the value of an index with raw JSON
-```
-  (any a, str b, JSON b) => a --set b -> none | error
-
-  $ d pasta --set '["spaghetti", "lasgna"]'
-  $ d pasta
-  spaghetti
-  lasagna
-```
-### -e, --edit
-  dump the raw JSON value of a key. used by a client to allow modification in
-  an editor and placement back in the database with --set
-```
-  any a => a --edit -> IO
-
-  $ d pasta = spaghetti
-  $ d pasta --edit
-```
-### -d, --del
-  delete any element from it's parent dictionary
-```
-  any a => a --del -> none
-
-  $ d apple sauce = good
-  $ d apple pie = great
-  $ d apple sauce --del
-  $ d apple
-  {'pie': 'great'}
-```
 
 # g
 A wrapper around git that allows any number of supported commands to be chained together. If any command fails, the rest will not be run. This allows common workflows to be written out all at once with terse abbreviations to save time and typing.
 
 ### Examples and equivalent git commands:
 ```
-$ g s 
+$ g s
 $ # git status
-$ g dh 2 
+$ g dh 2
 $ # git diff HEAD~2
-$ g s d a cm 'Update readme' f pl - ph 
+$ g s d a cm 'Update readme' f pl - ph
 $ # git status; git diff; git add -A; git commit -m 'Update readme'; git fetch; git pull; git push
 ```
 
@@ -237,7 +142,7 @@ encryption to ensure that the archive has not been tampered with at rest. This
 checksum is then verified after successful decryption. It also maintains the
 date the archive was created to alert the user when last the archive was opened
 upon successful decryption. This information is kept inside the archive itself
-and is removed upon decryption and presentation to the user. 
+and is removed upon decryption and presentation to the user.
 
 **qcrypt** has extensive error checking. It alerts the user if any part of the
 encryption or decryption process fails or is interrupted and attempts to clean
@@ -249,4 +154,4 @@ made once the problem is remedied.
 however this action is not disallowed. Likewise, attempted decryption of an
 archive without a qcrypt file extension will produce a warning but is allowed.
 This allows the user to rename archives and remove the qcrypt file extension if
-so desired. 
+so desired.
