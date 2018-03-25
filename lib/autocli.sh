@@ -17,8 +17,7 @@ autocli::create() {
   #
   # regenerate output file if the sources have changed
 
-  local root name location output
-  root="$(dirname "${BASH_SOURCE[0]}")"/..
+  local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
   source "${root}/lib/common.sh"
 
   local name="$1"

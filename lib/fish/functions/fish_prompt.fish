@@ -2,9 +2,6 @@
 
 function fish_prompt
 
-  set -gx SESSION (tmux display-message -p '#S' | awk '{print $1}')
-  set -gx WINDOW  (tmux display-message -p '#W' | awk '{print $1}')
-
   if test $status -ne 0
     set_color bryellow
   else
