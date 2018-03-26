@@ -5,8 +5,8 @@ function fish_user_key_bindings
   bind \co 'history-search-forward'
   bind \cb 'commandline -i "bash -c \'";commandline -a "\'"'
 
-  fish_default_key_bindings -M insert
-  fish_vi_key_bindings insert
+  # fish_default_key_bindings -M insert
+  fish_vi_key_bindings # insert
 
   bind -M insert \cf forward-char
   bind -M insert \ce end-of-line

@@ -3,11 +3,13 @@
 # fish global settings
 #===========================
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
-set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks/work/')
+set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.west.isilon.com/work/')
+
+set -gx auto_proxy "http://proxy.west.isilon.com/proxy.pac"
 
 
 # where are we?
-test (hostname) = 'wkstn-avoecks'; and set at_work yes
+test (hostname) = 'wkstn-avoecks.west.isilon.com'; and set at_work yes
 test (whoami)   = 'chronos';       and set at_cros yes
 set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 
@@ -45,14 +47,14 @@ function  ....; builtin cd ../../../;command ls --color=auto ; end
 
 # workstation
 if test "$at_work"
-  set -gx DIFFDIR   ~/cribshome/diffs/
+  set -gx DIFFDIR   ~/diffs/
   set -gx SCRIPITY  /mnt/ssd/
   set -gx ONEFSGIT  /mnt/ssd/onefs/
   set -gx DIMENSION work
 
   set PATH      ~/scripity-scripts/bin $PATH
-  set wiki_loc  ~/cribshome/wiki/index.md
-  set scripts   ~/cribshome/DotFiles
+  set wiki_loc  ~/wiki/index.md
+  set scripts   ~/DotFiles
 
 # chrome os native
 else if test "$at_cros"
