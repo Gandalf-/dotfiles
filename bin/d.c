@@ -42,21 +42,45 @@ int main(argc, argv)
 {
   int  buffer_size = 1024;
   char buffer[buffer_size];
+  char bytes[4];
   int  sockfd = create_socket("localhost", 9999);
+  int  t_length = 0;
+
+  // determine length of query, send it
+  for (int i = 1; i < argc; i++) {
+    t_length += strlen(argv[i]) + 1;
+  }
+
+  int length = htonl(t_length == 0 ? 1 : t_length);
+  check(
+      write(sockfd, &length, sizeof(length)) < 0,
+      "error writing to socket");
 
   // send all the arguments to the server, deliminated by newlines
-  for (int i = 1; i < argc; i++) {
-
+  if (argc == 1) {
     memset(buffer, 0, buffer_size);
-    snprintf(buffer, buffer_size - 1, "%s\n", argv[i]);
+    snprintf(buffer, buffer_size - 1, "\n");
     check(
         write(sockfd, buffer, strlen(buffer)) < 0,
         "error writing to socket");
+  }
+  else {
+    for (int i = 1; i < argc; i++) {
+
+      memset(buffer, 0, buffer_size);
+      snprintf(buffer, buffer_size - 1, "%s\n", argv[i]);
+      check(
+          write(sockfd, buffer, strlen(buffer)) < 0,
+          "error writing to socket");
+    }
   }
 
   // we're done sending data
   shutdown(sockfd, SHUT_WR);
   memset(buffer, 0, buffer_size);
+
+  // read length of the reply, throw it away
+  read(sockfd, bytes, 4);
 
   // receive the response
   while (read(sockfd, buffer, buffer_size - 1) > 0) {

@@ -14,6 +14,32 @@
 #   this approach makes devbot's schedule persist between runs, allowing very
 #   infrequent tasks to be scheduled with confidence
 
+devbot::service:handle() {
+
+  common::debug "service:handle $*"
+
+  local service="$1"
+  local pfile=~/.devbot/"$service".pid
+  local lfile=~/.devbot/"$service".log
+
+  if [[ -f "$pfile" ]]; then
+
+    if pkill -0 -F "$pfile"; then
+      # service is running fine
+      return
+    fi
+  fi
+
+  touch "$pfile"
+
+  local action; action="$(d devbot services "$service" action)"
+  eval "LOCK=$pfile $action" >> $lfile 2>&1 &
+
+  local pid=$!
+  disown
+
+  echo "$pid" > $pfile
+}
 
 devbot::task:handle() {
 
@@ -51,19 +77,6 @@ devbot::task:handle() {
 }
 
 
-devbot::runner() {
-
-  # string -> ... -> none
-  #
-  # figure out which type of event this is, and call the handler
-
-  common::debug "runner: $*"
-
-  local event="$1"
-  devbot::task:handle "$event"
-}
-
-
 devbot::eval() {
 
   # string ... -> none
@@ -91,9 +104,15 @@ devbot::main() {
 
     while read -r event; do
 
-      devbot::runner "$event"
+      devbot::task:handle "$event"
 
     done < <(d devbot events --keys)
+
+    while read -r service; do
+
+      devbot::service:handle "$service"
+
+    done < <(d devbot services --keys)
 
     sleep 5
   done
