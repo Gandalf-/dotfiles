@@ -9,7 +9,7 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   set title
   set langmenu=en_US      " Sets languages
-  set shell=fish          " So vim plays nice with fish
+  set shell=bash          " So vim plays nice with fish
   set fileformat=unix     " No crazy DOS line endings please
   set history=300         " Sets how many lines of history VIM has to remember
   set autoread            " Pick up changes from outside this vim session

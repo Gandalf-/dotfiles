@@ -170,14 +170,26 @@ wizard_devbot_list() {
     while read -r event; do
       local interval when action time
 
+      local string_interval=0
       interval="$(d devbot events "$event" interval)"
+
+      case $interval in
+        daily|hourly|weekly)
+          string_interval=1
+          ;;
+      esac
+
       when="$(d devbot events "$event" when)"
       action="$(d devbot events "$event" action)"
 
       time="$(translate-time $(( when - $(date '+%s') )) )"
 
       common::echo "$action"
-      echo "  every $(translate-time "$interval")"
+      if (( string_interval )); then
+        echo "  $interval"
+      else
+        echo "  every $(translate-time "$interval")"
+      fi
       echo "  next  $time from now"
       echo
 

@@ -33,12 +33,12 @@ devbot::service:handle() {
   touch "$pfile"
 
   local action; action="$(d devbot services "$service" action)"
-  eval "LOCK=$pfile $action" >> $lfile 2>&1 &
+  eval "LOCK=$pfile $action" >> "$lfile" 2>&1 &
 
   local pid=$!
   disown
 
-  echo "$pid" > $pfile
+  echo "$pid" > "$pfile"
 }
 
 devbot::task:handle() {
@@ -68,6 +68,17 @@ devbot::task:handle() {
 
     # run the event, update time
     interval="$(d devbot events "$event" interval)"
+    case $interval in
+      daily)
+        interval=86400
+        ;;
+      hourly)
+        interval=3600
+        ;;
+      weekly)
+        interval=604800
+        ;;
+    esac
     action="$(d devbot events "$event" action)"
 
     [[ $action ]] || { echo "task:handle error: no action"; return; }
