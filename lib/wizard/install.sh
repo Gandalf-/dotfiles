@@ -7,7 +7,7 @@
 
 wizard_install_dot-files() {
 
-  common::optional-help "$1" "
+  common::required-help "$1" "
 
   link all the configuration files in this repository to their correct
   locations in the system
@@ -25,23 +25,39 @@ wizard_install_dot-files() {
     common::do ln -sf "$here" "$there"
   }
 
-  link etc/config.fish         .config/fish/config.fish
-  link etc/vimrc               .vimrc
-  link etc/tmux.conf           .tmux.conf
-  link etc/bashrc              .bashrc
-  link etc/gitignore_global    .gitignore_global
-  link etc/pylintrc            .pylintrc
-  link etc/devbotrc            .devbotrc
+  copy() {
+    local here; here="$(readlink -e "${root}/$1")"
+    local there="${HOME}/$2"
 
-  link etc/vim/snippets        .vim/
-  link etc/irssi               .irssi
-  link lib/fish/functions      .config/fish/
+    common::do cp -r "$here" "$there"
+  }
+
+  case $1 in
+    link)
+      op=link
+      ;;
+    copy)
+      op=copy
+      ;;
+  esac
+
+  $op etc/config.fish         .config/fish/config.fish
+  $op etc/vimrc               .vimrc
+  $op etc/tmux.conf           .tmux.conf
+  $op etc/bashrc              .bashrc
+  $op etc/gitignore_global    .gitignore_global
+  $op etc/pylintrc            .pylintrc
+  $op etc/devbotrc            .devbotrc
+
+  $op etc/vim/snippets        .vim/
+  $op etc/irssi               .irssi
+  $op lib/fish/functions      .config/fish/
 
   # remove directory, not symbolic link
   local completions="$HOME/.config/fish/completions";
   [[ -L "$completions" ]] || common::do rm -rf "$completions"
 
-  link lib/fish/completions    .config/fish/
+  $op lib/fish/completions    .config/fish/
 }
 
 common::require 'apt' &&
