@@ -39,7 +39,7 @@ load-plugins=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 #disable=
-disable=R,C
+disable=R,C,import-error
 
 
 [REPORTS]

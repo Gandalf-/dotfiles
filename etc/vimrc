@@ -274,7 +274,10 @@
     set statusline+=%w   " Preview window flag.
     set statusline+=\    " Space.
     set statusline+=%=   " Right align.
-    set statusline+=%{fugitive#statusline()}
+    try
+      set statusline+=%{fugitive#statusline()}
+    catch
+    endtry
     set statusline+=\ %l:%03c\ %p%%
 
   " Colors

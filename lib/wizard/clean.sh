@@ -14,11 +14,11 @@ wizard_clean_every-other() {
   local delete=0
 
   for file in *; do
-
-    (( delete )) && rm -v "$file"
+    (( delete )) && rm -v "$file" &
     delete=$(( ! delete ))
-
   done
+
+  wait
 }
 
 common::require 'dpkg' &&
