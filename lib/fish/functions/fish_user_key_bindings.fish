@@ -14,6 +14,7 @@ function fish_user_key_bindings
 
   bind -M default E end-of-line
   bind -M default B beginning-of-line
+  bind -M default I edit_command_buffer
 
   bind -M insert \ci fzf-complete
   bind -M insert \ei fzf-file-widget

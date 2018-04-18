@@ -61,7 +61,7 @@ autocli::create() {
     echo "
 [[ \"\${BASH_SOURCE[0]}\" == \"\${0}\" ]] && $name \"\$@\"
 true
-}
+} || exit
 "
   } > "$output"
 
@@ -194,9 +194,6 @@ autocli::make-reflective-functions() {
       for ((i=2; i < $(( ${#sub_func} + 1)); i++)); do
         cases+="|\"${sub_func:0:$i}\""
       done
-
-      # convert verylongoption to vn
-      cases+="|\"${sub_func:0:1}${sub_func: -1}\""
 
       # convert abc-def-ghi to adg if dashes are present
       if grep -q '-' <<< "${sub_func[@]}"; then

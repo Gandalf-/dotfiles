@@ -11,7 +11,7 @@ function fzf-history-widget -d "Show command history"
     # history's -z flag is needed for multi-line support.
     # history's -z flag was added in fish 2.4.0, so don't use it for versions
     # before 2.4.0.
-    if [ "$FISH_MAJOR" -gt 2 -o \( "$FISH_MAJOR" -eq 2 -a "$FISH_MINOR" -ge 4 \) ];
+    if [ "$FISH_MAJOR" -gt 2 -o \( "$FISH_MAJOR" -eq 2 -a "$FISH_MINOR" -ge 4 \) ] 2>/dev/null;
       history -z | eval (__fzfcmd) --read0 -q '(commandline)' | perl -pe 'chomp if eof' | read -lz result
       and commandline -- $result
     else

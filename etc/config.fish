@@ -6,7 +6,7 @@ set -gx __HOST__ (hostname       | sed 's/localhost/home/')
 set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.west.isilon.com/work/')
 
 set -gx auto_proxy "http://proxy.west.isilon.com/proxy.pac"
-
+set -gx EDITOR vim
 
 # where are we?
 test (hostname) = 'wkstn-avoecks.west.isilon.com'; and set at_work yes
