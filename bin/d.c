@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -13,22 +14,23 @@
   if (condition) { perror(message); exit(1); }
 
 
-int create_socket(host, port)
-  char *host;
-  int   port;
-{
+int
+create_socket(char *host, int port) {
+
   struct sockaddr_in serv_addr;
   struct hostent    *server = gethostbyname(host);
+  check(!server, "could not resolve hostname");
 
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   check(sockfd < 0, "error opening socket");
 
-  memset(&serv_addr, 0, sizeof(serv_addr));
+  in_addr_t in_addr = inet_addr(
+      inet_ntoa(*(struct in_addr*)*(server->h_addr_list)));
 
+  serv_addr.sin_addr.s_addr = in_addr;
   serv_addr.sin_family = AF_INET;
-  memcpy(server->h_addr, &serv_addr.sin_addr.s_addr, server->h_length);
-
   serv_addr.sin_port = htons(port);
+
   check(
       connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0,
       "error connecting to remote host");
@@ -36,10 +38,9 @@ int create_socket(host, port)
   return sockfd;
 }
 
-int main(argc, argv)
-  int    argc;
-  char **argv;
-{
+int
+main(int argc, char **argv) {
+
   int  buffer_size = 1024;
   char buffer[buffer_size];
   char bytes[4];

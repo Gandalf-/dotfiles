@@ -2,16 +2,17 @@
 
 # use fzf to fuzzy select a tmux session or create one
 
-[[ -n "$TMUX" ]] && change="switch-client" || change="attach-session"
+[[ $TMUX ]] && change="switch-client" || change="attach-session"
 
-if [[ $1 ]]; then
-   tmux $change -t "$1" 2>/dev/null \
-     || (tmux new-session -d -s "$1" && tmux $change -t "$1")
-   return
+session="$(
+  tmux list-sessions -F "#{session_name}" 2>/dev/null \
+    | fzf --exit-0 --print-query \
+    | tail -n 1
+  )"
+[[ $session ]] || exit 0
+
+if ! tmux has-session "$session"; then
+  tmux new-session -d -s "$session" -c "$HOME"
 fi
 
-session=$(
-  tmux list-sessions -F "#{session_name}" 2>/dev/null \
-    | fzf --exit-0) \
-    &&  tmux $change -t "$session" \
-    || echo "No sessions found."
+tmux "$change" -t "$session"
