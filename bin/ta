@@ -1,2 +1,36 @@
-#!/bin/sh
-tmux attach || tmux new -s main
+#!/bin/bash
+
+# use fzf to fuzzy select a tmux session or create one
+
+switcher() {
+  if [[ $TMUX ]]; then
+    change="switch-client"
+  else
+    change="attach-session"
+  fi
+
+  session="$(
+    {
+      tmux list-sessions -F "#{session_name}"
+      d switcher-options
+    } 2>/dev/null \
+      | fzf --exit-0 --print-query \
+      | tail -n 1
+    )"
+  [[ $session ]] || exit 0
+
+  if ! tmux has-session "$session"; then
+    tmux new-session -d -s "$session" -c "$HOME"
+  fi
+
+  tmux "$change" -t "$session"
+}
+
+if tmux ls >/dev/null 2>&1; then
+  # tmux server is running
+  switcher
+
+else
+  # tmux server not running
+  tmux new -s main -c "$HOME"
+fi

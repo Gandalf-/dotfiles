@@ -8,6 +8,7 @@ function fish_user_key_bindings
   # fish_default_key_bindings -M insert
   fish_vi_key_bindings # insert
 
+  bind -M insert \cs 'ta; commandline -f repaint'
   bind -M insert \cf forward-char
   bind -M insert \ce end-of-line
   bind -M insert \ca beginning-of-line

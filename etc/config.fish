@@ -3,25 +3,15 @@
 # fish global settings
 #===========================
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
-set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.west.isilon.com/work/')
+set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.*/work/')
 
 set -gx auto_proxy "http://proxy.west.isilon.com/proxy.pac"
 set -gx EDITOR vim
 
 # where are we?
-test (hostname) = 'wkstn-avoecks.west.isilon.com'; and set at_work yes
+test (hostname | head -c 13) = 'wkstn-avoecks'; and set at_work yes
 test (whoami)   = 'chronos';       and set at_cros yes
 set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
-
-# Abbreviations
-if status --is-interactive
-
-  if test $fish_version -ge 220;
-    set -g fish_user_abbreviations
-    abbr --add bash b
-    abbr --add ls   l
-  end
-end
 
 # 'aliases'
 function sfish; source ~/.config/fish/config.fish; end
