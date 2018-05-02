@@ -17,16 +17,16 @@
 int
 create_socket(char *host, int port) {
 
-  struct sockaddr_in serv_addr;
-  struct hostent    *server = gethostbyname(host);
-  check(!server, "could not resolve hostname");
-
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   check(sockfd < 0, "error opening socket");
+
+  struct hostent *server = gethostbyname(host);
+  check(!server, "could not resolve hostname");
 
   in_addr_t in_addr = inet_addr(
       inet_ntoa(*(struct in_addr*)*(server->h_addr_list)));
 
+  struct sockaddr_in serv_addr;
   serv_addr.sin_addr.s_addr = in_addr;
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(port);
@@ -41,23 +41,23 @@ create_socket(char *host, int port) {
 int
 main(int argc, char **argv) {
 
-  int  buffer_size = 1024;
-  char buffer[buffer_size];
-  char bytes[4];
-  int  sockfd = create_socket("localhost", 9999);
-  int  t_length = 0;
-
   // determine length of query, send it
+  int t_length = 0;
+
   for (int i = 1; i < argc; i++) {
     t_length += strlen(argv[i]) + 1;
   }
 
   int length = htonl(t_length == 0 ? 1 : t_length);
+  int sockfd = create_socket("localhost", 9999);
   check(
       write(sockfd, &length, sizeof(length)) < 0,
       "error writing to socket");
 
   // send all the arguments to the server, deliminated by newlines
+  int  buffer_size = 1024;
+  char buffer[buffer_size];
+
   if (argc == 1) {
     memset(buffer, 0, buffer_size);
     snprintf(buffer, buffer_size - 1, "\n");
@@ -81,12 +81,15 @@ main(int argc, char **argv) {
   memset(buffer, 0, buffer_size);
 
   // read length of the reply, throw it away
+  char bytes[4];
   read(sockfd, bytes, 4);
 
   // receive the response
   while (read(sockfd, buffer, buffer_size - 1) > 0) {
 
-    printf("%s", buffer);
+    if (buffer[0] != '\n') {
+      printf("%s", buffer);
+    }
     memset(buffer, 0, buffer_size);
   }
 
