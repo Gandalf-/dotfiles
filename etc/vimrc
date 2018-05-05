@@ -68,6 +68,7 @@
         Plugin 'Gandalf-/vim-sh-syntax'
         Plugin 'justinmk/vim-syntax-extra'
         Plugin 'tpope/vim-fugitive'
+        Plugin 'airblade/vim-gitgutter'
 
         if has_vundle == 0
           :PluginInstall

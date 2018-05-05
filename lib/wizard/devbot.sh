@@ -15,6 +15,52 @@
 
 # wizard commands
 
+wizard_devbot_yaml_dump() {
+
+  common::optional-help "$1" "
+
+  write out the current devbot configuration file to disk
+  "
+
+  devbot_config=~/.devbot/config.yml
+
+  python3 -c "
+import yaml
+from apocrypha.client import Client
+
+client = Client()
+data = client.get('devbot')
+print('$devbot_config')
+
+with open('$devbot_config', 'w+') as yaml_file:
+    yaml.dump(data, yaml_file, default_flow_style=False)
+"
+}
+
+wizard_devbot_yaml_load() {
+
+  common::optional-help "$1" "
+
+  read the current devbot configuration file from disk into apocrypha
+  "
+  devbot_config=~/.devbot/config.yml
+
+  test -s "$devbot_config" ||
+    common::error "$devbot_config not found"
+
+  python3 -c "
+import yaml
+from apocrypha.client import Client
+
+with open('$devbot_config', 'r') as yaml_file:
+    data = yaml.load(yaml_file)
+
+client = Client()
+client.set('devbot', value=data)
+"
+
+}
+
 wizard_devbot_start() {
 
   common::optional-help "$1" "
@@ -34,7 +80,6 @@ wizard_devbot_start() {
   disown
 
   echo "$pid" > $pfile
-
   return $#
 }
 
@@ -168,10 +213,8 @@ wizard_devbot_list() {
   {
     echo
     while read -r event; do
-      local interval when action time
-
       local string_interval=0
-      interval="$(d devbot events "$event" interval)"
+      local interval; interval="$(d devbot events "$event" interval)"
 
       case $interval in
         daily|hourly|weekly)
@@ -179,9 +222,9 @@ wizard_devbot_list() {
           ;;
       esac
 
+      local when action time
       when="$(d devbot events "$event" when)"
       action="$(d devbot events "$event" action)"
-
       time="$(translate-time $(( when - $(date '+%s') )) )"
 
       common::echo "$action"
