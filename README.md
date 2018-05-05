@@ -1,5 +1,7 @@
 # DotFiles
 
+[![Build Status](https://travis-ci.org/Gandalf-/DotFiles.svg?branch=master)](https://travis-ci.org/Gandalf-/DotFiles)
+
 A huge variety of scripts, configuration files, shell libaries for ease of use,
 development, configuration and information gathering on Linux, BSDs and WSL.
 

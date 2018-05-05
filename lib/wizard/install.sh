@@ -34,7 +34,7 @@ wizard_install_dot-files() {
 
   case $1 in
     link)
-      op=link
+      op="link"
       ;;
     copy)
       op=copy

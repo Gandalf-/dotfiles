@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# pylint: disable=too-few-public-methods
+# pylint: disable=invalid-name
+
+'''
+misc python functions
+'''
+
 import math
 
 _ackerman_values = {}
@@ -30,12 +37,14 @@ def palindrome(xs):
 
     if length == 0 or length == 1:
         return True
-    else:
-        rest = xs[1:-1]
-        return xs[0] == xs[-1] and palindrome(rest)
+
+    rest = xs[1:-1]
+    return xs[0] == xs[-1] and palindrome(rest)
 
 
 def ackerman(m, n):
+    ''' int, int -> int
+    '''
 
     t = tuple([m, n])
 
@@ -54,12 +63,14 @@ def ackerman(m, n):
 
     if m > 0 and n > 0:
         left = _ackerman_values.get(
-                tuple([m, n - 1]), ackerman(m, n - 1))
+            tuple([m, n - 1]), ackerman(m, n - 1))
 
         value = _ackerman_values.get(
-                tuple([m - 1, left]), ackerman(m - 1, left))
+            tuple([m - 1, left]), ackerman(m - 1, left))
         _ackerman_values[t] = value
         return value
+
+    return 0
 
 
 class BST(object):
@@ -85,6 +96,9 @@ class BST(object):
         return ' '.join(output)
 
     def insert(self, value):
+        ''' str
+        add value to tree
+        '''
         if not self.value or value == self.value:
             self.value = value
 
