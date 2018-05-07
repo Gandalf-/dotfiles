@@ -1,3 +1,10 @@
 #!/bin/bash
 
-wizard "$@"
+tmp="$(mktemp --suffix=wizard)"
+cp "$(which wizard)" "$tmp"
+
+bash "$tmp" "$@"
+ret=$?
+
+rm -f "$tmp"
+exit "$ret"

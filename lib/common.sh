@@ -8,6 +8,11 @@ DEBUG=${DEBUG:-0}
 DNSSERVER=''
 
 
+common::branch-exists() {
+
+  git rev-parse --verify "$1" >/dev/null 2>&1
+}
+
 common::verify-global() {
 
   # string -> none || exit

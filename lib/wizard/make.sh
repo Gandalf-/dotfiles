@@ -114,7 +114,7 @@ wizard_make_mirror() {
 
 if common::program-exists 'tmux'; then
   wizard_make_session() {
-    common::optional-help "$1" "[name]
+    common::optional-help "$1" "[name] [commands ...]
 
   create a new tmux session and move to it
     "
