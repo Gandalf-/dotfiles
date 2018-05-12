@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+
+'''
+super devbot
+'''
+
+import os
+import subprocess
+import time
+import threading
+
+import daemon
+from daemon import pidfile
+
+import yaml
+from apocrypha.client import Client
+
+BASE = os.path.expanduser('~/.maestro/')
+CFG = BASE + 'config.yml'
+LOG = BASE + 'log'
+PID = BASE + 'pid'
+
+
+def load_config(client: Client) -> None:
+    ''' update event information in database
+    '''
+    with open(CFG, 'r') as yaml_file:
+        data = yaml.load(yaml_file)
+
+    for key in {'events', 'requirements', 'triggers'}:
+        if key in data:
+            client.set('maestro', key, value=data[key])
+
+
+def write_config(data) -> None:
+    '''
+    write out the dictionary as yaml
+    '''
+    with open(CFG, 'w+') as yaml_file:
+        yaml.dump(data, yaml_file, default_flow_style=False)
+
+
+def check_requirements(client: Client, event: dict) -> bool:
+    ''' if the event has requirements, make sure they're met
+    '''
+    if 'require' in event:
+        name = event['require']
+        requirement = client.get('maestro', 'requirements', name)
+
+        if not requirement:
+            return False
+
+        try:
+            subprocess.check_call(requirement, shell=True)
+        except subprocess.CalledProcessError:
+            return False
+
+    return True
+
+
+def get_interval(event: dict) -> int:
+    ''' translate the interval into some number of seconds
+    '''
+    interval = event['interval']
+
+    try:
+        # number of seconds
+        return int(interval)
+    except ValueError:
+        pass
+
+    if interval == 'weekly':
+        return 60 * 60 * 24 * 7
+
+    elif interval == 'daily':
+        return 60 * 60 * 24
+
+    elif interval == 'hourly':
+        return 60 * 60
+
+    elif interval == 'never':
+        return 2 ** 32
+
+    return 0
+
+
+def run_event(client: Client, name: str, event: dict) -> None:
+    ''' see if the action can be run, then run it, update the next time to run
+    '''
+
+    if not check_requirements(client, event):
+        return
+
+    action = event['action']
+    try:
+        # run the action, write output to log file
+        output = subprocess.check_output(action, shell=True).decode()
+        with open(LOG, 'a+') as log:
+            log.write(output)
+
+        if client.get('maestro', 'data', name, 'error'):
+            client.delete('maestro', 'data', name, 'error')
+
+    except subprocess.CalledProcessError as error:
+        client.set('maestro', 'data', name, 'error', value=str(error))
+
+
+def start_events(running: threading.Event) -> list:
+    ''' read all the events to run from the config and start runners
+    '''
+    client = Client()
+    events = client.get('maestro', 'events', default={})
+    threads = []
+
+    for name, event in events.items():
+        new = threading.Thread(
+            target=event_runner, args=(running, name, event,))
+        new.start()
+        threads += [new]
+
+    return threads
+
+
+def event_runner(running: threading.Event, name: str, event: dict) -> None:
+    ''' wait, then run the event
+    '''
+    client = Client()
+    interval = get_interval(event)
+    now = time.time()
+
+    # wait then run for new events
+    if not client.get('maestro', 'data', name, 'when'):
+        client.set('maestro', 'data', name, 'when', value=now + interval)
+
+    # get the list of our children
+    children = client.get(
+        'maestro', 'events', name, 'triggers', cast=list, default=[])
+
+    while running.is_set():
+        now = time.time()
+        when = client.get('maestro', 'data', name, 'when', default=0)
+
+        if now > when:
+            run_event(client, name, event)
+            client.set('maestro', 'data', name, 'when', value=now + interval)
+
+            # tell our child event to run
+            for child in children:
+                client.set('maestro', 'data', child, 'when', value=now)
+
+        time.sleep(5)
+
+
+def main():
+    '''
+    monitor, run
+    '''
+    client = Client()
+    load_config(client)
+
+    running = threading.Event()
+    running.set()
+    threads = start_events(running)
+
+    try:
+        while True:
+            time.sleep(5)
+
+    except KeyboardInterrupt:
+        running.clear()
+        print('waiting for threads to finish their work...')
+
+        for thread in threads:
+            thread.join()
+
+
+if __name__ == '__main__':
+    if not os.path.exists(BASE):
+        os.makedirs(BASE)
+
+    pid = pidfile.TimeoutPIDLockFile(PID)
+
+    with daemon.DaemonContext(pidfile=pid):
+        main()
