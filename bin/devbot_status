@@ -4,6 +4,7 @@
 # important because it's called every 5 seconds by each tmux window
 
 pfile=~/.devbot/pid
+lfile=~/.devbot/log
 
 if [[ -e $pfile ]]; then
   read -r pid < $pfile
@@ -12,7 +13,9 @@ if [[ -e $pfile ]]; then
     echo "✓"
 
   else
-    echo "!"
+    echo "detected stale pid file" >> "$lfile"
+    rm "$pfile"
+    wizard devbot start
   fi
 
 else
