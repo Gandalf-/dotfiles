@@ -92,6 +92,7 @@ wizard_devbot_bounce() {
   "
 
   wizard devbot kill
+  sleep 0.1
   wizard devbot start
 
   return $#
@@ -115,41 +116,6 @@ wizard_devbot_kill() {
   return $#
 }
 
-wizard_devbot_status() {
-
-  common::optional-help "$1" "
-
-  report whether devbot is running, used by tmux status
-  "
-
-  local pfile=~/.devbot/pid
-  local lfile=~/.devbot/log
-  local rfile=~/.devbot/report
-
-  if common::file-exists $pfile; then
-    read -r pid < $pfile
-
-    if common::process-exists "$pid"; then
-
-      if common::file-not-empty $rfile; then
-        echo "Ʃ"
-
-      else
-        echo "✓"
-      fi
-
-    else
-      echo detected stale pid file, restarting >> $lfile
-      rm $pfile
-      wizard devbot start
-      echo "✓"
-    fi
-
-  else
-    echo "✗"
-  fi
-}
-
 wizard_devbot_list() {
 
   common::optional-help "$1" "
@@ -157,46 +123,29 @@ wizard_devbot_list() {
   print out the current devbot schedule
   "
 
-  translate-time() {
-
-    local time="$1"
-
-    if (( time <= 60 )); then
-      echo "$time seconds"
-
-    elif (( time <= 3600 )); then
-      echo "$(( time / 60 )) minutes"
-
-    elif (( time <= 86400 )); then
-      echo "$(( time / 3600 )) hours"
-
-    else
-      echo "$(( time / 86400 )) days"
-    fi
-  }
-
   {
     echo
     while read -r event; do
-      local string_interval=0
       local interval; interval="$(d devbot events "$event" interval)"
 
       if ! common::is-integer "$interval"; then
         string_interval=1
+      else
+        string_interval=0
       fi
 
-      local when action time
+      local when action next
       when="$(d devbot data "$event" when)"
       action="$(d devbot events "$event" action)"
-      time="$(translate-time $(( when - $(date '+%s') )) )"
+      next="$(common::translate-time $(( when - $(date '+%s') )) )"
 
       common::echo "$action"
       if (( string_interval )); then
         echo -n "  $interval"
       else
-        echo -n "  every $(translate-time "$interval")"
+        echo -n "  every $(common::translate-time "$interval")"
       fi
-      echo ", next $time from now"
+      echo ", next $next from now"
       echo
 
     done < <(d devbot events --keys | sort)

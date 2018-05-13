@@ -291,3 +291,21 @@ common::confirm() {
     read -r reply; [[ "$reply" =~ [Nn] ]] && exit 1
   fi
 }
+
+common::translate-time() {
+
+  local time="$1"
+
+  if (( time <= 60 )); then
+    echo "$time seconds"
+
+  elif (( time <= 3600 )); then
+    echo "$(( time / 60 )) minutes"
+
+  elif (( time <= 86400 )); then
+    echo "$(( time / 3600 )) hours"
+
+  else
+    echo "$(( time / 86400 )) days"
+  fi
+}
