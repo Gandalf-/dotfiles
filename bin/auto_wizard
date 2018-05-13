@@ -15,7 +15,7 @@ location="${root}/bin/"
 
 export sources=(
   "${root}/lib/wizard/"*
-  "${root}/lib/apocrypha_devbot.sh"
+  "${root}/lib/devbot.sh"
   "$HOME/scripity-scripts/lib/wizard/"*
   )
 

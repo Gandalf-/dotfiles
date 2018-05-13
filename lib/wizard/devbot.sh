@@ -56,7 +56,8 @@ with open('$devbot_config', 'r') as yaml_file:
     data = yaml.load(yaml_file)
 
 client = Client()
-client.set('devbot', value=data)
+for key in data:
+    client.set('devbot', key, value=data[key])
 "
 
 }
@@ -80,42 +81,6 @@ wizard_devbot_start() {
   disown
 
   echo "$pid" > $pfile
-  return $#
-}
-
-wizard_devbot_report() {
-
-  common::optional-help "$1" "
-
-  check the report file for messages from devbot. messages are cleared after
-  reading
-  "
-
-  local rfile=~/.devbot/report
-
-  if common::file-not-empty $rfile; then
-    cat $rfile
-    rm $rfile
-  fi
-
-  return $#
-}
-
-wizard_devbot_edit() {
-
-  common::optional-help "$1" "
-
-  open up the devbot schedule in Vim to make manual changes.
-  devbot is paused while Vim is open.
-  "
-
-  wizard devbot kill
-
-  dclient devbot events --edit
-
-  devbot::save
-  wizard devbot start
-
   return $#
 }
 
@@ -216,24 +181,22 @@ wizard_devbot_list() {
       local string_interval=0
       local interval; interval="$(d devbot events "$event" interval)"
 
-      case $interval in
-        daily|hourly|weekly)
-          string_interval=1
-          ;;
-      esac
+      if ! common::is-integer "$interval"; then
+        string_interval=1
+      fi
 
       local when action time
-      when="$(d devbot events "$event" when)"
+      when="$(d devbot data "$event" when)"
       action="$(d devbot events "$event" action)"
       time="$(translate-time $(( when - $(date '+%s') )) )"
 
       common::echo "$action"
       if (( string_interval )); then
-        echo "  $interval"
+        echo -n "  $interval"
       else
-        echo "  every $(translate-time "$interval")"
+        echo -n "  every $(translate-time "$interval")"
       fi
-      echo "  next  $time from now"
+      echo ", next $time from now"
       echo
 
     done < <(d devbot events --keys | sort)

@@ -3,21 +3,16 @@
 # does the same as wizard devbot status, but without the overhead. this is
 # important because it's called every 5 seconds by each tmux window
 
-pfile=~/.maestro/pid
-lfile=~/.maestro/log
+pfile=~/.devbot/pid
 
 if [[ -e $pfile ]]; then
   read -r pid < $pfile
 
   if kill -0 "$pid"; then
-
     echo "✓"
 
   else
-    echo detected stale pid file, restarting >> $lfile
-    rm $pfile
-    maestro start
-    echo "✓"
+    echo "!"
   fi
 
 else

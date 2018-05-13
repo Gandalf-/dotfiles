@@ -29,6 +29,14 @@ common::verify-global() {
 }
 
 
+common::is-integer() {
+
+  # string -> bool
+
+  [ "$1" -eq "$1" ] 2>/dev/null
+}
+
+
 common::process-exists() {
 
   # pid -> bool

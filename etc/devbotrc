@@ -1,7 +1,0 @@
-task 300 insync-headless reject_all_new_shares austin.voecks@gmail.com
-task 3600 cd /home/leaf && wizard git fetch
-task 86400 echo > /home/leaf/.devbot-log
-task 86400 wizard update pip
-task 86400 wizard update apt
-task 86400 rm -rf /home/leaf/google_drive/.insync-trash
-task 86400 vim +PluginUpdate +qall >/dev/null
