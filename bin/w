@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tmp="$(mktemp --suffix=wizard)"
+tmp="$(mktemp /tmp/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
 cp "$(which wizard)" "$tmp"
 
 bash "$tmp" "$@"

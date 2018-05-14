@@ -19,7 +19,7 @@ switcher() {
     )"
   [[ $session ]] || exit 0
 
-  if ! tmux has-session "$session"; then
+  if ! tmux has-session "$session" 2>/dev/null; then
     tmux new-session -d -s "$session" -c "$HOME"
   fi
 
