@@ -9,7 +9,7 @@ lfile=~/.devbot/log
 if [[ -e $pfile ]]; then
   read -r pid < $pfile
 
-  if kill -0 "$pid" && [[ "$(ps -p "$pid" -o comm=)" == "wizard" ]]; then
+  if kill -0 "$pid"; then
     echo "✓"
 
   else

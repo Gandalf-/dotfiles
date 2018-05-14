@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tmp="$(mktemp /tmp/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
+tmp="$(mktemp /dev/shm/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
 cp "$(which wizard)" "$tmp"
 
 bash "$tmp" "$@"
