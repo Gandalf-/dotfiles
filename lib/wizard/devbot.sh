@@ -138,6 +138,7 @@ wizard_devbot_list() {
       when="$(d devbot data "$event" when)"
       action="$(d devbot events "$event" action)"
       next="$(common::translate-time $(( when - $(date '+%s') )) )"
+      duration="$(d devbot data "$event" duration)"
 
       common::echo "$action"
       if (( string_interval )); then
@@ -145,7 +146,8 @@ wizard_devbot_list() {
       else
         echo -n "  every $(common::translate-time "$interval")"
       fi
-      echo ", next $next from now"
+      echo ", next $next from now."
+      echo "  last run took $duration seconds"
       echo
 
     done < <(d devbot events --keys | sort)

@@ -9,12 +9,25 @@ switcher() {
     change="attach-session"
   fi
 
+  # shellcheck disable=SC2016
+  picker='
+  set item (echo {} | cut -f 1 -d " ")
+  if test -z (d "$item" -k) 2>/dev/null
+    d (echo {})
+  else
+    d "$item"
+  end
+  '
+
   session="$(
     {
       tmux list-sessions -F "#{session_name}"
       d switcher-options
     } 2>/dev/null \
-      | fzf --exit-0 --print-query \
+      | fzf --exit-0 \
+        --print-query \
+        --preview "$picker" \
+        --preview-window up \
       | tail -n 1
     )"
   [[ $session ]] || exit 0
