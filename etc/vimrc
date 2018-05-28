@@ -210,6 +210,8 @@
   " ALE
     let g:ale_lint_on_text_changed = 'normal'
     let g:ale_linters = {'python': ['pylint', 'flake8']}
+    let g:ale_c_clang_options = "-std=c++11 -Wall"
+    let g:ale_cpp_clangcheck_options = "-std=c++11 -Wall"
 
     let g:ale_echo_msg_error_str = '✘'
     let g:ale_echo_msg_warning_str = '▲'
@@ -303,8 +305,11 @@
     endfun
 
   " terminal!
-    tnoremap <ESC><ESC> <C-\><C-N>
     nnoremap <leader>T :terminal fish<CR>
+    tnoremap <silent> <C-h> <C-W>:TmuxNavigateLeft<cr>
+    tnoremap <silent> <C-j> <C-W>:TmuxNavigateDown<cr>
+    tnoremap <silent> <C-k> <C-W>:TmuxNavigateUp<cr>
+    tnoremap <silent> <C-l> <C-W>:TmuxNavigateRight<cr>
 
   " misc autocommands
   augroup misc_commands
@@ -574,7 +579,6 @@
 
   " paste result of command
     nnoremap          <leader>i :r!
-    vnoremap <silent> <leader>T :!column -te<cr>
 
   " open buffer, open tab, reload, save, sudo save current file
     nnoremap <leader>e :e<space>
@@ -601,9 +605,9 @@
     vnoremap <leader>; :
 
   " substitute line, global
-    vnoremap <leader>s :s/\v
-    nnoremap <leader>s V:s/\v
-    nnoremap <leader>S :%s/\v
+    vnoremap <leader>s :s/
+    nnoremap <leader>s V:s/
+    nnoremap <leader>S :%s/
 
   " repeat last colon command
     nnoremap <leader>. q:k<cr>
@@ -642,7 +646,9 @@
     autocmd FileType java    nmap <leader>r
           \ :silent call Compile("javac")<cr> <bar>:!clear;java %:r<cr>
     autocmd FileType c       nmap <leader>r
-          \ :silent call Compile("gcc")  <cr> <bar>:!clear;./a.out <cr>
+          \ :silent call Compile("clang")  <cr> <bar>:!clear;./a.out <cr>
+    autocmd FileType cpp     nmap <leader>r
+          \ :silent call Compile("clang++ -std=c++11")  <cr> <bar>:!clear;./a.out <cr>
 
   " Run program in pane to the right
     autocmd FileType python
@@ -654,8 +660,8 @@
   augroup end
 
   " Experiment
-    nnoremap / /\v
-    vnoremap / /\v
+  " nnoremap / /\v
+  " vnoremap / /\v
 
   " Search across all open buffers
     function! BuffersList()
