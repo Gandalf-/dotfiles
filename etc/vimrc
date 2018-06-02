@@ -68,6 +68,7 @@
         Plugin 'Gandalf-/vim-sh-syntax'
         Plugin 'justinmk/vim-syntax-extra'
         Plugin 'tpope/vim-fugitive'
+        Plugin 'tpope/vim-sleuth'
 
         if has_vundle == 0
           :PluginInstall
@@ -213,8 +214,18 @@
     let g:ale_c_clang_options = "-std=c++11 -Wall"
     let g:ale_cpp_clangcheck_options = "-std=c++11 -Wall"
 
-    let g:ale_echo_msg_error_str = '✘'
-    let g:ale_echo_msg_warning_str = '▲'
+    let g:ale_set_quickfix = 1
+    let g:ale_set_highlights = 0
+    let g:ale_type_map = {'flake8': {'ES': 'WS', 'E': 'W'}}
+
+    highlight link ALEWarningSign Comment
+    highlight link ALEWarning Comment
+
+    highlight link ALEErrorSign String
+    highlight link ALEError String
+
+    let g:ale_sign_error = '✘'
+    let g:ale_sign_warning = '▶'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -276,11 +287,33 @@
     set statusline+=%w   " Preview window flag.
     set statusline+=\    " Space.
     set statusline+=%=   " Right align.
+
     try
+      function! LinterStatus() abort
+          let l:counts = ale#statusline#Count(bufnr(''))
+
+          let l:all_errors = l:counts.error + l:counts.style_error
+          let l:all_non_errors = l:counts.total - l:all_errors
+
+          return l:counts.total == 0 ? '' : printf(
+          \   '%2dw %2de',
+          \   all_non_errors,
+          \   all_errors
+          \)
+      endfunction
+
+      set statusline+=%{LinterStatus()}
+    catch
+    endtry
+
+    try
+      set statusline+=\    " Space.
       set statusline+=%{fugitive#statusline()}
     catch
     endtry
-    set statusline+=\ %l:%03c\ %p%%
+
+    set statusline+=\    " Space.
+    set statusline+=\ %4l\ %3c\ %3p%%
 
   " Colors
     highlight Pmenu      ctermbg=245
@@ -365,8 +398,8 @@
     map <silent> <leader>b :call ToggleMouse()<cr>
 
     " scrolling like a GUI!
-      map <ScrollWheelUp> <C-Y>
-      map <ScrollWheelDown> <C-E>
+      map <ScrollWheelUp> 5<C-Y>
+      map <ScrollWheelDown> 5<C-E>
 
   " Folding
     set foldtext=MyFoldText()
@@ -439,10 +472,11 @@
 " => Text, tab and indent related
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   set backspace=indent,eol,start   " allow backspacing over everything
-  set shiftwidth=2                 " Set 2 spaces for indenting
-  set softtabstop=4
-  set expandtab smarttab
-  set autoindent nocindent
+  set tabstop=2
+  " set softtabstop=4
+  " set shiftwidth=2                 " Set 2 spaces for indenting
+  " set expandtab smarttab
+  " set autoindent nocindent
   set showmatch                    " Show matched brackets
 
   " Detect tabs or spaces
