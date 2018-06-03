@@ -338,11 +338,14 @@
     endfun
 
   " terminal!
+	try
     nnoremap <leader>T :terminal fish<CR>
     tnoremap <silent> <C-h> <C-W>:TmuxNavigateLeft<cr>
     tnoremap <silent> <C-j> <C-W>:TmuxNavigateDown<cr>
     tnoremap <silent> <C-k> <C-W>:TmuxNavigateUp<cr>
     tnoremap <silent> <C-l> <C-W>:TmuxNavigateRight<cr>
+	catch
+	endtry
 
   " misc autocommands
   augroup misc_commands
