@@ -475,7 +475,7 @@
 " => Text, tab and indent related
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   set backspace=indent,eol,start   " allow backspacing over everything
-  set tabstop=2
+  set tabstop=4
   " set softtabstop=4
   " set shiftwidth=2                 " Set 2 spaces for indenting
   " set expandtab smarttab
