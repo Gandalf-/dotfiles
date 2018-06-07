@@ -1,16 +1,31 @@
 #!/bin/bash
 
+# shellcheck disable=SC1117
+
 # common
-#
 #   commonly useful functions across all scripts
 
 DEBUG=${DEBUG:-0}
-DNSSERVER=''
+green="\033[01;32m"
+normal="\033[00m"
+PLATFORM="$(uname)"
+export PLATFORM
+
+
+# globals used by this libary
+BROWSER=''
+
+
+common::commit_exists() {
+  local target="$1"
+  grep -q "$target" <<< "$(git log --oneline | head -n 1)"
+}
 
 
 common::branch-exists() {
 
-  git rev-parse --verify "$1" >/dev/null 2>&1
+  local branch="$1"
+  git rev-parse --verify "$branch" >/dev/null 2>&1
 }
 
 common::verify-global() {
@@ -90,12 +105,19 @@ common::check-network() {
 }
 
 
+common::open-link() {
+
+  common::verify-global "BROWSER"
+
+  $BROWSER "$1" 2>/dev/null >/dev/null &
+}
+
 common::file-exists() {
   # check if a file exists
   #
   # common::file-exists $filename && echo "yes"
 
-  [[ -e "$1" ]]
+  [[ -f "$1" ]]
 }
 
 
@@ -121,7 +143,7 @@ common::require() {
 
 common::program-exists() {
 
-  which "$1" >/dev/null 2>/dev/null
+  command -v "$1" >/dev/null 2>/dev/null
 }
 
 
@@ -240,6 +262,15 @@ common::wait-until() {
   echo
 }
 
+common::cd() {
+
+  local target="$1"
+  if [[ "$target" == "$(pwd)" ]]; then
+    return
+  fi
+
+  common::do cd "$target"
+}
 
 common::do() {
   # print what we're about to do, then do it

@@ -320,6 +320,7 @@
     highlight PmenuSel   ctermbg=240
     highlight PmenuSBar  ctermbg=238
     highlight PmenuThumb ctermbg=234
+    highlight clear SignColumn
 
   " Be less obnoxious about 'Pattern not found' warnings
     highlight Error    None
@@ -338,14 +339,14 @@
     endfun
 
   " terminal!
-	try
+  try
     nnoremap <leader>T :terminal fish<CR>
     tnoremap <silent> <C-h> <C-W>:TmuxNavigateLeft<cr>
     tnoremap <silent> <C-j> <C-W>:TmuxNavigateDown<cr>
     tnoremap <silent> <C-k> <C-W>:TmuxNavigateUp<cr>
     tnoremap <silent> <C-l> <C-W>:TmuxNavigateRight<cr>
-	catch
-	endtry
+  catch
+  endtry
 
   " misc autocommands
   augroup misc_commands
@@ -358,7 +359,8 @@
     autocmd FileType make setlocal noexpandtab
 
   " Make pylint happy
-    autocmd BufNewFile,BufRead *.py setlocal tabstop=4
+    autocmd FileType c,cpp,python setlocal tabstop=4
+    " autocmd BufNewFile,BufRead *.py setlocal tabstop=4
   augroup end
 
   " silver searcher-ing
@@ -482,27 +484,27 @@
   " set autoindent nocindent
   set showmatch                    " Show matched brackets
 
-  " Detect tabs or spaces
-    function! TabsOrSpaces()
-        " Determines whether to use spaces or tabs on the current buffer.
-        if getfsize(bufname("%")) > 256000
-            " File is very large, just use the default.
-            return
-        endif
+  " " Detect tabs or spaces
+  "   function! TabsOrSpaces()
+  "       " Determines whether to use spaces or tabs on the current buffer.
+  "       if getfsize(bufname("%")) > 256000
+  "           " File is very large, just use the default.
+  "           return
+  "       endif
 
-        let numTabs=len(filter(getbufline(bufname("%"), 1, 250), 'v:val =~ "^\\t"'))
-        let numSpaces=len(filter(getbufline(bufname("%"), 1, 250), 'v:val =~ "^ "'))
+  "       let numTabs=len(filter(getbufline(bufname("%"), 1, 250), 'v:val =~ "^\\t"'))
+  "       let numSpaces=len(filter(getbufline(bufname("%"), 1, 250), 'v:val =~ "^ "'))
 
-        if numTabs > numSpaces
-            setlocal noexpandtab
-        endif
-    endfunction
+  "       if numTabs > numSpaces
+  "           setlocal noexpandtab
+  "       endif
+  "   endfunction
 
-  augroup tabs_or_spaces_group
-    autocmd!
-  " Call the function after opening a buffer
-    autocmd BufReadPost * call TabsOrSpaces()
-  augroup end
+  " augroup tabs_or_spaces_group
+  "   autocmd!
+  " " Call the function after opening a buffer
+  "   autocmd BufReadPost * call TabsOrSpaces()
+  " augroup end
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Macros
