@@ -7,6 +7,11 @@
 #   All the intermediary functions are produced by auto_cli.sh
 
 
+wizard_make_ctags() {
+
+  ctags --c++-kinds=+p --fields=+iaS --extra=+q --language-force=C++ -R .
+}
+
 wizard_make_hash() {
 
   head -c 50 /dev/urandom | md5sum | cut -f 1 -d ' '
