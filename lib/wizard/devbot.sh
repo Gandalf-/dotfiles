@@ -123,6 +123,9 @@ wizard_devbot_list() {
   print out the current devbot schedule
   "
 
+  devbot_list
+  return
+
   {
     echo
     while read -r event; do
