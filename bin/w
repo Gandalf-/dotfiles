@@ -1,7 +1,7 @@
 #!/bin/bash
 
 tmp="$(mktemp /dev/shm/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
-cp "$(which wizard)" "$tmp"
+cp "$(command -v wizard)" "$tmp"
 
 bash "$tmp" "$@"
 ret=$?

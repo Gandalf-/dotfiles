@@ -81,7 +81,6 @@ wizard_devbot_start() {
   disown
 
   echo "$pid" > $pfile
-  return $#
 }
 
 wizard_devbot_bounce() {
@@ -94,8 +93,6 @@ wizard_devbot_bounce() {
   wizard devbot kill
   sleep 0.1
   wizard devbot start
-
-  return $#
 }
 
 wizard_devbot_kill() {
@@ -112,8 +109,6 @@ wizard_devbot_kill() {
 
   pkill -F $pfile
   rm $pfile
-
-  return $#
 }
 
 wizard_devbot_list() {
@@ -157,5 +152,4 @@ wizard_devbot_list() {
   } > /dev/shm/devbot-list
 
   cat /dev/shm/devbot-list
-  return $#
 }

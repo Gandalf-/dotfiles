@@ -24,7 +24,7 @@ autocli::create() {
   local location="$2"
   local output="${location}/${name}"
 
-  declare -A meta_head meta_body    # these are accessible to the caller
+  declare -A meta_head meta_body meta_locked   # these are accessible to the caller
 
   # source inline files
   for file in "${inline[@]}"; do
@@ -56,7 +56,7 @@ autocli::create() {
     done
 
     # write out all output functions
-    declare -f -p
+    declare -f -p | sed -e 's/^}$/return $#;\n}/'
 
     echo "
 [[ \"\${BASH_SOURCE[0]}\" == \"\${0}\" ]] && $name \"\$@\"
@@ -205,11 +205,31 @@ autocli::make-reflective-functions() {
           )\""
       fi
 
-      function_body+="
-        $cases)
-          ${meta_func}_$sub_func \"\${@:2}\";; "
+      local sub_name="${meta_func}_${sub_func}"
 
-      if [[ ${__meta_functions[${meta_func}_$sub_func]} ]]; then
+      if (( meta_locked[$sub_name] )); then
+        # user has says this function should run with a lock
+        function_body+="
+          $cases)
+            (
+              flock -n 111 || {
+                echo \"${sub_name//_/ } is already running.\"
+                exit 1
+              }
+              $sub_name \"\${@:2}\"
+            ) 111> \"/tmp/$sub_name.lock\"
+            true
+            ;;
+          "
+      else
+        function_body+="
+          $cases)
+            $sub_name \"\${@:2}\"
+            ;;
+        "
+      fi
+
+      if [[ ${__meta_functions[$sub_name]} ]]; then
         auto_usage+="
   $sub_func ..."
       else

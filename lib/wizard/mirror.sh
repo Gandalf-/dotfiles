@@ -51,8 +51,6 @@ wizard_mirror_diff() {
   common::do \
     rsync --human-readable --dry-run --archive --update --verbose \
     "$remote"/ /usr/local
-
-  return $#
 }
 
 

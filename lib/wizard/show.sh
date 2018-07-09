@@ -64,8 +64,6 @@ wizard_show_next-break() {
   elif ! (( called_by_script )); then
     echo "You're doing great!"
   fi
-
-  return $#
 }
 
 
@@ -81,8 +79,6 @@ wizard_show_progress() {
     sleep 1
     clear
   done
-
-  return $#
 }
 
 
@@ -102,10 +98,6 @@ wizard_show_history() {
     | uniq -c \
     | sort -nr \
     | head -n "$amount"
-
-  [[ $1 && $2 ]] && return 2
-  [[ $1 ]] && return 1
-  return 0
 }
 
 
@@ -117,13 +109,10 @@ wizard_show_disk() {
   "
 
   df -h
-  return 0
 }
 
 
 wizard_show_weather() {
 
   curl http://wttr.in/~"${1:-Seattle}";
-  [[ $1 ]] && return 1
-  return 0
 }

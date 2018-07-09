@@ -12,6 +12,4 @@ wizard_here_wiki() {
   [[ $wiki ]] || common::error "no wiki for current context"
 
   vim "$wiki"
-
-  return $#
 }

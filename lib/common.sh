@@ -282,6 +282,7 @@ common::do() {
   fi
 
   if (( "$CONFIRM" )); then
+    common::echo "Continue? [Yn]"
     read -r reply
     [[ "$reply" =~ [Nn] ]] && exit 1
   fi

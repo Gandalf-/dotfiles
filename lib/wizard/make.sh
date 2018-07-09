@@ -38,8 +38,6 @@ wizard_make_tmpfs() {
     mount -t tmpfs \
     -o size=4G,nr_inodes=0,mode=700,uid=1000,gid=1000 \
     tmpfs_"$(basename "$target")" "$target"
-
-  return $#
 }
 
 
@@ -83,8 +81,6 @@ wizard_make_tmpfs-git-clone() {
 
   wizard_make_tmpfs "$name"
   common::do git clone --depth 1 "$repo" "$name"
-
-  return $#
 }
 
 
@@ -112,8 +108,6 @@ wizard_make_mirror() {
     tmpfs_"$(basename "$source")" "$target"
 
   common::do cp -ar "$source"/\* "$target"
-
-  return $#
 }
 
 
@@ -129,8 +123,6 @@ if common::program-exists 'tmux'; then
     tmux list-sessions | grep -q "$name" \
       || tmux new-session -d -s "$name"
     tmux switch-client -t "$name"
-
-    return $#
   }
 
   wizard_layout_vertical() {
@@ -219,7 +211,6 @@ wizard_make_project_python() {
   common::do mkdir "$1"
   common::do cd "$1"
   wizard_make_file_python "$1"
-  return 1
 }
 
 

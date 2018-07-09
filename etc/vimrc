@@ -69,6 +69,7 @@
         Plugin 'justinmk/vim-syntax-extra'
         Plugin 'tpope/vim-fugitive'
         Plugin 'tpope/vim-sleuth'
+        Plugin 'simnalamburt/vim-mundo.git'
 
         if has_vundle == 0
           :PluginInstall
@@ -112,9 +113,9 @@
     let g:vimwiki_folding        = 'custom'
 
     if dimension == "work"
-      let g:vimwiki_root = '~/vimwiki'
+      let g:vimwiki_root = '~/wiki'
       let g:vimwiki_list = [{
-            \ 'path': '~/vimwiki/',
+            \ 'path': '~/wiki/',
             \ 'syntax': 'markdown',
             \ 'ext': '.md'}]
 
@@ -526,7 +527,7 @@
           \J : scroll to bottom of screen\| j : jump to last buffer       \n
           \K : auto scroll down          \| k : save                      \n
           \L : list!                     \| l : reload file               \n
-          \M : make in pane              \| m : make                      \n
+          \M :                           \| m : mundo toggle              \n
           \N : print pwd                 \| n : cycle windows             \n
           \O : insert line above         \| o : insert line below         \n
           \P :                           \| p : toggle paste              \n
@@ -629,10 +630,8 @@
     nnoremap <silent> <leader>O O<Esc>
     nnoremap <silent> <leader>o o<Esc>
 
-  " make
-    nnoremap <silent> <leader>M :!tmux send-keys -t right
-          \ 'make' C-m<cr><cr>
-    nnoremap <silent> <leader>m :!clear;make<CR>
+  " Mundo Undo Tree
+    nnoremap <silent> <leader>m :MundoToggle<CR>
 
   " visual block mode
     nnoremap <silent> <leader>v <C-S-v>

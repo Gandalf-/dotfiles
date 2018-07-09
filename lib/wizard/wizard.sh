@@ -13,8 +13,6 @@ wizard_switch() {
 
   [[ $selection ]] || common::error "no selection made"
   wizard make session "$selection"
-
-  return $#
 }
 
 wizard_hunt() {
@@ -30,7 +28,6 @@ wizard_hunt() {
   "
 
   local signal=-TERM
-  local nargs=$#
   case $1 in -*) signal="$1"; shift ;; esac
 
   while read -r process; do
@@ -45,8 +42,6 @@ wizard_hunt() {
       ps ax
     fi | cut -c 1-250 | fzf -m --cycle
     )
-
-  return "$nargs"
 }
 
 wizard_regenerate() {
@@ -88,8 +83,6 @@ wizard_git_fetch() {
 
   done < <(find . -name .git) | sort
   wait
-
-  return $#
 }
 
 
@@ -123,8 +116,6 @@ wizard_git_report() {
 
   done < <(find . -name .git) | sort
   wait
-
-  return $#
 }
 
 
@@ -167,8 +158,6 @@ wizard_transcode_movies() {
     common::echo "Waiting..."; sleep 5
     common::do rm -i "$file"
   done
-
-  return $#
 }
 
 
@@ -183,8 +172,6 @@ wizard_file_remove-trailing-whitespace() {
     common::do sed -i 's/[ \t]*$//' "$1"
     shift
   done
-
-  return $#
 }
 
 
@@ -272,11 +259,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     test(InlineHandler, port=args.port, bind=args.bind)
 "
-  return 0
 }
 
 
-wizard_frequencies() {
+wizard_show_frequencies() {
 
   common::required-help "$1" "[amount]
 
@@ -287,11 +273,10 @@ wizard_frequencies() {
     | uniq -c \
     | sort -nr \
     | head -n "$1";
-  return 1
 }
 
 
-wizard_ratio() {
+wizard_show_ratio() {
 
   common::required-help "$1" "[amount]
 
@@ -304,8 +289,6 @@ wizard_ratio() {
     | head -n "$1" \
     | awk '{a[$2]=$1;s+=$1}END{for(i in a)printf"%-40s%-15d%6.2f%%\n",i,a[i],a[i]/s*100}' \
     | sort -r -k 2,2 -n
-
-  return 1
 }
 
 
@@ -359,8 +342,6 @@ wizard_update_apt() {
   common::sudo apt update
   common::sudo apt upgrade -y
   common::sudo apt-get autoremove -y
-
-  return $#
 }
 
 
@@ -376,9 +357,7 @@ wizard_update_pip() {
   sudo -H pip freeze --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \
-    | xargs -n1 sudo -H pip install -U
-
-  return $#
+    | xargs -n1 sudo -H python3 -m pip install -U
 }
 
 
@@ -446,7 +425,6 @@ wizard_open() {
     fi
 
   done
-  return $#
 }
 
 

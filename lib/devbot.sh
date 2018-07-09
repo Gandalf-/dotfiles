@@ -86,8 +86,12 @@ devbot::eval() {
   {
     local begin="$(date '+%s')"
 
-    bash -c "set -e; $*" || {
+    if bash -c "set -e; $*"; then
+      if [[ $(d devbot data "$name" errors) ]]; then
+        d devbot data "$name" errors -d
+      fi
 
+    else
       # the command failed
       # increment number of errors
       local errors="$(d devbot data "$name" errors)"
@@ -102,7 +106,8 @@ devbot::eval() {
 
       # log it
       devbot::log "error while running \"$name\" ($*), backing off $backoff seconds"
-    }
+    fi
+
     local end="$(date '+%s')"
 
     d devbot data "$name" duration = "$(( end - begin ))"

@@ -52,7 +52,6 @@ wizard_configure_add-user() {
   common::do cp -r /root/.ssh/ /home/"$user"/
 
   common::do chown -R "$user:$user" /home/"$user"/
-  return 1
 }
 
 
@@ -70,6 +69,4 @@ wizard_configure_ubuntu_development() {
 
   wizard_install_git
   wizard_install_fish
-
-  return $#
 }
