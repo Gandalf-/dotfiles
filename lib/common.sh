@@ -19,6 +19,7 @@ BROWSER=''
 common::commit_exists() {
   local target="$1"
   grep -q "$target" <<< "$(git log --oneline | head -n 1)"
+  return $?
 }
 
 
@@ -26,6 +27,7 @@ common::branch-exists() {
 
   local branch="$1"
   git rev-parse --verify "$branch" >/dev/null 2>&1
+  return $?
 }
 
 common::verify-global() {
@@ -49,6 +51,7 @@ common::is-integer() {
   # string -> bool
 
   [ "$1" -eq "$1" ] 2>/dev/null
+  return $?
 }
 
 
@@ -59,6 +62,7 @@ common::process-exists() {
   # check if a process is running
 
   kill -0 "$1"
+  return $?
 }
 
 
@@ -69,6 +73,7 @@ common::file-not-empty() {
   # check if a file's size is non zero
 
   [[ -s "$1" ]]
+  return $?
 }
 
 common::dir-exists() {
@@ -78,6 +83,7 @@ common::dir-exists() {
   # check if a directory exists
 
   [[ -d "$1" ]]
+  return $?
 }
 
 
@@ -102,6 +108,7 @@ common::check-network() {
   # none -> bool
 
   nc -w 1 -z "$DNSSERVER" 53
+  return $?
 }
 
 
@@ -118,6 +125,7 @@ common::file-exists() {
   # common::file-exists $filename && echo "yes"
 
   [[ -f "$1" ]]
+  return $?
 }
 
 
@@ -144,11 +152,13 @@ common::require() {
 common::program-exists() {
 
   command -v "$1" >/dev/null 2>/dev/null
+  return $?
 }
 
 
 common::contains() {
   [[ $1 =~ $2 ]]
+  return $?
 }
 
 
