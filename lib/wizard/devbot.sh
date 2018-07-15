@@ -111,6 +111,23 @@ wizard_devbot_kill() {
   rm $pfile
 }
 
+wizard_devbot_debug() {
+
+  common::optional-help "$1" "
+
+  toggle debug mode
+  "
+
+  if [[ $(d devbot debug) ]]; then
+    # was on, now off
+    d devbot debug -d
+
+  else
+    # was off, now on
+    d devbot debug = true
+  fi
+}
+
 wizard_devbot_list() {
 
   common::optional-help "$1" "

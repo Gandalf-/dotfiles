@@ -16,6 +16,11 @@ devbot::log() {
   printf '%s - %s\n' "$(date +'%x %X')" "$*"
 }
 
+devbot::debug() {
+  [[ $debug ]] || return
+  printf '[debug] %s - %s\n' "$(date +'%x %X')" "$*"
+}
+
 devbot::task() {
 
   # event -> none
@@ -24,10 +29,9 @@ devbot::task() {
   # otherwise we add it back to schedule unchanged
 
 
-  common::debug "task:handle $*"
+  devbot::debug "::task $*"
 
   local event="$1"
-  local now="$(date '+%s')"
   local when="$(d devbot data "$event" when)"
 
   if (( when < now )); then
@@ -50,6 +54,9 @@ devbot::task() {
     # update when to run next
     local interval="$(d devbot events "$event" interval)"
     case $interval in
+      [0-9]*)
+        # seconds
+        ;;
       daily)
         interval=86400
         ;;
@@ -59,13 +66,21 @@ devbot::task() {
       weekly)
         interval=604800
         ;;
+      '')
+        devbot::log "::task error: $event has no interval"
+        return
+        ;;
+      *)
+        devbot::log "::task error: $event has invalid interval"
+        return
+        ;;
     esac
     d devbot data "$event" when = $(( interval + now ))
 
     # run the action
     local action="$(d devbot events "$event" action)"
     [[ $action ]] || {
-      devbot::log "task:handle error: no action"
+      devbot::log "::task error: $event has no action"
       return
     }
 
@@ -81,10 +96,10 @@ devbot::eval() {
   # evaluate the given shell code, but don't wait for it to finish
 
   local name="$1"; shift
-  common::debug "eval: $*"
 
   {
     local begin="$(date '+%s')"
+    devbot::debug "::eval $*"
 
     if bash -c "set -e; $*"; then
       if [[ $(d devbot data "$name" errors) ]]; then
@@ -126,6 +141,10 @@ devbot::main() {
 
   devbot::log "starting devbot"
   while :; do
+
+    local debug="$(d devbot debug)"
+    local now="$(date '+%s')"
+    devbot::debug "reading events"
 
     while read -r event; do
       devbot::task "$event"
