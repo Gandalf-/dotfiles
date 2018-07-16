@@ -287,7 +287,7 @@ wizard_show_ratio() {
     | uniq -c \
     | sort -nr \
     | head -n "$1" \
-    | awk '{a[$2]=$1;s+=$1}END{for(i in a)printf"%-40s%-15d%6.2f%%\n",i,a[i],a[i]/s*100}' \
+    | awk '{a[$2]=$1;s+=$1}END{for(i in a)printf"%-55s%-15d%6.2f%%\n",i,a[i],a[i]/s*100}' \
     | sort -r -k 2,2 -n
 }
 

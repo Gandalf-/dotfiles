@@ -56,7 +56,16 @@ autocli::create() {
     done
 
     # write out all output functions
-    declare -f -p | sed -e 's/^}$/return $#;\n}/'
+    while read -r fname; do
+      case $fname in
+        *'::'*)
+          declare -f -p "$fname"
+          ;;
+        *)
+          declare -f -p "$fname" | sed -e 's/^}$/    return $#;\n}/'
+          ;;
+      esac
+    done < <(declare -F | awk '{print $3}')
 
     echo "
 [[ \"\${BASH_SOURCE[0]}\" == \"\${0}\" ]] && $name \"\$@\"

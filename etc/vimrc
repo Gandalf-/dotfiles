@@ -82,9 +82,6 @@
   " vim2hs
     " let g:haskell_conceal_wide = 1
 
-  " taskwiki
-    let g:taskwiki_syntax = 'markdown'
-
   " vimux
     let g:VimuxOrientation = "h"
     let g:VimuxHeight = "33"
@@ -322,6 +319,10 @@
     highlight PmenuSBar  ctermbg=238
     highlight PmenuThumb ctermbg=234
     highlight clear SignColumn
+
+  " Vimwiki colors
+    highlight PreProc ctermfg=darkblue
+    highlight Title ctermfg=darkgreen
 
   " Be less obnoxious about 'Pattern not found' warnings
     highlight Error    None
