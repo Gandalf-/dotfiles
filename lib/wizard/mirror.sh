@@ -4,6 +4,29 @@
 #
 # this commands only make sense in a ChromeOS -> Chromebrew context
 
+
+common::require 'mount' &&
+wizard_mirror_create() {
+
+  common::required-help "$2" "[source] [target]
+
+  mirror a root directory (source) into a tmpfs directory (target)
+  once created, wizard mirror ... commands allow syncing, pushing and pulling
+
+    wizard mirror create ~/google_drive /usr/local/tmp/
+  "
+
+  local -r source="$1"
+  local -r target="$2/$1"
+
+  [[ -d $source ]] || common::error "$source does not exist"
+  [[ -d $target ]] && commor::error "$target already exists"
+
+  wizard_make_tmpfs "$target"
+  common::do cp -ar "$source"/\* "$target"
+}
+
+
 common::require "rsync" &&
 wizard_mirror_push() {
 
@@ -26,6 +49,7 @@ wizard_mirror_push() {
 }
 
 
+common::require "rsync" &&
 wizard_mirror_diff() {
 
   common::optional-help "$1" "

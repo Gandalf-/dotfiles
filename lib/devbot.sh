@@ -13,13 +13,17 @@
 #   infrequent tasks to be scheduled with confidence
 
 devbot::log() {
-  printf '%s - %s\n' "$(date +'%x %X')" "$*"
+  printf '%s - %s - %s\n' \
+    "$(date +'%x %X')" "${FUNCNAME[1]}" "$*"
 }
+
 
 devbot::debug() {
   [[ $debug ]] || return
-  printf '[debug] %s - %s\n' "$(date +'%x %X')" "$*"
+  printf '%s - %s - %s\n' \
+    "$(date +'%x %X')" "${FUNCNAME[1]}" "$*"
 }
+
 
 devbot::task() {
 
@@ -28,21 +32,20 @@ devbot::task() {
   # check the time field of the input, if it's passed then run the command.
   # otherwise we add it back to schedule unchanged
 
+  devbot::debug "$*"
 
-  devbot::debug "::task $*"
-
-  local event="$1"
-  local when="$(d devbot data "$event" when)"
+  local -r event="$1"
+  local -r when="$(d devbot data "$event" when)"
 
   if (( when < now )); then
 
     # check for prerequisites
-    local req_name="$(d devbot events "$event" require)"
+    local -r req_name="$(d devbot events "$event" require)"
 
     if [[ $req_name ]]; then
 
       # grab the action to run out of the table
-      local req_action="$(d devbot requirements "$req_name")"
+      local -r req_action="$(d devbot requirements "$req_name")"
 
       if ! eval "$req_action"; then
         devbot::log \
@@ -78,7 +81,7 @@ devbot::task() {
     d devbot data "$event" when = $(( interval + now ))
 
     # run the action
-    local action="$(d devbot events "$event" action)"
+    local -r action="$(d devbot events "$event" action)"
     [[ $action ]] || {
       devbot::log "::task error: $event has no action"
       return
@@ -95,11 +98,11 @@ devbot::eval() {
   #
   # evaluate the given shell code, but don't wait for it to finish
 
-  local name="$1"; shift
+  local -r name="$1"; shift
 
   {
-    local begin="$(date '+%s')"
-    devbot::debug "::eval $*"
+    local -r begin="$(date '+%s')"
+    devbot::debug "$*"
 
     if bash -c "set -e; $*"; then
       if [[ $(d devbot data "$name" errors) ]]; then
@@ -109,21 +112,21 @@ devbot::eval() {
     else
       # the command failed
       # increment number of errors
-      local errors="$(d devbot data "$name" errors)"
-      [[ $errors ]] || errors="0"
-      (( errors += 1))
+      local -i errors="$(d devbot data "$name" errors)"  # default == 0
+      errors+=1
+
       d devbot data "$name" errors = "$errors"
 
       # set the backoff
-      local backoff="$(( 10 * errors ))"
-      local when="$(d devbot data "$name" when)"
+      local -r backoff="$(( 10 * errors ))"
+      local -r when="$(d devbot data "$name" when)"
       d devbot data "$name" when = "$(( when + backoff ))"
 
       # log it
       devbot::log "error while running \"$name\" ($*), backing off $backoff seconds"
     fi
 
-    local end="$(date '+%s')"
+    local -r end="$(date '+%s')"
 
     d devbot data "$name" duration = "$(( end - begin ))"
   } &

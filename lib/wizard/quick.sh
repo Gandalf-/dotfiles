@@ -1,5 +1,6 @@
 #!/bin/env bash
 
+
 wizard_quick_shell() {
 
   common::optional-help "$1" "

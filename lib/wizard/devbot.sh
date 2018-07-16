@@ -21,8 +21,7 @@ wizard_devbot_yaml_dump() {
 
   write out the current devbot configuration file to disk
   "
-
-  devbot_config=~/.devbot/config.yml
+  local -r devbot_config=~/.devbot/config.yml
 
   python3 -c "
 import yaml
@@ -43,7 +42,7 @@ wizard_devbot_yaml_load() {
 
   read the current devbot configuration file from disk into apocrypha
   "
-  devbot_config=~/.devbot/config.yml
+  local -r devbot_config=~/.devbot/config.yml
 
   test -s "$devbot_config" ||
     common::error "$devbot_config not found"
@@ -68,16 +67,15 @@ wizard_devbot_start() {
 
   start devbot, will fail if already running
   "
-
   mkdir -p ~/.devbot
-  local pfile=~/.devbot/pid
-  local lfile=~/.devbot/log
+  local -r pfile=~/.devbot/pid
+  local -r lfile=~/.devbot/log
 
   common::file-exists "$pfile" &&
     common::error "devbot already running"
 
   devbot::main >> $lfile 2>&1 &
-  local pid=$!
+  local -r pid=$!
   disown
 
   echo "$pid" > $pfile
@@ -89,7 +87,6 @@ wizard_devbot_bounce() {
 
   restart devbot
   "
-
   wizard devbot kill
   sleep 0.1
   wizard devbot start
@@ -101,8 +98,7 @@ wizard_devbot_kill() {
 
   stop devbot, will fail if not running
   "
-
-  local pfile=~/.devbot/pid
+  local -r pfile=~/.devbot/pid
 
   common::file-exists $pfile ||
     common::error "devbot is not running"
@@ -117,7 +113,6 @@ wizard_devbot_debug() {
 
   toggle debug mode
   "
-
   if [[ $(d devbot debug) ]]; then
     # was on, now off
     d devbot debug -d
@@ -134,9 +129,10 @@ wizard_devbot_list() {
 
   print out the current devbot schedule
   "
-
-  devbot_list
-  return
+  if common::program-exists devbot_list; then
+    devbot_list
+    return
+  fi
 
   {
     echo

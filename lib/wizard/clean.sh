@@ -21,7 +21,7 @@ wizard_clean_every-other() {
   wait
 }
 
-common::require 'dpkg' &&
+common::require dpkg apt-get &&
 wizard_clean_boot() {
 
   common::optional-help "$1" "
@@ -35,8 +35,6 @@ wizard_clean_boot() {
     | sort -V \
     | sed -n '/'"$(uname -r)"'/q;p' \
     | xargs sudo apt-get -y purge
-
-  return $#
 }
 
 
@@ -64,7 +62,6 @@ wizard_clean_haskell() {
   "
 
   common::do rm ./*.hi ./*.o || common::error "No files to clean"
-  return 0
 }
 
 
@@ -80,7 +77,6 @@ wizard_clean_files() {
     removing duplicate files insync creates
   "
 
-  local nargs=$#
   case $1 in -d|--dry) dry=1; shift; esac
 
   while read -r file; do
@@ -132,8 +128,4 @@ wizard_clean_files() {
   else
     echo "Cleaned up $counter files"
   fi
-
-  return "$nargs"
 }
-
-

@@ -135,12 +135,7 @@ common::require() {
 
   while [[ $1 ]]; do
     case $1 in
-
-      *)
-        if ! common::program-exists "$1"; then
-          return 1
-        fi
-        ;;
+      *) common::program-exists "$1" || return 1 ;;
     esac
     shift
   done
