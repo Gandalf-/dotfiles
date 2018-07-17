@@ -70,15 +70,22 @@ wizard_devbot_start() {
   mkdir -p ~/.devbot
   local -r pfile=~/.devbot/pid
   local -r lfile=~/.devbot/log
+  local -r kfile=~/.devbot/lock
 
   common::file-exists "$pfile" &&
     common::error "devbot already running"
 
-  devbot::main >> $lfile 2>&1 &
-  local -r pid=$!
-  disown
+  (
+    flock -ne 200 ||
+      common::error "Could not get devbot lock"
 
-  echo "$pid" > $pfile
+    devbot::main >> $lfile 2>&1 &
+    local -r pid=$!
+    disown
+
+    echo "$pid" > $pfile
+
+  ) 200>$kfile
 }
 
 wizard_devbot_bounce() {

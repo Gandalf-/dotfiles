@@ -1,0 +1,25 @@
+#!/bin/bash
+
+session_header=( $(tmux display-message -p "#S") )
+window_header=( $(tmux display-message -p "#W") )
+
+# try to use the window name first
+if [ "${window_header[0]}" -eq "${window_header[0]}" ] 2>/dev/null; then
+		# bug
+		context="${window_header[0]}"
+
+# could be a task if we have an database entry for it
+elif [[ $(d "${window_header[*]}") ]]; then
+		context="${window_header[*]}"
+
+# then try the session name
+elif [ "${session_header[0]}" -eq "${session_header[0]}" ] 2>/dev/null; then
+		# bug
+		context="${session_header[0]}"
+
+else
+		# task
+		context="${session_header[*]}"
+fi
+
+[[ $context ]] && timeout 0.05 d current-context = "$context"
