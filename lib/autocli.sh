@@ -8,9 +8,11 @@
 
 set -o pipefail
 
+declare -A meta_head meta_body meta_locked   # these are accessible to the caller
 sources=''
 inline=''
 
+autocli::debug() { (( DEBUG )) && eval "$*"; }
 
 autocli::create() {
   # location of generated file, source, source ... -> none
@@ -18,13 +20,11 @@ autocli::create() {
   # regenerate output file if the sources have changed
 
   local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
-  source "${root}/lib/common.sh"
+  source "${root}/lib/common.sh" 2>/dev/null
 
   local name="$1"
   local location="$2"
   local output="${location}/${name}"
-
-  declare -A meta_head meta_body meta_locked   # these are accessible to the caller
 
   # source inline files
   for file in "${inline[@]}"; do
@@ -32,13 +32,15 @@ autocli::create() {
   done
 
   # pull in all the sources since we need them now
-  for source in "${sources[@]}"; do
-    if common::file-exists "$source"; then
-      source "$source"
-    else
-      echo "warn: $source not found"
-    fi
-  done
+  if [[ ${sources[*]} ]]; then
+    for source in "${sources[@]}"; do
+      if [[ -f "$source" ]]; then
+        source "$source"
+      else
+        echo "warn: $source not found"
+      fi
+    done
+  fi
 
   # generate all the intermediary functions
   autocli::make-reflective-functions
@@ -58,6 +60,8 @@ autocli::create() {
     # write out all output functions
     while read -r fname; do
       case $fname in
+        'autocli::'*)
+          ;;
         *'::'*)
           declare -f -p "$fname"
           ;;
@@ -165,7 +169,7 @@ autocli::make-reflective-functions() {
     local base=${commands[0]}
 
     for ((j=1; j < len; j++)); do
-      common::debug echo "assign __meta_functions[$base] += ${commands[$j]}"
+      autocli::debug echo "assign __meta_functions[$base] += ${commands[$j]}"
 
       if ! [[ ${__meta_functions[$base]} =~ .*${commands[$j]}.* ]]; then
         __meta_functions[$base]+="${commands[$j]} "
@@ -175,8 +179,8 @@ autocli::make-reflective-functions() {
     done
   done
 
-  common::debug declare -p __meta_functions
-  common::debug echo "keys ${!__meta_functions[*]}"
+  autocli::debug declare -p __meta_functions
+  autocli::debug echo "keys ${!__meta_functions[*]}"
 
   local existing_functions
   # shellcheck disable=SC2207
@@ -185,7 +189,7 @@ autocli::make-reflective-functions() {
   # define each meta function
   for meta_func in "${!__meta_functions[@]}"; do
 
-    common::debug echo "meta_func: $meta_func, ${__meta_functions[$meta_func]}"
+    autocli::debug echo "meta_func: $meta_func, ${__meta_functions[$meta_func]}"
 
     if [[ ${existing_functions[*]} =~ .*$meta_func\ .* ]]; then
       echo "looks like $meta_func already exists! check your definitions"
@@ -216,7 +220,7 @@ autocli::make-reflective-functions() {
 
       local sub_name="${meta_func}_${sub_func}"
 
-      if (( meta_locked[$sub_name] )); then
+      if (( meta_locked["$sub_name"] )); then
         # user has says this function should run with a lock
         function_body+="
           $cases)
@@ -255,10 +259,9 @@ autocli::make-reflective-functions() {
         echo \"\$usage\"
         exit 0
       else
-        echo
-        echo \"\$__name\"
-        echo \"\$__usage\"
-        echo
+        printf '\\n%s\\n%s\\n\\n' \
+          \"\$__name\" \
+          \"\$__usage\"
         exit 0
       fi
       ;;
@@ -267,9 +270,11 @@ autocli::make-reflective-functions() {
     eval "
     $meta_func() {
       [[ \$1 ]] || \"\${FUNCNAME[0]}\" --help
-      local __ret __shifts=0
-      local __usage=\"$auto_usage\"
-      local __name=\"${auto_name}\"
+      local \
+        __shifts=0 \
+        __usage=\"$auto_usage\" \
+        __name=\"${auto_name}\"
+
       ${meta_head[$meta_func]}
 
       while [[ \$1 ]]; do
@@ -278,7 +283,7 @@ autocli::make-reflective-functions() {
           $function_body
         esac
 
-        __ret=\$?; shift; shift \$__ret
+        local __ret=\$?; shift; shift \$__ret
         (( __shifts += __ret + 1 ))
       done
       return \$__shifts
@@ -286,5 +291,5 @@ autocli::make-reflective-functions() {
     "
   done
 
-  common::debug declare -f
+  autocli::debug declare -f
 }
