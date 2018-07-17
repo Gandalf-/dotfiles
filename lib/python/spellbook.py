@@ -35,7 +35,7 @@ def palindrome(xs):
     '''
     length = len(xs)
 
-    if length == 0 or length == 1:
+    if length in (0, 1,):
         return True
 
     rest = xs[1:-1]
@@ -73,7 +73,7 @@ def ackerman(m, n):
     return 0
 
 
-class BST(object):
+class BST():
     ''' binary search tree
     '''
 
