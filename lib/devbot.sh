@@ -99,12 +99,13 @@ devbot::eval() {
   # evaluate the given shell code, but don't wait for it to finish
 
   local -r name="$1"; shift
+  local -r lockfile=~/.devbot/locks/"$name".lock
 
   {
     local -r begin="$(date '+%s')"
     devbot::debug "$*"
 
-    if bash -c "set -e; $*"; then
+    if flock --nonblock --exclusive "$lockfile" bash -c "set -e; $*"; then
       if [[ $(d devbot data "$name" errors) ]]; then
         d devbot data "$name" errors -d
       fi
@@ -140,7 +141,7 @@ devbot::main() {
   #
   # run the main event loop
 
-  mkdir -p ~/.devbot
+  mkdir -p ~/.devbot/locks/
 
   devbot::log "starting devbot"
   while :; do
