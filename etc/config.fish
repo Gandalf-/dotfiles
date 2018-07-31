@@ -33,9 +33,9 @@ function  ....; builtin cd ../../../;command ls --color=auto ; end
 #   d fish-history (string split ' ' "$argv") epoc + "$epoc"
 # end
 
-function postexec_test --on-event fish_postexec
-  _set_context 2>/dev/null
-end
+# function postexec_test --on-event fish_postexec
+#   _set_context 2>/dev/null
+# end
 
 # Location
 #===========================

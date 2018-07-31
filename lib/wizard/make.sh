@@ -64,7 +64,7 @@ wizard_make_tmpfs-git-clone() {
     [[ $1 =~ github ]]
   }
 
-  name_from_repo() {
+  name-from-repo() {
     # https://github.com/danilop/yas3fs.git -> yas3fs
 
     # shellcheck disable=2206
@@ -75,7 +75,7 @@ wizard_make_tmpfs-git-clone() {
 
   # given just a repo url
   if is_repo "$1"; then
-    name_from_repo "$1"
+    name-from-repo "$1"
     local name="$result"
     local repo="$1"
 
@@ -90,31 +90,36 @@ wizard_make_tmpfs-git-clone() {
 }
 
 
-common::require tmux && {
-
 wizard_make_session() {
-  common::required-help "$1" "[name] [commands ...]
+  common::required-help "$1" "[name]
 
-create a new tmux session and move to it
+  create a new tmux session and move to it
   "
 
   local name="$*"
 
   tmux list-sessions | grep -q "$name" \
     || tmux new-session -d -s "$name"
-  tmux switch-client -t "$name"
+
+  _set_context "$name" 2>/dev/null
+
+  if [[ $TMUX ]]; then
+    tmux switch-client -t "$name"
+  else
+    tmux attach-session -t "$name"
+  fi
 }
 
 wizard_layout_vertical() {
   tmux select-layout even-vertical
 }
+
 wizard_layout_horizontal() {
   tmux select-layout even-horizontal
 }
+
 wizard_layout_tiled() {
   tmux select-layout tiled
-}
-
 }
 
 

@@ -1,25 +1,51 @@
 #!/bin/bash
 
-session_header=( $(tmux display-message -p "#S") )
-window_header=( $(tmux display-message -p "#W") )
+IFS=' ' read -ra arguments < <(echo "$1")
+IFS=' ' read -ra session_header < <(tmux display-message -p "#S")
+IFS=' ' read -ra window_header < <(tmux display-message -p "#W")
 
-# try to use the window name first
-if [ "${window_header[0]}" -eq "${window_header[0]}" ] 2>/dev/null; then
-		# bug
-		context="${window_header[0]}"
+# arguments override everything
+if [[ ${arguments[0]} ]]; then
+    IFS=' ' read -ra active_window < <(
+        tmux list-windows -t "$*" -F '#{window_active} #{window_name}' \
+          | grep '^1' \
+          | cut -f 2- -d ' '
+    )
+    # arg window
+    if [ "${active_window[0]}" -eq "${active_window[0]}" ] 2>/dev/null; then
+        context="${active_window[0]}"
 
-# could be a task if we have an database entry for it
+    elif [[ $(d "${active_window[*]}") ]]; then
+        context="${active_window[*]}"
+
+    # arg session
+    elif [ "${arguments[0]}" -eq "${arguments[0]}" ] 2>/dev/null; then
+        context="${arguments[0]}"
+    else
+        context="$*"
+    fi
+
+# no args, detect from tmux
+
+# window name bug?
+elif [ "${window_header[0]}" -eq "${window_header[0]}" ] 2>/dev/null; then
+    # bug
+    context="${window_header[0]}"
+
+# window name task?
 elif [[ $(d "${window_header[*]}") ]]; then
-		context="${window_header[*]}"
+    context="${window_header[*]}"
 
-# then try the session name
+# session name bug?
 elif [ "${session_header[0]}" -eq "${session_header[0]}" ] 2>/dev/null; then
-		# bug
-		context="${session_header[0]}"
+    # bug
+    context="${session_header[0]}"
 
+# session name task
 else
-		# task
-		context="${session_header[*]}"
+    # task
+    context="${session_header[*]}"
 fi
 
-[[ $context ]] && timeout 0.05 d current-context = "$context"
+[[ $context ]] &&
+    timeout 0.05 d current-context = "$context"

@@ -602,13 +602,15 @@
     nnoremap <silent> <leader>z :set spell!<CR>
     nnoremap <silent> <leader>R :set relativenumber!<CR>
     function! SmartPaste()
-      set nu!
+      setlocal nu!
       if &paste
-        set nopaste
-        set foldcolumn=1
+        setlocal nopaste
+        setlocal foldcolumn=1
+        :ALEEnableBuffer
       else
-        set paste
-        set foldcolumn=0
+        setlocal paste
+        setlocal foldcolumn=0
+        :ALEDisableBuffer
       endif
     endfunction
     nnoremap <leader>p :call SmartPaste() <cr>

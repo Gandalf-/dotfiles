@@ -1,0 +1,5 @@
+#!/bin/sh
+
+tmux list-windows -t "$*" -F '#{window_active} #{window_name}' \
+  | grep '^1' \
+  | cut -f 2- -d ' '

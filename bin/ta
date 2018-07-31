@@ -25,9 +25,10 @@ switcher() {
       d switcher-options
     } 2>/dev/null \
       | fzf --exit-0 \
+        --height 40 \
         --print-query \
         --preview "$picker" \
-        --preview-window up \
+        --preview-window up:60% \
       | tail -n 1
     )"
   [[ $session ]] || exit 0
@@ -36,6 +37,7 @@ switcher() {
     tmux new-session -d -s "$session" -c "$HOME"
   fi
 
+  _set_context "$session"
   tmux "$change" -t "$session"
 }
 

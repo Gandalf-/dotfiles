@@ -16,18 +16,40 @@ export PLATFORM
 BROWSER=''
 
 
-common::commit_exists() {
+# database functions
+db::get() {
+  local name="$1"
+  shift
+  mapfile -t "${name?}" < <(d "$@")
+}
+
+
+# git functions
+git::is-clean() {
+
+  local clean='nothing to commit, working directory clean'
+  grep -q "$clean" <<< "$(git status)"
+}
+
+git::commit-exists() {
+
   local target="$1"
   grep -q "$target" <<< "$(git log --oneline | head -n 1)"
 }
 
-
-common::branch-exists() {
+git::branch-exists() {
 
   local branch="$1"
   git rev-parse --verify "$branch" >/dev/null 2>&1
 }
 
+git::current-branch() {
+
+  git rev-parse --abbrev-ref HEAD
+}
+
+
+# common
 common::verify-global() {
 
   # string -> none || exit
