@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+# pylint: disable=missing-docstring
+
+'''
+look at the current context, offer things to do
+'''
+
 import random
 import shutil
 import subprocess
@@ -10,100 +16,136 @@ low = 5
 high = 20
 
 
-def produce_git(options):
-    ''' set of tuple -> none
+class Registry():
+    items = []
 
-    git related suggestions
+    @classmethod
+    def register(cls):
+        def decorator(fn):
+            cls.items.append(fn)
+            return fn
+        return decorator
+
+
+class Options():
+
+    def __init__(self):
+        self.options = set()
+
+    def run(self):
+        for function in Registry.items:
+            function(self)
+
+    def show(self):
+        for option in self.options:
+            print(option[0])
+
+    def add_low(self, command):
+        self.options.add((command, low))
+
+    def add(self, command):
+        self.options.add((command, normal))
+
+    def add_high(self, command):
+        self.options.add((command, high))
+
+    @Registry.register()
+    def produce_git(self):
+        ''' git related suggestions '''
+
+        if not os.path.exists('.git'):
+            return
+        self.add('git status')
+
+        statuses = _shell('git', 'status', '--porcelain', split=True)
+        modified_not_added = False
+        add_not_commited = False
+
+        for status in statuses:
+            filename = status.split(' ')[-1]
+
+            if status[1] in ['M', '?']:
+                # modified but not added
+                self.add('git add {f}'.format(f=filename))
+                modified_not_added = True
+
+            elif status[0] in ['M', 'A']:
+                # added but not commited
+                self.add(
+                    'git commit -m "updates to {f}"'.format(f=filename))
+                self.add(
+                    'git reset HEAD {f}'.format(f=filename))
+                add_not_commited = True
+
+        if modified_not_added:
+            self.add('git diff')
+
+        if add_not_commited:
+            self.add('git diff --cached')
+
+        # porcelain doesn't tell us about commits that need to be pushed
+        git_status = _shell('git', 'status')
+
+        if 'Your branch is ahead of' in git_status:
+            self.add('git push')
+
+    @Registry.register()
+    def produce_insync(self):
+        ''' insync related suggestions '''
+
+        if not shutil.which('insync-headless'):
+            return
+
+        insync_status = _shell('insync-headless', 'get_status')
+
+        if insync_status == 'ERROR':
+            self.add('insync-headless retry_errors')
+
+        elif insync_status == 'SHARE':
+            self.add(
+                'insync-headless reject_all_new_shares austin.voecks@gmail.com')
+
+    @Registry.register()
+    def produce_human(self):
+        ''' suggestions to take a break, drink some water, etc '''
+
+        if random.randint(0, 10) == 0:
+            self.add('echo take a break!')
+
+        if random.randint(0, 15) == 0:
+            self.add('echo drink some water!')
+
+    @Registry.register()
+    def database(self):
+        connected = _shell('d', 'assistant', 'alive', '--keys')
+        if not connected:
+            self.add('python3 -m apocrypha.server')
+
+
+def _shell(*command, split=False):
+    ''' list of str -> list of str
     '''
+    try:
+        output = subprocess.check_output(
+            command,
+            stderr=subprocess.STDOUT
+        ).decode('utf-8')
+    except subprocess.CalledProcessError:
+        return False
 
-    if not os.path.exists('.git'):
-        return
-    options.add(
-        ('git status', normal))
+    if split and output:
+        output = [_ for _ in output.split('\n') if _]
 
-    git_status = subprocess.check_output(
-        ['git', 'status', '--porcelain']).decode('utf-8').split('\n')
-    statuses = [_ for _ in git_status if _]
-
-    modified_not_added = False
-    add_not_commited = False
-
-    for status in statuses:
-        filename = status.split(' ')[-1]
-
-        if status[1] in ['M', '?']:
-            # modified but not added
-            options.add(
-                ('git add {f}'.format(f=filename), normal))
-            modified_not_added = True
-
-        elif status[0] in ['M', 'A']:
-            # added but not commited
-            options.add(
-                ('git commit -m "updates to {f}"'.format(f=filename), normal))
-            options.add(
-                ('git reset HEAD {f}'.format(f=filename), low))
-            add_not_commited = True
-
-    if modified_not_added:
-        options.add(('git diff', low))
-
-    if add_not_commited:
-        options.add(('git diff --cached', low))
-
-    # porcelain doesn't tell us about commits that need to be pushed
-    git_status = subprocess.check_output(
-        ['git', 'status']).decode('utf-8')
-
-    if 'Your branch is ahead of' in git_status:
-        options.add(('git push', normal))
-
-
-def produce_insync(options):
-    ''' none -> none
-
-    insync related suggestions
-    '''
-
-    if not shutil.which('insync-headless'):
-        return
-
-    insync_status = subprocess.check_output(
-        ['insync-headless', 'get_status']).decode('utf-8')
-
-    if insync_status == 'ERROR':
-        options.add(('insync-headless retry_errors', normal))
-
-    elif insync_status == 'SHARE':
-        options.add(
-            ('insync-headless reject_all_new_shares austin.voecks@gmail.com',
-             normal))
-
-
-def produce_human(options):
-    ''' none -> none
-
-    suggestions to take a break, drink some water, etc
-    '''
-
-    if random.randint(0, 10) == 0:
-        options.add(('echo take a break!', low))
-
-    if random.randint(0, 15) == 0:
-        options.add(('echo drink some water!', low))
+    return output
 
 
 def main():
     '''
+    look around for things to offer
     '''
-    options = set()
-
-    produce_git(options)
-    produce_insync(options)
-    produce_human(options)
-
-    for option in options:
-        print(option[0])
+    options = Options()
+    options.run()
+    options.show()
 
 
 if __name__ == '__main__':
