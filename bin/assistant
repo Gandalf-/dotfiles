@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # pylint: disable=missing-docstring
+# pylint: disable=too-few-public-methods
 
 '''
 look at the current context, offer things to do
@@ -125,10 +126,15 @@ class Options():
             self.add('echo drink some water!')
 
     @Registry.register()
-    def database(self):
+    def database_and_devbot(self):
         connected = _shell('d', 'assistant', 'alive', '--keys')
-        if not connected:
+        if connected is False:
             self.add('python3 -m apocrypha.server')
+            return
+
+        devbot_alive = _shell('devbot_status')
+        if '✗' in devbot_alive:
+            self.add('w devbot start')
 
 
 def _shell(*command, split=False):
