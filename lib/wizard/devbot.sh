@@ -4,16 +4,11 @@
 #
 #   daemon to handle simple background tasks automatically based on a schedule
 #
-#   tasks are added to a schedule file, that's read every 5 seconds.
-#     task :: interval time command ...
-#
 #   when a tasks time is reached, the command is run and it's added back to the
 #   schedule with an updated time (current time + interval)
 #
 #   this approach makes devbot's schedule persist between runs, allowing very
 #   infrequent tasks to be scheduled with confidence
-
-# wizard commands
 
 wizard_devbot_yaml_dump() {
 
@@ -35,6 +30,7 @@ with open('$devbot_config', 'w+') as yaml_file:
     yaml.dump(data, yaml_file, default_flow_style=False)
 "
 }
+
 
 wizard_devbot_yaml_load() {
 
@@ -58,8 +54,8 @@ client = Client()
 for key in data:
     client.set('devbot', key, value=data[key])
 "
-
 }
+
 
 wizard_devbot_start() {
 
@@ -88,6 +84,7 @@ wizard_devbot_start() {
   ) 200>$kfile
 }
 
+
 wizard_devbot_bounce() {
 
   common::optional-help "$1" "
@@ -98,6 +95,7 @@ wizard_devbot_bounce() {
   sleep 0.1
   wizard devbot start
 }
+
 
 wizard_devbot_kill() {
 
@@ -113,6 +111,7 @@ wizard_devbot_kill() {
   pkill -F $pfile
   rm $pfile
 }
+
 
 wizard_devbot_debug() {
 

@@ -21,6 +21,7 @@ wizard_clean_every-other() {
   wait
 }
 
+
 common::require dpkg apt-get &&
 wizard_clean_boot() {
 
@@ -83,33 +84,32 @@ wizard_clean_files() {
     local fixed; fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
 
     # make sure the file still exists
-    if [[ -e "$file" ]] ; then
+    [[ -e "$file" ]] || continue
 
-      # target file exists too, make sure they're different
-      if [[ -f "$fixed" ]]; then
+    # target file exists too, make sure they're different
+    if [[ -f "$fixed" ]]; then
 
-        soriginal=$(sha1sum "$file")
-        snew=$(sha1sum "$fixed")
+      soriginal=$(sha1sum "$file")
+      snew=$(sha1sum "$fixed")
 
-        echo "remove dup: $file"
-        if [[ $soriginal != "$snew" ]]; then
-          (( dry )) \
-            || rm "$file" \
-            || exit
-
-        else
-          echo "$file $fixed both exist but are different"
-        fi
+      echo "remove dup: $file"
+      if [[ $soriginal != "$snew" ]]; then
+        (( dry )) \
+          || rm "$file" \
+          || exit
 
       else
-        echo "rename dup: $file"
-        (( dry )) \
-          || mv "$file" "$fixed" \
-          || exit
+        echo "$file $fixed both exist but are different"
       fi
 
-      (( counter++ ))
+    else
+      echo "rename dup: $file"
+      (( dry )) \
+        || mv "$file" "$fixed" \
+        || exit
     fi
+
+    (( counter++ ))
   done < <(find . -regex '.*([0-9]+).*')
 
   while read -r file; do

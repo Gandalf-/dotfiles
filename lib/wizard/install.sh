@@ -12,7 +12,6 @@ wizard_install_dot-files() {
   link all the configuration files in this repository to their correct
   locations in the system
   "
-
   local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
 
   common::do mkdir -p "$HOME"/.vim
@@ -21,14 +20,12 @@ wizard_install_dot-files() {
   link() {
     local here; here="$(readlink -e "${root}/$1")"
     local there="${HOME}/$2"
-
     common::do ln -sf "$here" "$there"
   }
 
   copy() {
     local here; here="$(readlink -e "${root}/$1")"
     local there="${HOME}/$2"
-
     common::do cp -r "$here" "$there"
   }
 
@@ -45,7 +42,6 @@ wizard_install_dot-files() {
   $op etc/vimrc               .vimrc
   $op etc/tmux.conf           .tmux.conf
   $op etc/bashrc              .bashrc
-  $op etc/gitignore_global    .gitignore_global
   $op etc/pylintrc            .pylintrc
   $op etc/devbotrc            .devbotrc
 
@@ -61,13 +57,12 @@ wizard_install_dot-files() {
 }
 
 common::require 'apt' &&
-wizard_install_apt() {
+wizard::apt() {
 
   common::required-help "$1" "[package...]
 
   install a package with apt
   "
-
   common::sudo apt install -y "$@"
 }
 
@@ -79,8 +74,7 @@ wizard_install_irssi() {
 
   install irssi's dependencies with apt, then clone and compile from source
   "
-
-  wizard_install_apt libtool libglib2.0-dev libssl-dev
+  wizard::apt libtool libglib2.0-dev libssl-dev
 
   common::do cd /tmp
   wizard make git-tmpfs-clone https://github.com/irssi/irssi.git
@@ -96,7 +90,6 @@ wizard_install_autojump() {
 
   install autojump from github
   "
-
   common::clone git://github.com/joelthelion/autojump.git /tmp/autojump
 
   common::do cd /tmp/autojump
@@ -114,7 +107,7 @@ wizard_install_git() {
   "
   common::sudo add-apt-repository ppa:git-core/ppa -y
   common::sudo apt-get update
-  wizard_install_apt git
+  wizard::apt git
 }
 
 
@@ -126,7 +119,7 @@ wizard_install_vnc() {
   install xfce4 and start a VNC server. for droplets
   "
   common::sudo apt update
-  wizard_install_apt xfce4 xfce4-goodies tightvncserver
+  wizard::apt xfce4 xfce4-goodies tightvncserver
   common::sudo vncserver
   common::sudo vncserver -kill :1
   cat > "$HOME"/.vnc/xstartup << EOF
@@ -147,7 +140,7 @@ wizard_install_java() {
   "
   common::sudo add-apt-repository -y ppa:webupd8team/java
   common::sudo apt update
-  wizard_install_apt oracle-java8-installer
+  wizard::apt oracle-java8-installer
 }
 
 
@@ -197,18 +190,18 @@ wizard_install_fish() {
 
   install fish from the official repository so we get the most recent version
   "
-
-  wizard_install_apt software-properties-common python-software-properties
+  wizard::apt software-properties-common python-software-properties
   common::sudo apt-add-repository -y ppa:fish-shell/release-2
   common::sudo apt-get update
-  wizard_install_apt fish
+  wizard::apt fish
 }
 
 
 wizard_install_tmux() {
 
   common::sudo apt install libevent-dev libncurses5-dev
-  common::do wget https://github.com/tmux/tmux/releases/download/2.7/tmux-2.7.tar.gz
+  common::do wget \
+    https://github.com/tmux/tmux/releases/download/2.7/tmux-2.7.tar.gz
   common::do tar xf tmux-2.7.tar.gz
   common::cd tmux-2.7
   common::do ./configure
@@ -233,6 +226,6 @@ wizard_install_docker() {
 
   common::sudo apt-get update
   common::do apt-cache policy docker-ce
-  wizard_install_apt -y docker-ce
+  wizard::apt -y docker-ce
 }
 

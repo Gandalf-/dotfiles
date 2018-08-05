@@ -1,14 +1,5 @@
 #!/bin/env bash
 
-wizard_show_projects() {
-
-  while read -r project; do
-
-    printf '%-15s %s\n' \
-      "$project" "$(d "$project" desc)"
-
-  done < <(d projects)
-}
 
 wizard_show_next-break() {
 
@@ -98,17 +89,6 @@ wizard_show_history() {
     | uniq -c \
     | sort -nr \
     | head -n "$amount"
-}
-
-
-wizard_show_disk() {
-
-  common::optional-help "$1" "
-
-  show disk and partition usage
-  "
-
-  df -h
 }
 
 
