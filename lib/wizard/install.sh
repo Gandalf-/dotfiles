@@ -205,6 +205,18 @@ wizard_install_fish() {
 }
 
 
+wizard_install_tmux() {
+
+  common::sudo apt install libevent-dev libncurses5-dev
+  common::do wget https://github.com/tmux/tmux/releases/download/2.7/tmux-2.7.tar.gz
+  common::do tar xf tmux-2.7.tar.gz
+  common::cd tmux-2.7
+  common::do ./configure
+  common::do make -j 4
+  common::sudo make install
+}
+
+
 common::require 'apt' &&
 wizard_install_docker() {
 

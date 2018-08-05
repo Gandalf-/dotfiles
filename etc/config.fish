@@ -100,9 +100,10 @@ test -d ~/.cabal/bin/
   and set PATH ~/.cabal/bin/ $PATH
 
 # go
-if test -d /usr/local/go/bin/
-  set PATH /usr/local/go/bin/ $PATH
-  set -gx GOPATH ~/google_drive/code/go
+if test -d /usr/local/go/bin
+  set PATH $HOME/google_drive/code/go/bin /usr/local/go/bin $PATH
+
+  set -x -U GOPATH $HOME/google_drive/code/go
 end
 
 # Other executables
