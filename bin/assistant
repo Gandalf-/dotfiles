@@ -67,10 +67,12 @@ class Options():
             if status[1] in ['M', '?']:
                 # modified but not added
                 self.add('git add {f}'.format(f=filename))
+                self.add('git stash')
                 modified_not_added = True
 
             elif status[0] in ['M', 'A']:
                 # added but not commited
+                self.add('git commit --amend --no-edit')
                 self.add(
                     'git commit -m "updates to {f}"'.format(f=filename))
                 self.add(
@@ -86,8 +88,15 @@ class Options():
         # porcelain doesn't tell us about commits that need to be pushed
         git_status = _shell('git', 'status')
 
-        if 'Your branch is ahead of' in git_status:
+        if 'have diverged' in git_status:
+            self.add('git push --force')
+        elif 'Your branch is ahead of' in git_status:
             self.add('git push')
+
+        git_stash = _shell('git', 'stash', 'list')
+        if git_stash:
+            self.add('git stash list')
+            self.add('git stash pop')
 
     @Registry.register()
     def produce_insync(self):
