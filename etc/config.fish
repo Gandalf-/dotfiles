@@ -147,14 +147,14 @@ set __fish_git_prompt_color_branch yellow
 if test "$at_work"
   set -gx DISPLAY ':0'
 
-else
-  set __fish_git_prompt_showdirtystate 'yes'
-  set __fish_git_prompt_showstashstate 'yes'
-  set __fish_git_prompt_showuntrackedfiles 'no'
-  set __fish_git_prompt_color_upstream_ahead green
-  set __fish_git_prompt_color_upstream_behind red
-  set __fish_git_prompt_color_upstream_ahead green
-  set __fish_git_prompt_color_upstream_behind red
+# else
+#   set __fish_git_prompt_showdirtystate 'yes'
+#   set __fish_git_prompt_showstashstate 'yes'
+#   set __fish_git_prompt_showuntrackedfiles 'no'
+#   set __fish_git_prompt_color_upstream_ahead green
+#   set __fish_git_prompt_color_upstream_behind red
+#   set __fish_git_prompt_color_upstream_ahead green
+#   set __fish_git_prompt_color_upstream_behind red
 end
 
 # Status Chars

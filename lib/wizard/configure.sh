@@ -65,8 +65,11 @@ wizard_configure_ubuntu_development() {
 
   common::sudo apt update -y
   common::sudo apt upgrade -y
-  common::sudo apt install -y htop python-pip tmux silversearcher-ag vim
+  common::sudo apt install -y \
+    htop python-pip silversearcher-ag vim python3-pip
 
   wizard_install_git
   wizard_install_fish
+  wizard_install_tmux
+  wizard_install_vim
 }

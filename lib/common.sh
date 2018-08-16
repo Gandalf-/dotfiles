@@ -5,6 +5,9 @@
 # common
 #   commonly useful functions across all scripts
 
+
+# globals used by this libary
+BROWSER=''
 DEBUG=${DEBUG:-0}
 green="\033[01;32m"
 normal="\033[00m"
@@ -12,8 +15,32 @@ PLATFORM="$(uname)"
 export PLATFORM
 
 
-# globals used by this libary
-BROWSER=''
+# aliases
+alias read='read -r'
+
+
+common::xargs() {
+
+  local function="$1"
+  local items=()
+
+  while read item; do
+    items+=( "$item" )
+  done
+
+  for item in "${items[@]}"; do
+    "$function" "$item"
+  done
+}
+
+common::map() {
+
+  # create a new function from the argument string
+  # and apply it to each line of input
+
+  eval "lambda() { $@ }"
+  common::xargs lambda
+}
 
 
 # database functions
@@ -46,6 +73,12 @@ git::branch-exists() {
 git::current-branch() {
 
   git rev-parse --abbrev-ref HEAD
+}
+
+
+common::pip() {
+
+  common::do python3 -m pip "$*"
 }
 
 
@@ -303,7 +336,7 @@ common::do() {
 
   if (( "$CONFIRM" )); then
     common::echo "Continue? [Yn]"
-    read -r reply
+    read reply
     [[ "$reply" =~ [Nn] ]] && exit 1
   fi
 
@@ -340,7 +373,7 @@ common::confirm() {
   common::echo "$@"
 
   if ! (( "$AUTO" )); then
-    read -r reply; [[ "$reply" =~ [Nn] ]] && exit 1
+    read reply; [[ "$reply" =~ [Nn] ]] && exit 1
   fi
 }
 

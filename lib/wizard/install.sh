@@ -183,7 +183,20 @@ wizard_install_lua() {
 }
 
 
-common::require 'apt' &&
+wizard_install_tmux() {
+  common::sudo apt install libevent-dev libncurses5-dev
+
+  common::do wget https://github.com/tmux/tmux/releases/download/2.7/tmux-2.7.tar.gz
+  common::do tar xf tmux-2.7.tar.gz
+
+  common::cd tmux-2.7
+  common::do ./configure
+  common::do make -j 4
+
+  common::sudo make install
+}
+
+
 wizard_install_fish() {
 
   common::optional-help "$1" "
@@ -206,6 +219,37 @@ wizard_install_tmux() {
   common::cd tmux-2.7
   common::do ./configure
   common::do make -j 4
+  common::sudo make install
+}
+
+wizard_install_vim() {
+
+  common::optional-help "$1" "
+
+  install all possible Vim dedependencies with apt, then download master.zip,
+  compile and install with all feaures enabled
+  "
+
+  common::pip install pylint flake8
+
+  common::do cd ~/
+  wizard_make_tmpfs-git-clone https://github.com/vim/vim.git
+  common::do cd vim
+
+  common::do ./configure \
+    --with-features=huge \
+    --with-lua-prefix=/usr/local \
+    --enable-multibyte \
+    --enable-rubyinterp=yes \
+    --enable-pythoninterp=yes \
+    --enable-python3interp=yes \
+    --enable-perlinterp=yes \
+    --enable-luainterp=yes \
+    --enable-gui=auto \
+    --enable-cscope \
+    --prefix=/usr/local
+
+  common::do make -j CFLAGS='"-oFast -march=native"'
   common::sudo make install
 }
 

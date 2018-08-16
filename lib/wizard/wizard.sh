@@ -20,6 +20,7 @@ wizard_hunt() {
   common::optional-help "$1" "(-#) (pid or process name)
 
   find processes and send them a signal, default SIGTERM
+  can signal multiple processes at once
 
     wizard hunt
     wizard hunt -9
@@ -30,18 +31,12 @@ wizard_hunt() {
   local signal=-TERM
   case $1 in -*) signal="$1"; shift ;; esac
 
-  while read -r process; do
-    local pid; pid="$(awk '{print $1}' <<< "$process")"
-    kill "$signal" "$pid"
-
-  done < <(
-    # shellcheck disable=SC2009
-    if [[ $1 ]]; then
-      ps ax | grep "$1"
-    else
-      ps ax
-    fi | cut -c 1-250 | fzf -m --cycle
-    )
+  ps ax \
+    | { [[ $1 ]] && grep "$1"; cat; } \
+    | cut -c 1-250 \
+    | fzf --multi --cycle \
+    | awk '{print $1}' \
+    | xargs kill "$signal"
 }
 
 wizard_regenerate() {
@@ -358,39 +353,6 @@ wizard_update_pip() {
     | grep -v '^\-e' \
     | cut -d = -f 1  \
     | xargs -n1 sudo -H python3 -m pip install -U
-}
-
-
-common::require "wget" "pip" "apt" &&
-wizard_build_vim() {
-
-  common::optional-help "$1" "
-
-  install all possible Vim dedependencies with apt, then download master.zip,
-  compile and install with all feaures enabled
-  "
-
-  common::sudo -H pip install pylint flake8
-
-  common::do cd ~/
-	wizard_make_tmpfs-git-clone https://github.com/vim/vim.git
-  common::do cd vim
-
-  common::do ./configure \
-    --with-features=huge \
-    --with-lua-prefix=/usr/local \
-    --enable-multibyte \
-    --enable-rubyinterp=yes \
-    --enable-pythoninterp=yes \
-    --enable-python3interp=yes \
-    --enable-perlinterp=yes \
-    --enable-luainterp=yes \
-    --enable-gui=auto \
-    --enable-cscope \
-    --prefix=/usr/local
-
-  common::do make -j CFLAGS='"-oFast -march=native"'
-  common::sudo make install
 }
 
 
