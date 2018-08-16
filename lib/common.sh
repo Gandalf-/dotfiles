@@ -15,34 +15,6 @@ PLATFORM="$(uname)"
 export PLATFORM
 
 
-# aliases
-alias read='read -r'
-
-
-common::xargs() {
-
-  local function="$1"
-  local items=()
-
-  while read item; do
-    items+=( "$item" )
-  done
-
-  for item in "${items[@]}"; do
-    "$function" "$item"
-  done
-}
-
-common::map() {
-
-  # create a new function from the argument string
-  # and apply it to each line of input
-
-  eval "lambda() { $@ }"
-  common::xargs lambda
-}
-
-
 # database functions
 db::get() {
   local name="$1"
@@ -212,6 +184,16 @@ common::xargs() {
 }
 
 
+common::map() {
+
+  # create a new function from the argument string
+  # and apply it to each line of input
+
+  eval "lambda() { $* }"
+  common::xargs lambda
+}
+
+
 common::program-exists() {
 
   command -v "$1" >/dev/null 2>/dev/null
@@ -354,7 +336,7 @@ common::do() {
 
   if (( "$CONFIRM" )); then
     common::echo "Continue? [Yn]"
-    read reply
+    read -r reply
     [[ "$reply" =~ [Nn] ]] && exit 1
   fi
 
@@ -391,7 +373,7 @@ common::confirm() {
   common::echo "$@"
 
   if ! (( "$AUTO" )); then
-    read reply; [[ "$reply" =~ [Nn] ]] && exit 1
+    read -r reply; [[ "$reply" =~ [Nn] ]] && exit 1
   fi
 }
 
