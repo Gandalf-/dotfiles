@@ -2,7 +2,7 @@
 
 # wrapper around xiwi -T for running GUIs in crouton
 
-which "$1" >/dev/null ||
+command -v "$1" >/dev/null ||
   { echo "error: $1 not found"; exit 1; }
 
 echo "Starting xiwi for \"$*\"..."

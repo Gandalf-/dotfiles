@@ -194,6 +194,24 @@ common::require() {
 }
 
 
+common::xargs() {
+
+  # apply a function to each line of input
+  # have to read all, then apply incase function clobbers stdin
+
+  local function="$1"
+
+  items=()
+  while read -r item; do
+    items+=( "$item" )
+  done
+
+  for item in "${items[@]}"; do
+    "$function" "$item"
+  done
+}
+
+
 common::program-exists() {
 
   command -v "$1" >/dev/null 2>/dev/null

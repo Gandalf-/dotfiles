@@ -91,15 +91,21 @@ wizard_make_tmpfs-git-clone() {
 
 
 wizard_make_session() {
-  common::required-help "$1" "[name]
+  common::required-help "$1" "[name] (command)
 
   create a new tmux session and move to it
   "
 
-  local name="$*"
+  local name="$1"
+  local command="$2"
 
-  tmux list-sessions | grep -q "$name" \
-    || tmux new-session -d -s "$name"
+  tmux list-sessions | grep -q "$name" || {
+    if [[ $command ]]; then
+      tmux new-session -d -s "$name" "$command"
+    else
+      tmux new-session -d -s "$name"
+    fi
+  }
 
   _set_context "$name" 2>/dev/null
 
