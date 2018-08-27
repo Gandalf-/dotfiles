@@ -6,5 +6,5 @@ cp "$(command -v wizard)" "$tmp"
 bash "$tmp" "$@"
 ret=$?
 
-rm -f "$tmp"
+# rm -f "$tmp"
 exit "$ret"

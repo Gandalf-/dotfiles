@@ -356,40 +356,6 @@ wizard_update_pip() {
 }
 
 
-wizard_open() {
-
-  common::optional-help "$1" "
-
-  open a file based on it's type and available programs
-  "
-
-  stdin=''
-  timeout 0.1 read -r stdin
-
-  local filetype
-
-  for target in "$@" "$stdin"; do
-
-    # shellcheck disable=SC2076
-    filetype="$(file -b "$target")"
-
-    if common::contains "$filetype" 'ASCII text'; then
-      vim "$target"
-
-    elif common::program-exists 'xdg-open'; then
-
-      if common::program-exists 'xiwi'; then
-        xiwit xdg-open "$target"
-
-      else
-        xdg-open "$target" >/dev/null 2>&1
-      fi
-    fi
-
-  done
-}
-
-
 common::require "sshd" &&
 wizard_start_sshd() {
 

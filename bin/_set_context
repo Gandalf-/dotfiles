@@ -7,7 +7,7 @@ IFS=' ' read -ra window_header < <(tmux display-message -p "#W")
 # arguments override everything
 if [[ ${arguments[0]} ]]; then
     IFS=' ' read -ra active_window < <(
-        tmux list-windows -t "$*" -F '#{window_active} #{window_name}' \
+        tmux list-windows -t "$*" -F '#{window_active} #{window_name}' 2>/dev/null \
           | grep '^1' \
           | cut -f 2- -d ' '
     )

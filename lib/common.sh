@@ -166,31 +166,20 @@ common::require() {
 }
 
 
-common::xargs() {
+common::map() {
 
   # apply a function to each line of input
   # have to read all, then apply incase function clobbers stdin
 
-  local function="$1"
-
-  items=()
-  while read -r item; do
-    items+=( "$item" )
+  local __items=()
+  local __item
+  while read -r __item; do
+    __items+=( "$__item" )
   done
 
-  for item in "${items[@]}"; do
-    "$function" "$item"
+  for __item in "${__items[@]}"; do
+    "$@" "$__item"
   done
-}
-
-
-common::map() {
-
-  # create a new function from the argument string
-  # and apply it to each line of input
-
-  eval "lambda() { $* }"
-  common::xargs lambda
 }
 
 

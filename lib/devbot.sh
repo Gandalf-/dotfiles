@@ -119,7 +119,7 @@ devbot::eval() {
       d devbot data "$name" errors = "$errors"
 
       # set the backoff
-      local -r backoff="$(( 10 * errors ))"
+      local -r backoff="$(bc <<< "$errors * 10 ^ 2 / 1")"
       local -r when="$(d devbot data "$name" when)"
       d devbot data "$name" when = "$(( when + backoff ))"
 

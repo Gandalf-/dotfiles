@@ -18,7 +18,7 @@ elif [[ -e $pfile ]]; then
   else
     echo "detected stale pid file" >> "$lfile"
     rm "$pfile"
-    wizard devbot start
+    w devbot start
   fi
 
 else
