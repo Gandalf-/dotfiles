@@ -103,6 +103,10 @@
       \ 'spinner': ['fg', 'Label'],
       \ 'header':  ['fg', 'Comment'] }
 
+    let g:fzf_action = {
+      \ 'ctrl-x': 'split',
+      \ 'ctrl-v': 'vsplit' }
+
   " vimwiki
     "autocmd TextChanged,TextChangedI *.md silent write
     let g:vimwiki_table_mappings = 0
@@ -255,7 +259,7 @@
 
   " Be as wild as possible
     set wildmode=full wildmenu
-    set wildignore=*.o,*~,*.pyc,/usr/include/*,*.class,*.bak,
+    set wildignore=*.o,*~,*.pyc,/usr/include/*,*.class,*.bak,*.hi
     set wildignore+=.git\*,.svn\*
     set wildignorecase
 
@@ -355,7 +359,7 @@
     autocmd!
 
   " clear whitespace
-    autocmd FileType yaml,scheme,vimwiki,markdown,conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+    autocmd FileType haskell,yaml,scheme,vimwiki,markdown,conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
 
   " make uses tabs
     autocmd FileType make setlocal noexpandtab
