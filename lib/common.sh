@@ -177,8 +177,67 @@ common::map() {
     __items+=( "$__item" )
   done
 
+  [[ ${__items[*]} ]] || exit 1
+
   for __item in "${__items[@]}"; do
     "$@" "$__item"
+  done
+}
+
+
+common::for() {
+
+  while [[ $1 ]]; do
+    echo "$1"
+    shift
+  done
+}
+
+
+common::mapl() {
+
+  [[ $1 ]] || return
+
+  eval "
+  __lambda() {
+    ${*//\{\}/\"\$1\"}
+  }
+  "
+
+  common::map __lambda
+}
+
+
+common::filterl() {
+  [[ $1 ]] || return
+
+  common::mapl "$* && echo {}"
+}
+
+
+common::mmap() {
+
+  # concurrent map
+
+  local __items=()
+  local __item
+  while read -r __item; do
+    __items+=( "$__item" )
+  done
+
+  local __tmps=()
+  for __item in "${__items[@]}"; do
+    __tmp="$(mktemp /dev/shm/mmap.XXXXXXXXXXXXXXXXXXXXXX)"
+    __tmps+=( "$__tmp" )
+
+    "$@" "$__item" > "$__tmp" 2>&1 &
+  done
+
+  wait
+
+  for __tmp in "${__tmps[@]}"; do
+    cat "$__tmp"
+    rm -f "$__tmp"
   done
 }
 
@@ -339,6 +398,9 @@ common::do() {
   elif (( "$SILENT" )); then
     eval "${@/ \"\"/}" >/dev/null 2>/dev/null \
       || common::color-error "error running \"$*\""
+
+  elif (( "$IGNORE" )); then
+    eval "${@/ \"\"/}"
 
   else
     eval "${@/ \"\"/}" \

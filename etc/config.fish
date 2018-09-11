@@ -8,6 +8,7 @@ set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.*/work/')
 set -gx auto_proxy "http://proxy.west.isilon.com/proxy.pac"
 set -gx EDITOR vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
+set -gx BROWSER google-chrome
 
 # where are we?
 test (hostname | head -c 13) = 'wkstn-avoecks'; and set at_work yes

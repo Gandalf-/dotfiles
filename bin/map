@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if grep -q '{}' <<< "$*"; then
+  xargs -L1 -i "$@"
+
+else
+  xargs -L1 "$@"
+fi
