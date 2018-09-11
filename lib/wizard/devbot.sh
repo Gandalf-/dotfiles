@@ -135,11 +135,6 @@ wizard_devbot_list() {
 
   print out the current devbot schedule
   "
-  if common::program-exists devbot_list_hs; then
-    devbot_list_hs
-    return
-  fi
-
   if common::program-exists devbot_list; then
     devbot_list
     return

@@ -1,17 +1,24 @@
 all: d devbot_list
 
-d: d.c
-	gcc -std=c99 -Wall -Wextra -o d d.c
+CFLAGS = -Wall -Wextra
 
-devbot_list: json.hpp devbot.cpp
-	clang++ -Wall -Wextra -std=c++11 devbot.cpp -o devbot_list
+devbot_list: json.hpp devbot.cpp devbot.hs Apocrypha/Network.hs
+ifneq ("$(shell which ghc)","")
+	ghc --make -Wall devbot.hs -o $@
+else
+	g++ -std=c++11 ${CFLAGS} devbot.cpp -o $@
+endif
+
+d: d.c d.hs Apocrypha/Network.hs
+ifneq ("$(shell which ghc)","")
+	ghc --make -Wall d.hs -o $@
+else
+	gcc -std=c99 ${CFLAGS} d.c -o $@
+endif
 
 json.hpp:
 	wget --quiet https://github.com/nlohmann/json/releases/download/v3.1.2/json.hpp
 
-devbot_list_hs:
-	ghc --make devbot.hs -o devbot_list_hs
-
 clean:
-	@rm *.o d
+	-rm -f *.o d devbot_list *.hi
 	@echo Done
