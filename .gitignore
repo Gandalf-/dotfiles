@@ -9,3 +9,6 @@ __pycache__
 *.pyc
 .coverage
 htmlcov
+*.hi
+*.o
+devbot_list_hs

@@ -150,9 +150,8 @@ devbot::main() {
     local now="$(date '+%s')"
     devbot::debug "reading events"
 
-    while read -r event; do
-      devbot::task "$event"
-    done < <(d devbot events --keys)
+    d devbot events --keys \
+      | common::map devbot::task
 
     sleep 5
   done

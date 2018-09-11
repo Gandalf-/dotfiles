@@ -9,6 +9,9 @@ devbot_list: json.hpp devbot.cpp
 json.hpp:
 	wget --quiet https://github.com/nlohmann/json/releases/download/v3.1.2/json.hpp
 
+devbot_list_hs:
+	ghc --make devbot.hs -o devbot_list_hs
+
 clean:
 	@rm *.o d
 	@echo Done
