@@ -77,12 +77,12 @@ now = round `fmap` getPOSIXTime
 printAction :: Config -> String
 printAction (Config _ action _ _ )  = decorate a blue
     where a = "    " ++ intercalate pad action
-          blue = (Blue, Black, Null) :: Decoration
+          blue = (Blue, NoColor, Null) :: Decoration
           pad = "\n    "
 
 printName :: Config -> String
 printName (Config name _ _ _) = decorate name green
-    where green = (Green, Black, Bold) :: Decoration
+    where green = (Green, NoColor, Bold) :: Decoration
 
 prettyTime :: Integer -> String
 prettyTime i
@@ -102,12 +102,12 @@ secondsOrTime _ (Just i) = "every " ++ s
 printInterval :: Config -> String
 printInterval (Config _ _ interval _) = decorate ("    " ++ i) cyan
     where i = secondsOrTime interval (readMaybe interval :: Maybe Integer)
-          cyan = (Cyan, Black, Null) :: Decoration
+          cyan = (Cyan, NoColor, Null) :: Decoration
 
 printNext :: Data -> Integer -> String
 printNext (Data _ when _) time = decorate ("next in " ++ n) yellow
     where n = prettyTime $ when - time
-          yellow = (Yellow, Black, Null)
+          yellow = (Yellow, NoColor, Null)
 
 
 printOptional :: Config -> Data -> IO ()
@@ -126,7 +126,7 @@ printOptional (Config _ _ _ require) (Data _ _ errors) = do
           printRequire (Just r') =
               putStr $ ", requires " ++ r'
 
-          red = (Red, Black, Null) :: Decoration
+          red = (Red, NoColor, Null) :: Decoration
 
 printEvent :: Maybe Event -> IO ()
 printEvent Nothing = return ()
