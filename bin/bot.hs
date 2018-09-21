@@ -169,6 +169,7 @@ flush e@(Event n _ (Data duration when errors)) = do
         Nothing -> del c ["devbot", "data", n, "errors"]
         Just v  -> set c ["devbot", "data", n, "errors"] v
 
+    cleanContext c
     return e
 
 

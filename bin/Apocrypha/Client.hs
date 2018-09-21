@@ -8,6 +8,7 @@ module Apocrypha.Client
     , del
     , getter
     , getContext
+    , cleanContext
     , Context
     ) where
 

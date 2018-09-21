@@ -2,6 +2,7 @@ module Apocrypha.Network
     ( client
     , jClient
     , getContext
+    , cleanContext
     , Context
     ) where
 
@@ -79,13 +80,21 @@ client s@(Just _) message = query s message
 client Nothing message = do
     -- didn't give us a socket? try to get our own
     s <- getSocket Nothing Nothing
-    query s message
+    r <- query s message
+    cleanContext s
+    return r
 
 jClient :: Context -> [String] -> IO B.ByteString
 jClient s@(Just _) message = jsonQuery s message
 jClient Nothing message = do
     -- didn't give us a socket? try to get our own
     s <- getSocket Nothing Nothing
-    jsonQuery s message
+    r <- jsonQuery s message
+    cleanContext s
+    return r
 
 getContext = getSocket
+
+cleanContext :: Context -> IO ()
+cleanContext Nothing  = return ()
+cleanContext (Just s) = close s
