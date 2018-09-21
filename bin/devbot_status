@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # does the same as wizard devbot status, but without the overhead. this is
-# important because it's called every 5 seconds by each tmux window
+# important because it's called every 5 seconds by each tmux session
 
 pfile=~/.devbot/pid
 lfile=~/.devbot/log
 
-if ! d database alive check --keys >/dev/null; then
+if ! d database alive check >/dev/null; then
   echo "!"
 
 elif [[ -e $pfile ]]; then

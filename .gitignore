@@ -12,3 +12,4 @@ htmlcov
 *.hi
 *.o
 devbot_list_hs
+devbot

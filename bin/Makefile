@@ -1,17 +1,21 @@
-all: d devbot_list
+all: d devbot_list devbot
 
 CFLAGS = -Wall -Wextra
+HFLAGS = -Wall -Wno-type-defaults -Wno-missing-signatures -Wno-name-shadowing
 
-devbot_list: json.hpp devbot.cpp devbot.hs Apocrypha/Network.hs
+devbot: bot.hs Apocrypha/Client.hs Apocrypha/Network.hs Devbot/Core.hs
+	ghc --make ${HFLAGS} bot.hs -o $@
+
+devbot_list: json.hpp devbot.cpp list.hs Apocrypha/Network.hs
 ifneq ("$(shell which ghc)","")
-	ghc --make -Wall devbot.hs -o $@
+	ghc --make ${HFLAGS} list.hs -o $@
 else
 	g++ -std=c++11 ${CFLAGS} devbot.cpp -o $@
 endif
 
 d: d.c d.hs Apocrypha/Network.hs
 ifneq ("$(shell which ghc)","")
-	ghc --make -Wall d.hs -o $@
+	ghc --make ${HFLAGS} d.hs -o $@
 else
 	gcc -std=c99 ${CFLAGS} d.c -o $@
 endif

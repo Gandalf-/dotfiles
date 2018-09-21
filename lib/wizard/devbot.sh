@@ -75,7 +75,7 @@ wizard_devbot_start() {
     flock -ne 200 ||
       common::error "Could not get devbot lock"
 
-    devbot::main >> $lfile 2>&1 &
+    devbot >> $lfile 2>&1 &
     local -r pid=$!
     disown
 
