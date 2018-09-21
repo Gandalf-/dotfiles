@@ -3,17 +3,19 @@ module Main where
 import Apocrypha.Client
 import Devbot.Core
 
-import Data.Time.Clock.POSIX (getPOSIXTime)
 import Control.Concurrent (threadDelay)
+
 import Data.List (intercalate)
+import Data.Maybe (catMaybes)
+import Data.Time.Clock.POSIX (getPOSIXTime)
+
+import System.Exit (ExitCode(..))
+import System.IO (hSetBuffering, stdout, BufferMode(..))
 import System.Process ( spawnCommand
                       , getProcessExitCode
                       , ProcessHandle
                       , waitForProcess
                       )
-import System.Exit (ExitCode(..))
-import System.IO (hSetBuffering, stdout, BufferMode(..))
-
 
 type State = [Task]
 data Task = Task Event (Maybe ProcessHandle) StartTime
@@ -21,23 +23,29 @@ type StartTime = Integer
 
 
 startingState :: [Maybe Event] -> State
-startingState es =
-    map (\e -> Task e Nothing 0) $ convert es
-    where
-        convert :: [Maybe a] -> [a]
-        convert [] = []
-        convert (Nothing:xs) = convert xs
-        convert (Just e :xs) = e : convert xs
+startingState events =
+    map (\event -> Task event Nothing 0) $ catMaybes events
 
 
-runner :: State -> IO State
-runner state = do
+runner :: Integer -> State -> IO State
+runner runs state =
     -- check each Task for something to do
+    -- run for n iterations before dropping out so main can refetch the
+    -- events and start us again
 
-    threadDelay $ 1 * second
-    mapM handle state >>= runner
+    if runs > minRunsToRestart && noRunners state
+      then return []
+      else do
+          threadDelay $ 1 * second
+          mapM handle state >>= runner (runs + 1)
 
-    where second = 1000000
+    where second  = 1000000
+          minRunsToRestart = 60 * 5
+
+          noRunners :: State -> Bool
+          noRunners [] = True
+          noRunners (Task _ Nothing  _ : xs) = noRunners xs
+          noRunners (Task _ (Just _) _ : _ ) = False
 
 
 handle :: Task -> IO Task
@@ -62,12 +70,21 @@ handle task@(Task _ (Just h) _) = do
         Just ExitSuccess -> success task
         Just _           -> failure task
 
+
 check :: Task -> IO Task
-check task@(Task (Event n c _) _ _) = do
+check task@(Task (Event n c d) p s) = do
+    -- if we can't run, wait 30 seconds before trying again
+
+    now <- getTime
     met <- requirementsMet n c
     if met
         then run task
-        else return task
+        else return $ Task (Event n c (backoff now d)) p s
+
+    where
+          backoff :: Integer -> Data -> Data
+          backoff now (Data d _ e) = Data d (now + 30) e
+
 
 run :: Task -> IO Task
 run (Task event@(Event n (Config c _ _) _) _ _) = do
@@ -97,6 +114,7 @@ success (Task event@(Event _ c _) _ startTime) = do
           clearErrors :: Event -> Event
           clearErrors (Event n co (Data du wh _)) =
             Event n co (Data du wh Nothing)
+
 
 failure :: Task -> IO Task
 failure (Task event@(Event n _ d) _ startTime) = do
@@ -129,13 +147,16 @@ failure (Task event@(Event n _ d) _ startTime) = do
           incrementError (Event n c (Data du wh (Just e))) =
               Event n c (Data du wh (Just $ e + 1))
 
+
 updateTime :: Event -> Integer -> Integer -> Event
 updateTime (Event n c (Data _ _ e)) newTime duration =
   Event n c (Data duration newTime e)
 
+
 nextRun :: Integer -> Config -> Integer
 nextRun time (Config _ interval _) =
         time + interval
+
 
 flush :: Event -> IO Event
 flush e@(Event n _ (Data duration when errors)) = do
@@ -149,6 +170,7 @@ flush e@(Event n _ (Data duration when errors)) = do
         Just v  -> set c ["devbot", "data", n, "errors"] v
 
     return e
+
 
 logger :: String -> IO ()
 logger msg = do
@@ -192,6 +214,9 @@ main :: IO ()
 main = do
     putStrLn "devbot starting up"
     hSetBuffering stdout LineBuffering
-    es <- events
-    _ <- runner $ startingState es
-    return ()
+
+    loop
+    where loop = do
+            es <- events
+            _ <- runner 1 $ startingState es
+            loop
