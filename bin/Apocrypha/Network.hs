@@ -51,9 +51,6 @@ query sock message = do
     buffer <- _query sock message
     return $ unprotocol buffer
 
--- put (Just s) msg = send s $ protocol msg
--- get (Just s) = recv s
-
 jsonQuery :: Maybe Socket -> [String] -> IO B.ByteString
 jsonQuery sock message = do
     buffer <- _query sock message

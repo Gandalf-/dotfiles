@@ -12,62 +12,70 @@ import Data.Aeson
 
 import Data.Foldable (asum)
 import Data.Maybe (fromMaybe)
-import Control.Monad (liftM3)
 import Text.Read (readMaybe)
+
 import qualified Data.Text as T
+import qualified Data.HashMap.Strict as HM
 
 
-data Event = Event Name Config Data
+data Devbot = Devbot DataMap ConfigMap
+    deriving (Show, Eq, Generic)
+instance FromJSON Devbot where
+
+type ConfigMap = HM.HashMap String Config
+type DataMap   = HM.HashMap String Data
+
+
+data Event = Event String Config Data
     deriving (Show, Eq)
-type Name = String
+-- type Name = String
+
 
 data Data = Data
           { duration :: Integer
           , when     :: Integer
           , errors   :: Maybe Integer
           }
-    deriving ( Show
-             , Eq
-             , Generic)
+    deriving (Show, Eq, Generic)
 
 instance FromJSON Data where
 
 instance ToJSON Data where
     toEncoding = genericToEncoding defaultOptions
 
+
 data Config = Config
             { action   :: [String]
             , interval :: Integer
             , require  :: Maybe String
             }
-    deriving ( Eq
-             , Show
-             , Generic)
+    deriving (Eq, Show, Generic)
 
 instance FromJSON Config where
     parseJSON = withObject "Config" $ \o -> do
         -- action may be a string or list of string
         action   <- asum [
-                do a <- o .: "action"
-                   case a of
-                       (Array _)             -> parseJSON a
-                       (Data.Aeson.String s) -> return [T.unpack s]
-                       _                     -> fail ""
+            do a <- o .: "action"
+               case a of
+                   (Array _)             -> parseJSON a
+                   (Data.Aeson.String s) -> return [T.unpack s]
+                   _                     -> fail ""
             ]
 
         -- interval may be a string or number
         interval <- asum [
-                do i <- o .: "interval"
-                   case i of
-                       (Number _)            -> parseJSON i
-                       (Data.Aeson.String s) -> return . parse . T.unpack $ s
-                       _                     -> fail ""
+            do i <- o .: "interval"
+               case i of
+                   (Number _)            -> parseJSON i
+                   (Data.Aeson.String s) -> return . parse . T.unpack $ s
+                   _                     -> fail ""
             ]
 
         require  <- o .:? "require"
 
         return Config{..}
         where
+              parse :: String -> Integer
               parse "hourly" = hour
               parse "daily"  = daily
               parse "weekly" = weekly
@@ -78,30 +86,26 @@ instance FromJSON Config where
               hour   = minute * 60
               minute = 60
 
-
 instance ToJSON Config where
     toEncoding = genericToEncoding defaultOptions
 
-devbot :: Context -> [String] -> IO (Maybe String)
-devbot context items =
-    get context $ "devbot" : items
 
-
+{-
 getEvent :: Context -> String -> IO (Maybe Event)
 getEvent context name = do
     -- it's fine for Data to be missing, use a default when it is
 
-    c <- getter context ["devbot", "events", name] :: IO (Maybe Config)
-    d <- getter context ["devbot", "data"  , name] :: IO (Maybe Data)
+    c <- get context ["devbot", "events", name] :: IO (Maybe Config)
+    d <- get context ["devbot", "data"  , name] :: IO (Maybe Data)
 
-    return $ liftM3 Event
-        (Just name)
-        c
-        (case d of
-           Nothing  -> defaultData
-           (Just _) -> d)
+    return $ result name c (fromMaybe defaultData d)
 
-    where defaultData = Just $ Data 0 0 Nothing
+    where
+          result :: String -> Maybe Config -> Data -> Maybe Event
+          result _ Nothing _  = Nothing
+          result s (Just c) d = Just $ Event s c d
+
+          defaultData = Data 0 0 Nothing
 
 events :: IO [Maybe Event]
 events = do
@@ -109,3 +113,23 @@ events = do
     r <- keys c ["devbot", "events"] >>= mapM (getEvent c)
     cleanContext c
     return r
+-}
+
+events :: IO [Event]
+events = do
+    c <- getContext Nothing Nothing
+    configs <- get c ["devbot", "events"] :: IO (Maybe ConfigMap)
+    datas <- get c ["devbot", "data"] :: IO (Maybe DataMap)
+    cleanContext c
+
+    let cs = HM.toList . fromMaybe (HM.fromList []) $ configs
+        ds = fromMaybe (HM.fromList []) datas
+
+        parse :: (String, Config) -> Event
+        parse (name, config) =
+            Event name config (fromMaybe defaultData (HM.lookup name ds))
+
+    return $ map parse cs
+    where
+          defaultData = Data 0 0 Nothing
+

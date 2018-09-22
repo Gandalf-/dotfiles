@@ -6,7 +6,6 @@ import Devbot.Core
 import Control.Concurrent (threadDelay)
 
 import Data.List (intercalate)
-import Data.Maybe (catMaybes)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 
 import System.Exit (ExitCode(..))
@@ -22,9 +21,8 @@ data Task = Task Event (Maybe ProcessHandle) StartTime
 type StartTime = Integer
 
 
-startingState :: [Maybe Event] -> State
-startingState events =
-    map (\event -> Task event Nothing 0) $ catMaybes events
+startingState :: [Event] -> State
+startingState = map (\event -> Task event Nothing 0)
 
 
 runner :: Integer -> State -> IO State
@@ -182,7 +180,9 @@ logger msg = do
 requirementsMet :: String -> Config -> IO Bool
 requirementsMet _ (Config _ _ Nothing) = return True
 requirementsMet n (Config _ _ (Just r)) = do
-    req <- get' ["devbot", "requirements", r]
+    c <- getContext Nothing Nothing
+    req <- get c ["devbot", "requirements", r]
+    cleanContext c
 
     case req of
         Nothing -> do

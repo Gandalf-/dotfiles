@@ -60,9 +60,8 @@ printOptional (Config _ _ req) (Data _ _ errs) = do
 
           red = (Red, Black, Null) :: Decoration
 
-printEvent :: Maybe Event -> IO ()
-printEvent Nothing = return ()
-printEvent (Just (Event n c d)) = do
+printEvent :: Event -> IO ()
+printEvent (Event n c d) = do
     putStrLn $ printName n
     putStrLn $ printAction c
     putStr $ printInterval c
