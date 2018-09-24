@@ -2,11 +2,12 @@ module Main where
 
 import Apocrypha.Network
 
-import Data.Maybe (fromMaybe)
 import System.Environment (getArgs)
 
+display Nothing  = return ()
+display (Just s) = putStrLn s
 
 main :: IO ()
 main = do
     context <- getContext Nothing
-    getArgs >>= client context >>= putStrLn . fromMaybe ""
+    getArgs >>= client context >>= display

@@ -87,12 +87,12 @@ check task@(Task (Event n c d) p s) = do
 run :: Task -> IO Task
 run (Task event@(Event n (Config c _ _) _) _ _) = do
     -- start running the actions, add handle to Task
-    putStrLn $ "Running: " ++ n ++ ":\n" ++ cmd
+    -- putStrLn $ "Running: " ++ n ++ ":\n" ++ cmd
 
     h <- spawnCommand cmd
     Task event (Just h) <$> getTime
 
-    where cmd = intercalate "\n" . map ("  " ++) $ c
+    where cmd = intercalate "\n" c
 
 
 success :: Task -> IO Task

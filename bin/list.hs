@@ -9,17 +9,21 @@ import Data.Time.Clock.POSIX (getPOSIXTime)
 now :: IO Integer
 now = round `fmap` getPOSIXTime
 
+blue   = (Blue, NoColor, Null) :: Decoration
+black  = (White, NoColor, Null) :: Decoration
+green  = (Green, NoColor, Bold) :: Decoration
+yellow = (Yellow, NoColor, Null) :: Decoration
+red    = (Red, NoColor, Null) :: Decoration
+cyan   = (Cyan, NoColor, Null) :: Decoration
 
 printAction :: Config -> String
 printAction (Config act _ _ )  = decorate a blue
     where a    = "    " ++ intercalate pad act
-          blue = (Blue, Black, Null) :: Decoration
           pad  = "\n    "
 
 
 printName :: String -> String
 printName name = decorate name green
-    where green = (Green, Black, Bold) :: Decoration
 
 
 prettyTime :: Integer -> String
@@ -36,7 +40,6 @@ prettyTime i
 printInterval :: Config -> String
 printInterval (Config _ i _) =
         decorate ("    every " ++ prettyTime i) cyan
-    where cyan = (Cyan, Black, Null) :: Decoration
 
 
 printNext :: Data -> Integer -> String
@@ -44,12 +47,14 @@ printNext (Data _ w _) time
     | w - time > 0 = decorate ("next in " ++ t) yellow
     | otherwise    = decorate "now" yellow
     where t      = prettyTime $ w - time
-          yellow = (Yellow, Black, Null)
 
 
 printOptional :: Config -> Data -> String
-printOptional (Config _ _ req) (Data _ _ errs) =
-        concat [printErrors errs, printRequire req, "\n"]
+printOptional (Config _ _ req) (Data d _ errs) =
+        concat [ printErrors errs
+               , printDuration d
+               , printRequire req
+               ]
     where
           printErrors :: Maybe Integer -> String
           printErrors Nothing = ""
@@ -59,7 +64,9 @@ printOptional (Config _ _ req) (Data _ _ errs) =
           printRequire Nothing = ""
           printRequire (Just r') = ", requires " ++ r'
 
-          red = (Red, Black, Null) :: Decoration
+          printDuration :: Integer -> String
+          printDuration s =
+                ", " ++ decorate ("took " ++ show s ++ " seconds") cyan
 
 
 printEvent :: Event -> IO ()
@@ -69,8 +76,9 @@ printEvent (Event n c d) = do
         [ printName n, "\n"
         , printAction c, "\n"
         , printInterval c
-        , ", ", printNext d time
-        , printOptional c d
+        , printOptional c d, ", "
+        , printNext d time
+        , "\n"
         ]
 
 main :: IO ()
