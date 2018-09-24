@@ -85,7 +85,7 @@ check task@(Task (Event n c d) p s) = do
 
 
 run :: Task -> IO Task
-run (Task event@(Event n (Config c _ _) _) _ _) = do
+run (Task event@(Event _ (Config c _ _) _) _ _) = do
     -- start running the actions, add handle to Task
     -- putStrLn $ "Running: " ++ n ++ ":\n" ++ cmd
 

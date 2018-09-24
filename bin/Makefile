@@ -1,7 +1,8 @@
-all: d devbot_list devbot
+all: d devbot_list devbot devbot_status
 
 CFLAGS = -Wall -Wextra
-HFLAGS = -Wall -Wno-type-defaults -Wno-missing-signatures -Wno-name-shadowing
+HFLAGS  = -Wall -Wno-type-defaults -Wno-missing-signatures -Wno-name-shadowing
+HFLAGS += -dynamic -lpthread
 
 devbot: bot.hs Apocrypha/Client.hs Apocrypha/Network.hs Devbot/Core.hs
 	ghc --make ${HFLAGS} bot.hs -o $@
@@ -12,6 +13,14 @@ ifneq ("$(shell which ghc)","")
 else
 	g++ -std=c++11 ${CFLAGS} devbot.cpp -o $@
 endif
+
+devbot_status: status.hs status.sh
+ifneq ("$(shell which ghc)","")
+	ghc --make ${HFLAGS} status.hs -o $@
+else
+	cp status.sh $@
+endif
+
 
 d: d.c d.hs Apocrypha/Network.hs
 ifneq ("$(shell which ghc)","")
