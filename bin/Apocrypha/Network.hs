@@ -1,9 +1,6 @@
 module Apocrypha.Network
-    ( client
-    , jClient
-    , getContext
-    , cleanContext
-    , Context
+    ( client, jClient
+    , Context, getContext, cleanContext
     ) where
 
 import Control.Exception (SomeException, try)
@@ -16,7 +13,6 @@ import qualified Data.ByteString.Lazy as B
 import Data.Binary (encode, decode)
 import Data.List (intercalate)
 
-type Context = Maybe Socket
 
 protocol :: String -> B8.ByteString
 protocol message =
@@ -25,35 +21,47 @@ protocol message =
           msg = B8.pack message
           htonl' = B8.drop 4 . B.toStrict . encode
 
+
 unprotocol :: B8.ByteString -> Maybe String
 unprotocol bytes = clean result
   where result = B8.unpack bytes
         clean [] = Nothing
         clean xs = Just $ init xs
 
+
 protoLen :: B8.ByteString -> Int
 protoLen b = maximum [0, decode (B.fromStrict bytes) :: Int]
   where bytes = B8.take 8 . B8.append (B8.replicate 4 '\0') $ b
+
 
 _query :: Maybe Socket -> [String] -> IO B8.ByteString
 _query Nothing _ = return B8.empty
 _query (Just sock) msg = do
     _ <- send sock . protocol . intercalate "\n" $ msg
-    size   <- recv sock 4
-    let s = protoLen size
-    if s > 0
-      then recv sock s
-      else return B8.empty
+    size <- recv sock 4
+    reader sock $ protoLen size
+
+    where
+          reader :: Socket -> Int -> IO B8.ByteString
+          reader sock s
+            | s <= 0    = return B8.empty
+            | otherwise = do
+                bytes <- recv sock s
+                next  <- reader sock (s - B8.length bytes)
+                return $ B8.append bytes next
+
 
 query :: Maybe Socket -> [String] -> IO (Maybe String)
 query sock message = do
     buffer <- _query sock message
     return $ unprotocol buffer
 
+
 jsonQuery :: Maybe Socket -> [String] -> IO B.ByteString
 jsonQuery sock message = do
     buffer <- _query sock message
     return $ B.fromStrict buffer
+
 
 type ExceptOrIO = IO (Either SomeException ())
 
@@ -80,6 +88,7 @@ client Nothing message = do
     cleanContext s
     return r
 
+
 jClient :: Context -> [String] -> IO B.ByteString
 jClient s@(Just _) message = jsonQuery s message
 jClient Nothing message = do
@@ -88,6 +97,9 @@ jClient Nothing message = do
     r <- jsonQuery s message
     cleanContext s
     return r
+
+
+type Context = Maybe Socket
 
 getContext = getSocket
 
