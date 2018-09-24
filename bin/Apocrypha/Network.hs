@@ -15,7 +15,6 @@ import qualified Data.ByteString.Lazy as B
 
 import Data.Binary (encode, decode)
 import Data.List (intercalate)
-import Data.Maybe (fromMaybe)
 
 type Context = Maybe Socket
 
@@ -58,9 +57,11 @@ jsonQuery sock message = do
 
 type ExceptOrIO = IO (Either SomeException ())
 
-getSocket :: Maybe String -> Maybe Integer -> IO (Maybe Socket)
-getSocket host port = withSocketsDo $ do
-    addrInfo <- getAddrInfo Nothing (Just h) (Just $ show p)
+getSocket :: Maybe (String, Integer) -> IO (Maybe Socket)
+getSocket Nothing = getSocket (Just ("127.0.0.1", 9999))
+
+getSocket (Just (host, port)) = withSocketsDo $ do
+    addrInfo <- getAddrInfo Nothing (Just host) (Just $ show port)
     let serverAddr = head addrInfo
     sock <- socket (addrFamily serverAddr) Stream defaultProtocol
     canConnect <- try (connect sock (addrAddress serverAddr)
@@ -68,15 +69,13 @@ getSocket host port = withSocketsDo $ do
     case canConnect of
       Left  _ -> return Nothing
       Right _ -> return $ Just sock
-    where h = fromMaybe "127.0.0.1" host
-          p = fromMaybe 9999 port
 
 
 client :: Context -> [String] -> IO (Maybe String)
 client s@(Just _) message = query s message
 client Nothing message = do
     -- didn't give us a socket? try to get our own
-    s <- getSocket Nothing Nothing
+    s <- getSocket Nothing
     r <- query s message
     cleanContext s
     return r
@@ -85,7 +84,7 @@ jClient :: Context -> [String] -> IO B.ByteString
 jClient s@(Just _) message = jsonQuery s message
 jClient Nothing message = do
     -- didn't give us a socket? try to get our own
-    s <- getSocket Nothing Nothing
+    s <- getSocket Nothing
     r <- jsonQuery s message
     cleanContext s
     return r

@@ -18,17 +18,13 @@ import qualified Data.Text as T
 import qualified Data.HashMap.Strict as HM
 
 
-data Devbot = Devbot DataMap ConfigMap
-    deriving (Show, Eq, Generic)
-instance FromJSON Devbot where
-
 type ConfigMap = HM.HashMap String Config
 type DataMap   = HM.HashMap String Data
 
 
-data Event = Event String Config Data
+data Event = Event Name Config Data
     deriving (Show, Eq)
--- type Name = String
+type Name = String
 
 
 data Data = Data
@@ -90,46 +86,20 @@ instance ToJSON Config where
     toEncoding = genericToEncoding defaultOptions
 
 
-{-
-getEvent :: Context -> String -> IO (Maybe Event)
-getEvent context name = do
-    -- it's fine for Data to be missing, use a default when it is
-
-    c <- get context ["devbot", "events", name] :: IO (Maybe Config)
-    d <- get context ["devbot", "data"  , name] :: IO (Maybe Data)
-
-    return $ result name c (fromMaybe defaultData d)
-
-    where
-          result :: String -> Maybe Config -> Data -> Maybe Event
-          result _ Nothing _  = Nothing
-          result s (Just c) d = Just $ Event s c d
-
-          defaultData = Data 0 0 Nothing
-
-events :: IO [Maybe Event]
-events = do
-    c <- getContext Nothing Nothing -- (Just "aspen.anardil.net") Nothing
-    r <- keys c ["devbot", "events"] >>= mapM (getEvent c)
-    cleanContext c
-    return r
--}
-
 events :: IO [Event]
 events = do
-    c <- getContext Nothing Nothing
-    configs <- get c ["devbot", "events"] :: IO (Maybe ConfigMap)
-    datas <- get c ["devbot", "data"] :: IO (Maybe DataMap)
+    c <- getContext Nothing
+    cs <- get c ["devbot", "events"] :: IO (Maybe ConfigMap)
+    ds <- get c ["devbot", "data"  ] :: IO (Maybe DataMap)
     cleanContext c
 
-    let cs = HM.toList . fromMaybe (HM.fromList []) $ configs
-        ds = fromMaybe (HM.fromList []) datas
+    let configs = HM.toList . fromMaybe (HM.fromList []) $ cs
+        datas = fromMaybe (HM.fromList []) ds
 
         parse :: (String, Config) -> Event
         parse (name, config) =
-            Event name config (fromMaybe defaultData (HM.lookup name ds))
+            Event name config . fromMaybe defaultData . HM.lookup name $ datas
 
-    return $ map parse cs
+    return $ map parse configs
     where
           defaultData = Data 0 0 Nothing
-

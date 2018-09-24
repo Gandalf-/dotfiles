@@ -158,7 +158,7 @@ nextRun time (Config _ interval _) =
 
 flush :: Event -> IO Event
 flush e@(Event n _ (Data duration when errors)) = do
-    c <- getContext Nothing Nothing
+    c <- getContext Nothing
 
     set c ["devbot", "data", n, "duration"] duration
     set c ["devbot", "data", n, "when"    ] when
@@ -180,9 +180,7 @@ logger msg = do
 requirementsMet :: String -> Config -> IO Bool
 requirementsMet _ (Config _ _ Nothing) = return True
 requirementsMet n (Config _ _ (Just r)) = do
-    c <- getContext Nothing Nothing
-    req <- get c ["devbot", "requirements", r]
-    cleanContext c
+    req <- get' ["devbot", "requirements", r]
 
     case req of
         Nothing -> do
