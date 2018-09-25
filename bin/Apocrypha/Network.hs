@@ -30,8 +30,10 @@ unprotocol bytes = clean result
 
 
 protoLen :: B8.ByteString -> Int
-protoLen b = maximum [0, decode (B.fromStrict bytes) :: Int]
+protoLen b = maximum [0, len]
+
   where bytes = B8.take 8 . B8.append (B8.replicate 4 '\0') $ b
+        len   = decode (B.fromStrict bytes) :: Int
 
 
 _query :: Maybe Socket -> [String] -> IO B8.ByteString

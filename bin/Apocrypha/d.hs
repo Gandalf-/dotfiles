@@ -1,13 +1,10 @@
 module Main where
 
-import Apocrypha.Network
-
+import Apocrypha.Network (client)
 import System.Environment (getArgs)
 
 display Nothing  = return ()
 display (Just s) = putStrLn s
 
 main :: IO ()
-main = do
-    context <- getContext Nothing
-    getArgs >>= client context >>= display
+main = getArgs >>= client Nothing >>= display

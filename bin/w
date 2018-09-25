@@ -1,10 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 
-tmp="$(mktemp /dev/shm/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
-cp "$(command -v wizard)" "$tmp"
+bash -s - "$@" < "$(command -v wizard)"
 
-bash "$tmp" "$@"
-ret=$?
-
-rm -f "$tmp"
-exit "$ret"
+# tmp="$(mktemp /dev/shm/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
+# cp "$(command -v wizard)" "$tmp"
+#
+# bash "$tmp" "$@"
+# ret=$?
+#
+# rm -f "$tmp"
+# exit "$ret"

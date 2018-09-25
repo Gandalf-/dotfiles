@@ -104,7 +104,7 @@ success (Task event@(Event _ c _) _ startTime) = do
     let newEvent = clearErrors $ updateTime event next duration
         newTask  = Task newEvent Nothing 0
 
-    _ <- flush newEvent
+    flush newEvent
     return newTask
 
     where next = nextRun startTime c
@@ -129,7 +129,7 @@ failure (Task event@(Event n _ d) _ startTime) = do
     let newEvent = incrementError $ updateTime event next duration
         newTask  = Task newEvent Nothing 0
 
-    _ <- flush newEvent
+    flush newEvent
     return newTask
 
     where backoff = getBackoff d
@@ -152,23 +152,11 @@ updateTime (Event n c (Data _ _ e)) newTime duration =
 
 
 nextRun :: Integer -> Config -> Integer
-nextRun time (Config _ interval _) =
-        time + interval
+nextRun time (Config _ interval _) = time + interval
 
 
-flush :: Event -> IO Event
-flush e@(Event n _ (Data duration when errors)) = do
-    c <- getContext Nothing
-
-    set c ["devbot", "data", n, "duration"] duration
-    set c ["devbot", "data", n, "when"    ] when
-
-    case errors of
-        Nothing -> del c ["devbot", "data", n, "errors"]
-        Just v  -> set c ["devbot", "data", n, "errors"] v
-
-    cleanContext c
-    return e
+flush :: Event -> IO ()
+flush (Event n _ d) = set' ["devbot", "data", n] d
 
 
 logger :: String -> IO ()
