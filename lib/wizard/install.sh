@@ -7,10 +7,12 @@
 
 wizard_install_dot-files() {
 
-  common::required-help "$1" "
+  common::required-help "$1" "[link | copy]
 
   link all the configuration files in this repository to their correct
   locations in the system
+
+  if the system doesn't support links, you can use 'copy'
   "
   local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
 
@@ -56,7 +58,6 @@ wizard_install_dot-files() {
   $op lib/fish/completions    .config/fish/
 }
 
-common::require 'apt' &&
 wizard::apt() {
 
   common::required-help "$1" "[package...]
@@ -67,7 +68,6 @@ wizard::apt() {
 }
 
 
-common::require 'apt' &&
 wizard_install_irssi() {
 
   common::optional-help "$1" "
@@ -84,21 +84,6 @@ wizard_install_irssi() {
 }
 
 
-wizard_install_autojump() {
-
-  common::optional-help "$1" "
-
-  install autojump from github
-  "
-  common::clone git://github.com/joelthelion/autojump.git /tmp/autojump
-
-  common::do cd /tmp/autojump
-  common::do ./install.py
-  common::do cd -
-}
-
-
-common::require 'apt' &&
 wizard_install_git() {
 
   common::optional-help "$1" "
@@ -111,7 +96,6 @@ wizard_install_git() {
 }
 
 
-common::require 'apt' &&
 wizard_install_vnc() {
 
   common::optional-help "$1" "
@@ -131,7 +115,6 @@ EOF
 }
 
 
-common::require 'apt' &&
 wizard_install_java() {
 
   common::optional-help "$1" "
@@ -144,7 +127,6 @@ wizard_install_java() {
 }
 
 
-common::require 'dpkg' &&
 wizard_install_shellcheck() {
 
   common::optional-help "$1" "
@@ -160,7 +142,6 @@ wizard_install_shellcheck() {
 }
 
 
-common::require 'apt' &&
 wizard_install_lua() {
 
   common::optional-help "$1" "
@@ -210,30 +191,15 @@ wizard_install_fish() {
 }
 
 
-wizard_install_tmux() {
-
-  common::sudo apt install libevent-dev libncurses5-dev
-  common::do wget \
-    https://github.com/tmux/tmux/releases/download/2.7/tmux-2.7.tar.gz
-  common::do tar xf tmux-2.7.tar.gz
-  common::cd tmux-2.7
-  common::do ./configure
-  common::do make -j 4
-  common::sudo make install
-}
-
 wizard_install_vim() {
 
   common::optional-help "$1" "
 
-  install all possible Vim dedependencies with apt, then download master.zip,
   compile and install with all feaures enabled
   "
 
-  common::pip install pylint flake8
-
   common::do cd ~/
-  wizard_make_tmpfs-git-clone https://github.com/vim/vim.git
+  git clone --depth 1 https://github.com/vim/vim.git
   common::do cd vim
 
   common::do ./configure \
@@ -254,7 +220,6 @@ wizard_install_vim() {
 }
 
 
-common::require 'apt' &&
 wizard_install_docker() {
 
   common::optional-help "$1" "
@@ -273,3 +238,28 @@ wizard_install_docker() {
   wizard::apt -y docker-ce
 }
 
+
+wizard_install_stack-links() {
+
+  common::optional-help "$1" "
+
+  create 'ghc' and 'ghci' scripts that link to the stack equivalents
+  "
+
+  mkdir -p ~/.local/bin/
+
+cat << EOF > ~/.local/bin/ghc
+#!/bin/sh
+
+stack ghc -- "\$@"
+EOF
+
+cat << EOF > ~/.local/bin/ghci
+#!/bin/sh
+
+stack ghci -- "\$@"
+EOF
+
+  chmod +x ~/.local/bin/ghc
+  chmod +x ~/.local/bin/ghci
+}
