@@ -1,25 +1,26 @@
 module Main where
 
-import Common.ColorText
-import Devbot.Core
+import           Common.ColorText
+import           Devbot.Core
 
-import Data.List (intercalate)
-import Data.Time.Clock.POSIX (getPOSIXTime)
+import           Data.List             (intercalate)
+import           Data.Time.Clock.POSIX (getPOSIXTime)
 
 now :: IO Integer
 now = round `fmap` getPOSIXTime
 
-blue   = (Blue, NoColor, Null) :: Decoration
-black  = (White, NoColor, Null) :: Decoration
-green  = (Green, NoColor, Bold) :: Decoration
-yellow = (Yellow, NoColor, Null) :: Decoration
-red    = (Red, NoColor, Null) :: Decoration
-cyan   = (Cyan, NoColor, Null) :: Decoration
+blue   = (Blue,   NoColor, Null)
+black  = (White,  NoColor, Null)
+green  = (Green,  NoColor, Bold)
+yellow = (Yellow, NoColor, Null)
+red    = (Red,    NoColor, Null)
+cyan   = (Cyan,   NoColor, Null)
+
 
 printAction :: Config -> String
-printAction (Config act _ _ )  = decorate a blue
-    where a    = "    " ++ intercalate pad act
-          pad  = "\n    "
+printAction (Config a _ _ )  = decorate action blue
+    where action = "    " ++ intercalate pad a
+          pad    = "\n    "
 
 
 printName :: String -> String
@@ -51,22 +52,20 @@ printNext (Data _ w _) time
 
 printOptional :: Config -> Data -> String
 printOptional (Config _ _ req) (Data d _ errs) =
-        concat [ printErrors errs
+        concat [ maybe "" printErrors errs
                , printDuration d
-               , printRequire req
+               , maybe "" printRequire req
                ]
     where
-          printErrors :: Maybe Integer -> String
-          printErrors Nothing = ""
-          printErrors (Just s) = ", " ++ decorate (show s ++ " errors") red
-
-          printRequire :: Maybe String -> String
-          printRequire Nothing = ""
-          printRequire (Just r') = ", requires " ++ r'
+          printErrors :: Integer -> String
+          printErrors e = ", " ++ decorate (show e ++ " errors") red
 
           printDuration :: Integer -> String
-          printDuration s =
-                ", " ++ decorate ("took " ++ show s ++ " seconds") cyan
+          printDuration d =
+                ", " ++ decorate ("took " ++ show d ++ " seconds") cyan
+
+          printRequire :: String -> String
+          printRequire r = ", requires " ++ r
 
 
 printEvent :: Event -> IO ()

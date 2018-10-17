@@ -1,21 +1,21 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Devbot.Core where
 
-import GHC.Generics
-import Apocrypha.Client
+import           Apocrypha.Client
+import           GHC.Generics
 
-import Data.Aeson
+import           Data.Aeson
 
-import Data.Foldable (asum)
-import Data.Maybe (fromMaybe)
-import Text.Read (readMaybe)
+import           Data.Foldable       (asum)
+import           Data.Maybe          (fromMaybe)
+import           Text.Read           (readMaybe)
 
-import qualified Data.Text as T
 import qualified Data.HashMap.Strict as HM
+import qualified Data.Text           as T
 
 
 type ConfigMap = HM.HashMap String Config
@@ -91,7 +91,6 @@ events = do
     c <- getContext Nothing
     cs <- get c ["devbot", "events"] :: IO (Maybe ConfigMap)
     ds <- get c ["devbot", "data"  ] :: IO (Maybe DataMap)
-    cleanContext c
 
     let configs = HM.toList . fromMaybe (HM.fromList []) $ cs
         datas = fromMaybe (HM.fromList []) ds

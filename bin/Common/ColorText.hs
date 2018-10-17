@@ -34,7 +34,7 @@ escBg :: BgColor -> String
 escBg color = escColor color 10
 
 escColor :: Color -> Int -> String
-escColor NoColor _ = ""
+escColor NoColor _      = ""
 escColor Black   offset = esc (30 + offset)
 escColor Red     offset = esc (31 + offset)
 escColor Green   offset = esc (32 + offset)

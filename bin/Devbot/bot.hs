@@ -178,8 +178,7 @@ requirementsMet n (Config _ _ (Just r)) = do
     where
           runCheck :: String -> IO Bool
           runCheck cmd = do
-              h <- spawnCommand cmd
-              code <- waitForProcess h
+              code <- spawnCommand cmd >>= waitForProcess
               case code of
                   ExitSuccess -> return True
                   _           -> do

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+db() {
+    timeout 0.05 d "$@"
+}
+
 IFS=' ' read -ra arguments < <(echo "$1")
 IFS=' ' read -ra session_header < <(tmux display-message -p "#S")
 IFS=' ' read -ra window_header < <(tmux display-message -p "#W")
@@ -15,7 +19,7 @@ if [[ ${arguments[0]} ]]; then
     if [ "${active_window[0]}" -eq "${active_window[0]}" ] 2>/dev/null; then
         context="${active_window[0]}"
 
-    elif [[ $(d "${active_window[*]}") ]]; then
+    elif [[ $(db "${active_window[*]}") ]]; then
         context="${active_window[*]}"
 
     # arg session
@@ -33,7 +37,7 @@ elif [ "${window_header[0]}" -eq "${window_header[0]}" ] 2>/dev/null; then
     context="${window_header[0]}"
 
 # window name task?
-elif [[ $(d "${window_header[*]}") ]]; then
+elif [[ $(db "${window_header[*]}") ]]; then
     context="${window_header[*]}"
 
 # session name bug?
@@ -48,4 +52,4 @@ else
 fi
 
 [[ $context ]] &&
-    timeout 0.05 d current-context = "$context"
+    db current-context = "$context"

@@ -2,7 +2,7 @@ all: d devbot_list devbot devbot_status
 
 HS = "$(shell which ghc)"
 
-CFLAGS = -Wall -Wextra
+CFLAGS  = -Wall -Wextra
 HFLAGS  = -Wall -Wno-type-defaults -Wno-missing-signatures -Wno-name-shadowing
 HFLAGS += -dynamic -lpthread
 
