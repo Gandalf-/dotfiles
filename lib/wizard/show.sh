@@ -96,3 +96,27 @@ wizard_show_weather() {
 
   curl http://wttr.in/~"${1:-Seattle}";
 }
+
+
+wizard_show_haskell_documentation() {
+
+  common::optional-help "$1" "
+
+  start a Python http.server in the Haskell documentation directory
+  "
+
+  common::require -f stack python3
+  common::cd ~/.stack/programs/x86_64-linux/
+
+  local latest; latest="$(
+    find . -maxdepth 1 -type d | tail -n 1
+  )"
+  latest="${latest//.\/}"
+
+  [[ $latest ]] ||
+    common::error "Couldn't find any documentation"
+
+  common::cd "$latest"/share/doc/"$latest"/html
+  common::echo "http://localhost:8000"
+  common::do python3 -m http.server
+}

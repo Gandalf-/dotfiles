@@ -5,6 +5,17 @@
 #   install packages, programs from source and more
 
 
+wizard::apt() {
+
+  common::required-help "$1" "[package...]
+
+  install a package with apt
+  "
+  common::sudo apt install -y "$@"
+}
+
+
+
 wizard_install_dot-files() {
 
   common::required-help "$1" "[link | copy]
@@ -12,8 +23,10 @@ wizard_install_dot-files() {
   link all the configuration files in this repository to their correct
   locations in the system
 
-  if the system doesn't support links, you can use 'copy'
+  if the system doesn't support links (SMB mount), you can use 'copy'
   "
+  common::require -f unzip
+
   local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
 
   common::do mkdir -p "$HOME"/.vim
@@ -31,12 +44,18 @@ wizard_install_dot-files() {
     common::do cp -r "$here" "$there"
   }
 
+  unpack-irssi() {
+    common::cd "$root/etc/irssi"
+    common::do unzip scripts.zip
+    common::cd -
+  }
+
   case $1 in
-    link)
-      op="link"
+    link|copy)
+      op="$1"
       ;;
-    copy)
-      op=copy
+    *)
+      common::error 'options are link or copy'
       ;;
   esac
 
@@ -56,15 +75,7 @@ wizard_install_dot-files() {
   [[ -L "$completions" ]] || common::do rm -rf "$completions"
 
   $op lib/fish/completions    .config/fish/
-}
-
-wizard::apt() {
-
-  common::required-help "$1" "[package...]
-
-  install a package with apt
-  "
-  common::sudo apt install -y "$@"
+  unpack-irssi
 }
 
 
@@ -77,7 +88,9 @@ wizard_install_irssi() {
   wizard::apt libtool libglib2.0-dev libssl-dev
 
   common::do cd /tmp
-  wizard make git-tmpfs-clone https://github.com/irssi/irssi.git
+  [[ -d irssi ]] ||
+    common::do git clone --depth 1 https://github.com/irssi/irssi.git
+
   common::do cd irssi
   common::do ./autogen.sh
   common::do make -j
@@ -133,12 +146,8 @@ wizard_install_shellcheck() {
 
   download and install the latest shellcheck
   "
-  common::do cd /tmp/
-  common::do wget -N \
-    'http://ftp.us.debian.org/debian/pool/main/s/shellcheck/shellcheck_0.4.6-1_i386.deb'
-  common::sudo dpkg -i shellcheck_*.deb || true
-  common::sudo apt-get install -f
-  common::do cd -
+  common::require -f stack
+  common::do stack install shellcheck
 }
 
 
@@ -148,29 +157,43 @@ wizard_install_lua() {
 
   install dependencies with apt, compile and install lua 5.3.3
   "
+
   common::sudo apt install gcc build-essential libreadline-dev
+  local builddir='lua-5.3.3'
 
-  echo "installing lua"
   common::do cd /tmp/
+  [[ -d $builddir ]] || {
+    common::do wget -N 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
+    common::do tar zxvf lua-5.3.3.tar.gz
+  }
 
-  common::do wget -N 'https://www.lua.org/ftp/lua-5.3.3.tar.gz'
-  common::do tar zxvf lua-5.3.3.tar.gz
   common::do cd lua-5.3.3
   common::do make -j linux
   common::sudo make install
-
-  common::do cd -
-  echo "done"
 }
 
 
 wizard_install_tmux() {
-  common::sudo apt install libevent-dev libncurses5-dev
 
-  common::do wget https://github.com/tmux/tmux/releases/download/2.7/tmux-2.7.tar.gz
-  common::do tar xf tmux-2.7.tar.gz
+  common::optional-help "$1" "
 
-  common::cd tmux-2.7
+  download, build and install tmux 2.7
+  "
+  wizard::apt \
+    libevent-dev \
+    build-essential \
+    libncurses5-dev
+
+  common::cd /tmp/
+  local builddir='tmux-2.7'
+
+  [[ -d $builddir ]] || {
+    common::do wget \
+      'https://github.com/tmux/tmux/releases/download/2.7/tmux-2.7.tar.gz'
+    common::do tar xf tmux-2.7.tar.gz
+  }
+
+  common::cd $builddir
   common::do ./configure
   common::do make -j 4
 
@@ -196,10 +219,21 @@ wizard_install_vim() {
   common::optional-help "$1" "
 
   compile and install with all feaures enabled
-  "
 
-  common::do cd ~/
-  git clone --depth 1 https://github.com/vim/vim.git
+  run these first
+    - w install lua
+  "
+  wizard::apt \
+    git \
+    build-essential \
+    silversearcher-ag \
+    python3-pip
+
+  common::do cd /tmp/
+
+  [[ -d vim ]] ||
+    common::do git clone --depth 1 https://github.com/vim/vim.git
+
   common::do cd vim
 
   common::do ./configure \
@@ -236,30 +270,4 @@ wizard_install_docker() {
   common::sudo apt-get update
   common::do apt-cache policy docker-ce
   wizard::apt -y docker-ce
-}
-
-
-wizard_install_stack-links() {
-
-  common::optional-help "$1" "
-
-  create 'ghc' and 'ghci' scripts that link to the stack equivalents
-  "
-
-  mkdir -p ~/.local/bin/
-
-cat << EOF > ~/.local/bin/ghc
-#!/bin/sh
-
-stack ghc -- "\$@"
-EOF
-
-cat << EOF > ~/.local/bin/ghci
-#!/bin/sh
-
-stack ghci -- "\$@"
-EOF
-
-  chmod +x ~/.local/bin/ghc
-  chmod +x ~/.local/bin/ghci
 }

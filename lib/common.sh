@@ -152,13 +152,24 @@ common::require() {
 
   # string, ... -> bool
 
+  local caller="${FUNCNAME[1]//_/ }"
+  local force=0
+
   while [[ $1 ]]; do
     case $1 in
+      -f)
+        force=1
+        ;;
 
       *)
-        if ! common::program-exists "$1"; then
-          return 1
-        fi
+        common::program-exists "$1" || {
+          if (( force )); then
+            common::error "Need $1 to continue with $caller"
+
+          else
+            return 1
+          fi
+        }
         ;;
     esac
     shift

@@ -114,23 +114,6 @@ wizard_git_report() {
 }
 
 
-wizard_macro() {
-
-  common::optional-help "$1" "(amount)
-
-  replay a portion of fish history in the current terminal. the order of
-  selection in fzf matters
-  "
-
-  while read -r command; do
-    eval "$command"
-
-  done < <(fish -c 'history' \
-    | head -n "${1:-10}" \
-    | fzf -m)
-}
-
-
 common::require 'ffmpeg' &&
 wizard_transcode_movies() {
 
@@ -287,7 +270,6 @@ wizard_show_ratio() {
 }
 
 
-common::require 'python' &&
 wizard_parse_json() {
 
   common::optional-help "$1" "
@@ -301,7 +283,6 @@ wizard_parse_json() {
 }
 
 
-common::require "xmllint" &&
 wizard_parse_xml() {
 
   common::required-help "$1" "< file.xml
@@ -324,7 +305,6 @@ wizard_update_platform() {
   esac
 }
 
-common::require "apt" &&
 wizard_update_apt() {
 
   common::optional-help "$1" "
@@ -340,7 +320,6 @@ wizard_update_apt() {
 }
 
 
-common::require "pip" &&
 wizard_update_pip() {
 
   common::optional-help "$1" "
@@ -356,7 +335,6 @@ wizard_update_pip() {
 }
 
 
-common::require "sshd" &&
 wizard_start_sshd() {
 
   common::optional-help "$1" "
