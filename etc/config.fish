@@ -95,10 +95,10 @@ test -d ~/.cargo/bin/
 
 # haskell
 test -d ~/.local/bin/
-  and set PATH ~/.local/bin/ $PATH
+  and set PATH ~/.local/bin $PATH
 
 test -d ~/.cabal/bin/
-  and set PATH ~/.cabal/bin/ $PATH
+  and set PATH ~/.cabal/bin $PATH
 
 # go
 if test -d /usr/local/go/bin

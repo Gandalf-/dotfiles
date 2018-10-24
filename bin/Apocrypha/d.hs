@@ -5,9 +5,9 @@ import           System.Environment (getArgs)
 
 display Nothing  = return ()
 display (Just s) =
-        if null s
+        if null s || s == "\n"
             then return ()
-            else putStrLn s
+            else putStr s
 
 main :: IO ()
 main = do

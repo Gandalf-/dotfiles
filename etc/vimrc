@@ -64,6 +64,7 @@
         Plugin 'vimwiki/vimwiki'
         Plugin 'w0rp/ale'
         Plugin 'dag/vim2hs'
+        " Plugin 'nbouscal/vim-stylish-haskell'
         Plugin 'ehamberg/vim-cute-python'
         Plugin 'Gandalf-/vim-sh-syntax'
         Plugin 'justinmk/vim-syntax-extra'
@@ -120,17 +121,12 @@
             \ 'syntax': 'markdown',
             \ 'ext': '.md'}]
 
-    elseif dimension == "gallium" || dimension == "ubuntu"
+    else
+      let g:ale_fix_on_save = 1
+
       let g:vimwiki_root = '~/google_drive/personal/wiki'
       let g:vimwiki_list = [{
             \ "path": '~/google_drive/personal/wiki/',
-            \ "syntax": 'markdown',
-            \ "ext": '.md',}]
-
-    elseif dimension == "cros"
-      let g:vimwiki_root = '/usr/local/home/google_drive/personal/wiki/'
-      let g:vimwiki_list = [{
-            \ "path": '/usr/local/home/google_drive/personal/wiki/',
             \ "syntax": 'markdown',
             \ "ext": '.md',}]
     endif
@@ -211,7 +207,10 @@
     endif
 
   " ALE
+    " let g:ale_lint_on_enter = 0
+    let g:haskell_hlint_options = '-j'
     let g:ale_lint_on_text_changed = 'normal'
+    let g:ale_lint_delay = 400
     let g:ale_linters = {'python': ['pylint', 'flake8']}
     let g:ale_c_clang_options = "-std=c++11 -Wall"
     let g:ale_cpp_clangcheck_options = "-std=c++11 -Wall"
@@ -219,6 +218,12 @@
     let g:ale_set_quickfix = 1
     let g:ale_set_highlights = 0
     let g:ale_type_map = {'flake8': {'ES': 'WS', 'E': 'W'}}
+
+    let g:ale_fixers = {
+    \   '*': ['remove_trailing_lines', 'trim_whitespace'],
+    \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace']
+    \}
 
     highlight link ALEWarningSign Comment
     highlight link ALEWarning Comment
@@ -336,14 +341,6 @@
 " => Miscellaneous
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-  " Strip whitespaces on save
-    fun! <SID>StripTrailingWhitespaces()
-        let l = line(".")
-        let c = col(".")
-        %s/\s\+$//e
-        call cursor(l, c)
-    endfun
-
   " terminal!
   try
     nnoremap <leader>T :terminal fish<CR>
@@ -358,8 +355,8 @@
   augroup misc_commands
     autocmd!
 
-  " clear whitespace
-    autocmd FileType haskell,yaml,scheme,vimwiki,markdown,conf,vim,tex,sh,c,cpp,java,python autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+  " haskell format
+    " autocmd FileType haskell setlocal formatprg=stylish-haskell
 
   " make uses tabs
     autocmd FileType make setlocal noexpandtab

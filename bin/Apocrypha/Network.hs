@@ -6,11 +6,11 @@ module Apocrypha.Network
 
 import           Network
 
+import           Control.Exception     (SomeException, try)
 import           Data.Binary           (decode, encode)
 import           Data.List             (intercalate)
 import           Data.Maybe            (fromMaybe)
 import           GHC.IO.Handle.Types   (Handle)
-import Control.Exception (SomeException, try)
 
 import           Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as B8
@@ -23,8 +23,10 @@ type Context = Maybe Handle
 getContext :: Maybe (String, PortNumber) -> IO Context
 getContext Nothing =
         getContext $ Just ("127.0.0.1", 9999)
+
 getContext (Just (host, port)) = do
-        result <- try (connectTo host $ PortNumber port) :: IO (Either SomeException Handle)
+        result <- try (connectTo host $ PortNumber port
+                      ) :: IO (Either SomeException Handle)
         case result of
             Left _  -> return Nothing
             Right h -> return $ Just h

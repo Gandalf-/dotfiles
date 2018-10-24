@@ -6,11 +6,11 @@ module Apocrypha.Client
     , Context, getContext
     ) where
 
-import Data.Aeson
-import Apocrypha.Network
+import           Apocrypha.Network
+import           Data.Aeson
 
 import qualified Data.ByteString.Char8 as B8
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Lazy  as B
 
 
 keys :: Context -> [String] -> IO [String]
