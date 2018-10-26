@@ -115,20 +115,32 @@
     let g:vimwiki_folding        = 'custom'
 
     if dimension == "work"
+      " work settings
       let g:vimwiki_root = '~/wiki'
       let g:vimwiki_list = [{
             \ 'path': '~/wiki/',
             \ 'syntax': 'markdown',
             \ 'ext': '.md'}]
 
-    else
-      let g:ale_fix_on_save = 1
+      let g:ale_fixers = {
+      \   '*': ['remove_trailing_lines', 'trim_whitespace'],
+      \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
+      \   'python' : ['remove_trailing_lines', 'trim_whitespace']
+      \}
 
+    else
+      " home settings
       let g:vimwiki_root = '~/google_drive/personal/wiki'
       let g:vimwiki_list = [{
             \ "path": '~/google_drive/personal/wiki/',
             \ "syntax": 'markdown',
             \ "ext": '.md',}]
+
+      let g:ale_fixers = {
+      \   '*': ['remove_trailing_lines', 'trim_whitespace'],
+      \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
+      \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace']
+      \}
     endif
 
     autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
@@ -207,6 +219,8 @@
     endif
 
   " ALE
+    let g:ale_fix_on_save = 1
+
     " let g:ale_lint_on_enter = 0
     let g:haskell_hlint_options = '-j'
     let g:ale_lint_on_text_changed = 'normal'
@@ -218,12 +232,6 @@
     let g:ale_set_quickfix = 1
     let g:ale_set_highlights = 0
     let g:ale_type_map = {'flake8': {'ES': 'WS', 'E': 'W'}}
-
-    let g:ale_fixers = {
-    \   '*': ['remove_trailing_lines', 'trim_whitespace'],
-    \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace']
-    \}
 
     highlight link ALEWarningSign Comment
     highlight link ALEWarning Comment

@@ -1,16 +1,16 @@
 #!/bin/env bash
 
-# setup - wizard libary
+# configure - wizard libary
 
 
-wizard_setup_passwordless-sudo() {
+wizard_configure_passwordless-sudo() {
 
   common::echo "Add this to /etc/sudoers"
   echo "$(whomai) ALL=(ALL) NOPASSWD:ALL"
 }
 
 
-wizard_setup_haskell_stack-links() {
+wizard_configure_haskell_stack-links() {
 
   common::optional-help "$1" "
 
@@ -36,7 +36,7 @@ EOF
 }
 
 
-wizard_setup_haskell_vim-depends() {
+wizard_configure_haskell_vim-depends() {
 
   common::optional-help "$1" "
 

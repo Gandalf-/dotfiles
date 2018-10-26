@@ -39,6 +39,7 @@ git::is-clean() {
   grep -q "$clean" <<< "$(git status)"
 }
 
+
 git::commit-exists() {
 
   # commit -> exit code
@@ -49,6 +50,7 @@ git::commit-exists() {
   grep -q "$target" <<< "$(git log --oneline | head -n 1)"
 }
 
+
 git::branch-exists() {
 
   # branch name -> exit code
@@ -58,6 +60,7 @@ git::branch-exists() {
   local branch="$1"
   git rev-parse --verify "$branch" >/dev/null 2>&1
 }
+
 
 git::current-branch() {
 
@@ -160,8 +163,15 @@ common::open-link() {
   # url -> ()
 
   common::verify-global "BROWSER"
-  $BROWSER "$1" 2>/dev/null >/dev/null &
+  "$BROWSER" "$1" 2>/dev/null >/dev/null &
 }
+
+
+common::open-file() {
+
+  "${EDITOR:-vim}" "$@"
+}
+
 
 common::file-exists() {
 
@@ -405,6 +415,7 @@ common::wait-until() {
   echo
 }
 
+
 common::cd() {
 
   local target="$1"
@@ -414,6 +425,7 @@ common::cd() {
 
   common::do cd "$target"
 }
+
 
 common::do() {
   # print what we're about to do, then do it
@@ -486,4 +498,12 @@ common::translate-time() {
   else
     echo "$(( time / 86400 )) days"
   fi
+}
+
+
+common::choice() {
+  # return a random element from the arguments
+
+  items=( "$@" )
+  echo "${items[$RANDOM % ${#items[@]} ]}"
 }
