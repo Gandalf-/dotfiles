@@ -31,22 +31,40 @@ wizard_install_dot-files() {
 
   common::do mkdir -p "$HOME"/.vim
   common::do mkdir -p "$HOME"/.config/fish
+  common::cd "$HOME"
 
   link() {
+    # create symbolic links between here and there
+
     local here; here="$(readlink -e "${root}/$1")"
     local there="${HOME}/$2"
+
+    common::file-exists "$here" ||
+      common::error "Couldn't find $here"
+
     common::do ln -sf "$here" "$there"
   }
 
   copy() {
+    # copy files from here to there
+
     local here; here="$(readlink -e "${root}/$1")"
     local there="${HOME}/$2"
+
+    common::file-exists "$here" ||
+      common::error "Couldn't find $here"
+
     common::do cp -r "$here" "$there"
   }
 
   unpack-irssi() {
+    # unpack irssi scripts, since they're zipped
+
     common::cd "$root/etc/irssi"
-    common::do unzip scripts.zip
+
+    [[ -d scripts ]] ||
+      common::do unzip scripts.zip
+
     common::cd -
   }
 
@@ -64,7 +82,6 @@ wizard_install_dot-files() {
   $op etc/tmux.conf           .tmux.conf
   $op etc/bashrc              .bashrc
   $op etc/pylintrc            .pylintrc
-  $op etc/devbotrc            .devbotrc
 
   $op etc/vim/snippets        .vim/
   $op etc/irssi               .irssi
@@ -94,6 +111,7 @@ wizard_install_irssi() {
   common::do cd irssi
   common::do ./autogen.sh
   common::do make -j
+  common::sudo make install
 }
 
 
