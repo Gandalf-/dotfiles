@@ -1,6 +1,7 @@
 #!/bin/bash
 
 db() {
+    # if the server is down, don't hang
     timeout 0.05 d "$@"
 }
 

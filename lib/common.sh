@@ -9,22 +9,31 @@
 # globals used by this libary
 BROWSER=''
 DEBUG=${DEBUG:-0}
-green="\033[01;32m"
-normal="\033[00m"
 PLATFORM="$(uname)"
 export PLATFORM
+
+green="\033[01;32m"
+normal="\033[00m"
 
 
 # database functions
 db::get() {
-  local name="$1"
+  # variable name -> [keys] -> ()
+  #
+  # db::get 'value' some keys that produce value
+
+  local variable="$1"
   shift
-  mapfile -t "${name?}" < <(d "$@")
+  mapfile -t "${variable?}" < <(d "$@")
 }
 
 
 # git functions
 git::is-clean() {
+
+  # exit code
+  #
+  # check for non committed changes
 
   local clean='nothing to commit, working directory clean'
   grep -q "$clean" <<< "$(git status)"
@@ -32,17 +41,29 @@ git::is-clean() {
 
 git::commit-exists() {
 
+  # commit -> exit code
+  #
+  # check if the commit exists in the current git repo
+
   local target="$1"
   grep -q "$target" <<< "$(git log --oneline | head -n 1)"
 }
 
 git::branch-exists() {
 
+  # branch name -> exit code
+  #
+  # check if the branch exists in the current git repo
+
   local branch="$1"
   git rev-parse --verify "$branch" >/dev/null 2>&1
 }
 
 git::current-branch() {
+
+  # branch name
+  #
+  # get the current branch's name
 
   git rev-parse --abbrev-ref HEAD
 }
@@ -54,10 +75,9 @@ common::pip() {
 }
 
 
-# common
 common::verify-global() {
 
-  # string -> none || exit
+  # string -> () || exit
   #
   # check if a variable is defined
 
@@ -73,7 +93,7 @@ common::verify-global() {
 
 common::is-integer() {
 
-  # string -> bool
+  # string -> exit code
 
   [ "$1" -eq "$1" ] 2>/dev/null
 }
@@ -81,7 +101,7 @@ common::is-integer() {
 
 common::process-exists() {
 
-  # pid -> bool
+  # pid -> exit code
   #
   # check if a process is running
 
@@ -91,7 +111,7 @@ common::process-exists() {
 
 common::file-not-empty() {
 
-  # file -> bool
+  # file -> exit code
   #
   # check if a file's size is non zero
 
@@ -100,7 +120,7 @@ common::file-not-empty() {
 
 common::dir-exists() {
 
-  # path -> bool
+  # path -> exit code
   #
   # check if a directory exists
 
@@ -110,7 +130,7 @@ common::dir-exists() {
 
 common::inplace-file-op() {
 
-  # file, string -> none
+  # file name -> command string -> exit code
   #
   # common::inplace-file-op words.txt "grep -o . | sort | uniq -c"
 
@@ -120,29 +140,34 @@ common::inplace-file-op() {
 
   mv "$file" "$copy"
   eval "cat $copy | $ops > $file"
+  local code=$?
   rm "$copy"
+  return $code
 }
 
 
 common::check-network() {
 
-  # none -> bool
+  # exit code
 
+  common::verify-global "DNSSERVER"
   nc -w 1 -z "$DNSSERVER" 53
 }
 
 
 common::open-link() {
 
-  common::verify-global "BROWSER"
+  # url -> ()
 
+  common::verify-global "BROWSER"
   $BROWSER "$1" 2>/dev/null >/dev/null &
 }
 
 common::file-exists() {
-  # check if a file exists
+
+  # file path -> exit code
   #
-  # common::file-exists $filename && echo "yes"
+  # check if a file exists
 
   [[ -f "$1" ]]
 }
@@ -150,7 +175,7 @@ common::file-exists() {
 
 common::require() {
 
-  # string, ... -> bool
+  # ["-f" | progam name] -> exit code
 
   local caller="${FUNCNAME[1]//_/ }"
   local force=0
@@ -179,8 +204,13 @@ common::require() {
 
 common::map() {
 
+  # stdin: items to map
+  # args:  commands to apply to items
+  #
   # apply a function to each line of input
   # have to read all, then apply incase function clobbers stdin
+  #
+  # find . -type f | common::map wc
 
   local __items=()
   local __item
@@ -198,6 +228,8 @@ common::map() {
 
 common::for() {
 
+  # list -> intersperse '\n' list
+
   while [[ $1 ]]; do
     echo "$1"
     shift
@@ -206,6 +238,11 @@ common::for() {
 
 
 common::mapl() {
+
+  # create a function from the provided shell code and apply it to each line
+  # from stdin
+  #
+  # find . -type f | common::mapl 'echo {} {} {}'
 
   [[ $1 ]] || return
 
@@ -220,8 +257,8 @@ common::mapl() {
 
 
 common::filterl() {
-  [[ $1 ]] || return
 
+  [[ $1 ]] || return
   common::mapl "$* && echo {}"
 }
 
@@ -255,20 +292,14 @@ common::mmap() {
 
 common::program-exists() {
 
+  # program name -> exit code
+
   command -v "$1" >/dev/null 2>/dev/null
 }
 
 
 common::contains() {
   [[ $1 =~ $2 ]]
-}
-
-
-common::program-exists "google-chrome" &&
-common::open-link() {
-  # open a link in chrome
-
-  google-chrome "$1" 2>/dev/null >/dev/null &
 }
 
 

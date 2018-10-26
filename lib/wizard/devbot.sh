@@ -10,7 +10,7 @@
 #   this approach makes devbot's schedule persist between runs, allowing very
 #   infrequent tasks to be scheduled with confidence
 
-wizard_devbot_yaml_dump() {
+wizard_devbot_config_dump() {
 
   common::optional-help "$1" "
 
@@ -32,7 +32,7 @@ with open('$devbot_config', 'w+') as yaml_file:
 }
 
 
-wizard_devbot_yaml_load() {
+wizard_devbot_config_load() {
 
   common::optional-help "$1" "
 
@@ -75,7 +75,7 @@ wizard_devbot_start() {
     flock -ne 200 ||
       common::error "Could not get devbot lock"
 
-    if command -v devbot; then
+    if common::program-exists devbot; then
       devbot >> $lfile 2>&1 &
     else
       devbot::main >> $lfile 2>&1 &
@@ -96,9 +96,9 @@ wizard_devbot_bounce() {
 
   restart devbot
   "
-  wizard devbot kill
+  wizard_devbot_kill ''
   sleep 0.1
-  wizard devbot start
+  wizard_devbot_start ''
 }
 
 
@@ -118,32 +118,19 @@ wizard_devbot_kill() {
 }
 
 
-wizard_devbot_debug() {
-
-  common::optional-help "$1" "
-
-  toggle debug mode
-  "
-  if [[ $(d devbot debug) ]]; then
-    # was on, now off
-    d devbot debug -d
-
-  else
-    # was off, now on
-    d devbot debug = true
-  fi
-}
-
 wizard_devbot_list() {
 
   common::optional-help "$1" "
 
-  print out the current devbot schedule
+  print out the current devbot schedule, we'll use this if we don't have a
+  devbot_list binary somewhere
   "
   if common::program-exists devbot_list; then
     devbot_list
     return
   fi
+
+  common::require -f d
 
   {
     echo
@@ -156,11 +143,10 @@ wizard_devbot_list() {
         string_interval=0
       fi
 
-      local when action next
-      when="$(d devbot data "$event" when)"
-      action="$(d devbot events "$event" action)"
-      next="$(common::translate-time $(( when - $(date '+%s') )) )"
-      duration="$(d devbot data "$event" duration)"
+      local when; when="$(d devbot data "$event" when)"
+      local action; action="$(d devbot events "$event" action)"
+      local next; next="$(common::translate-time $(( when - $(date '+%s') )) )"
+      local duration; duration="$(d devbot data "$event" duration)"
 
       common::echo "$action"
       if (( string_interval )); then

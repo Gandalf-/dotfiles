@@ -17,7 +17,7 @@ export sources=(
   "${root}/lib/wizard/"*
   "${root}/lib/devbot.sh"
   "$HOME/scripity-scripts/lib/wizard/"*
-  )
+)
 
 export inline=(
   "${root}/etc/wizardrc"

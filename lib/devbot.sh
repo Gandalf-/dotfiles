@@ -11,17 +11,32 @@
 #
 #   this approach makes devbot's schedule persist between runs, allowing very
 #   infrequent tasks to be scheduled with confidence
+#
+#   we'll use this version if we don't have a 'devbot' binary
+#
+#   controlled through 'w devbot ...'
 
-devbot::log() {
-  printf '%s - %s - %s\n' \
-    "$(date +'%x %X')" "${FUNCNAME[1]}" "$*"
-}
 
+devbot::main() {
 
-devbot::debug() {
-  [[ $debug ]] || return
-  printf '%s - %s - %s\n' \
-    "$(date +'%x %X')" "${FUNCNAME[1]}" "$*"
+  # none -> none
+  #
+  # run the main event loop
+
+  mkdir -p ~/.devbot/locks/
+
+  devbot::log "starting devbot"
+  while :; do
+
+    local debug="$(d devbot debug)"
+    local now="$(date '+%s')"
+    devbot::debug "reading events"
+
+    d devbot events --keys \
+      | common::map devbot::task
+
+    sleep 5
+  done
 }
 
 
@@ -124,7 +139,8 @@ devbot::eval() {
       d devbot data "$name" when = "$(( when + backoff ))"
 
       # log it
-      devbot::log "error while running \"$name\" ($*), backing off $backoff seconds"
+      devbot::log \
+        "error while running \"$name\" ($*), backing off $backoff seconds"
     fi
 
     local -r end="$(date '+%s')"
@@ -135,24 +151,14 @@ devbot::eval() {
 }
 
 
-devbot::main() {
+devbot::log() {
+  printf '%s - %s - %s\n' \
+    "$(date +'%x %X')" "${FUNCNAME[1]}" "$*"
+}
 
-  # none -> none
-  #
-  # run the main event loop
 
-  mkdir -p ~/.devbot/locks/
-
-  devbot::log "starting devbot"
-  while :; do
-
-    local debug="$(d devbot debug)"
-    local now="$(date '+%s')"
-    devbot::debug "reading events"
-
-    d devbot events --keys \
-      | common::map devbot::task
-
-    sleep 5
-  done
+devbot::debug() {
+  [[ $debug ]] || return
+  printf '%s - %s - %s\n' \
+    "$(date +'%x %X')" "${FUNCNAME[1]}" "$*"
 }
