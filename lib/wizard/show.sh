@@ -120,3 +120,18 @@ wizard_show_haskell_documentation() {
   common::echo "http://localhost:8000"
   common::do python3 -m http.server
 }
+
+
+wizard_show_dir-hash() {
+
+  common::required-help "$1" "
+
+  create a composite hash from everything in a directory
+  "
+
+  local dir="$1"
+
+  find "$dir" -exec sha1sum {} + 2>/dev/null \
+    | sha1sum \
+    | awk '{print $1}'
+}

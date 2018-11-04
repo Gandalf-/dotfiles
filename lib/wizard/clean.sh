@@ -78,10 +78,13 @@ wizard_clean_files() {
     removing duplicate files insync creates
   "
 
-  case $1 in -d|--dry) dry=1; shift; esac
+  case $1 in -d|--dry) dry=1; esac
 
   while read -r file; do
-    local fixed; fixed="$(sed -e 's/[ ]*([0-9]\+)//' <<< "$file")"
+
+    local fixed; fixed="$(
+      sed -e 's/[ ]*([0-9]\+)//' <<< "$file"
+    )"
 
     # make sure the file still exists
     [[ -e "$file" ]] || continue
