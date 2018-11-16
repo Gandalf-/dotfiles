@@ -57,10 +57,16 @@
         Plugin 'christoomey/vim-tmux-navigator'
         Plugin 'junegunn/fzf'
         Plugin 'junegunn/fzf.vim'
-        Plugin 'Shougo/neocomplete.vim'
-        Plugin 'Shougo/neoinclude.vim'
-        Plugin 'Shougo/neosnippet-snippets'
-        Plugin 'Shougo/neosnippet.vim'
+
+        if dimension == "work"
+          Plugin 'Shougo/neocomplete.vim'
+          Plugin 'Shougo/neoinclude.vim'
+          Plugin 'Shougo/neosnippet-snippets'
+          Plugin 'Shougo/neosnippet.vim'
+        else
+          Plugin 'zxqfl/tabnine-vim'
+        endif
+
         Plugin 'vimwiki/vimwiki'
         Plugin 'w0rp/ale'
         Plugin 'dag/vim2hs'
@@ -169,7 +175,7 @@
     endfunction
 
   " neocomplete
-    if v:version >= 704 && has("lua")
+    if exists("neocomplete#data_directory")
       "let g:acp_enableAtStartup = 0
       let g:neocomplete#enable_at_startup = 1
       let g:neocomplete#enable_smart_case = 1
@@ -200,22 +206,24 @@
     endif
 
   " neosnippet
-    imap <C-l> <Plug>(neosnippet_expand_or_jump)
-    smap <C-l> <Plug>(neosnippet_expand_or_jump)
-    xmap <C-l> <Plug>(neosnippet_expand_target)
+    if exists("neosnippet#data_directory")
+      imap <C-l> <Plug>(neosnippet_expand_or_jump)
+      smap <C-l> <Plug>(neosnippet_expand_or_jump)
+      xmap <C-l> <Plug>(neosnippet_expand_target)
 
-    imap <C-j> <Plug>(neosnippet_jump)
-    smap <C-j> <Plug>(neosnippet_jump)
+      imap <C-j> <Plug>(neosnippet_jump)
+      smap <C-j> <Plug>(neosnippet_jump)
 
-    imap <expr><TAB>
-     \ pumvisible() ? "\<C-n>" :
-     \ neosnippet#expandable_or_jumpable() ?
-     \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+      imap <expr><TAB>
+       \ pumvisible() ? "\<C-n>" :
+       \ neosnippet#expandable_or_jumpable() ?
+       \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
-    let g:neosnippet#snippets_directory = [ "~/.vim/snippets", "~/.vim/bundle/neosnippet-snippets/neosnippets/" ]
+      let g:neosnippet#snippets_directory = [ "~/.vim/snippets", "~/.vim/bundle/neosnippet-snippets/neosnippets/" ]
 
-    if has('conceal')
-      set conceallevel=2 concealcursor=i
+      if has('conceal')
+        set conceallevel=2 concealcursor=i
+      endif
     endif
 
   " ALE

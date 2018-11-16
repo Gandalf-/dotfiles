@@ -44,5 +44,8 @@ wizard_configure_haskell_vim-depends() {
   "
 
   common::require -f stack
-  common::do stack install hlint apply-refact
+  common::do stack install \
+    hlint \
+    apply-refact \
+    stylish-haskell
 }
