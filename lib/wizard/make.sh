@@ -11,7 +11,19 @@
 common::require ctags &&
 wizard_make_ctags() {
 
-  ctags --c++-kinds=+p --fields=+iaS --extra=+q --language-force=C++ -R .
+  ctags \
+    --c++-kinds=+p \
+    --fields=+iaS \
+    --extra=+q \
+    --language-force=C++ \
+    -R .
+}
+
+
+wizard_make_passwordless-sudo() {
+
+  common::echo "Add this to /etc/sudoers"
+  echo "$(whomai) ALL=(ALL) NOPASSWD:ALL"
 }
 
 

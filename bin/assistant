@@ -113,7 +113,9 @@ class Options():
 
         elif insync_status == 'SHARE':
             self.add(
-                'insync-headless reject_all_new_shares austin.voecks@gmail.com')
+                'insync-headless '
+                'reject_all_new_shares '
+                'austin.voecks@gmail.com')
 
     @Registry.register()
     def produce_human(self):
