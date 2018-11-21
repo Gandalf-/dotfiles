@@ -53,7 +53,7 @@ wizard_make_tmpfs() {
   common::do mkdir -p "$target"
   CONFIRM=1 common::sudo \
     mount -t tmpfs \
-    -o size=4G,nr_inodes=0,mode=700,uid="$uid",gid="$gid" \
+    -o size=12G,nr_inodes=0,mode=700,uid="$uid",gid="$gid" \
     tmpfs_"$(basename "$target")" \
     "$target"
 }
