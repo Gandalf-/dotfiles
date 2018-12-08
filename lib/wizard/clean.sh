@@ -96,14 +96,14 @@ wizard_clean_files() {
 
   while read -r file; do
 
-    # make sure the file still exists, this may not be the case if it's
-    # directory was fixed before we got here
-    [[ -e "$duplicated_path" ]] || continue
-
     # determine what the path 'should' be
     local fixed_path; fixed_path="$(
       sed -e 's/[ ]*([0-9]\+)//' <<< "$duplicated_path"
     )"
+
+    # make sure the file still exists, this may not be the case if it's
+    # directory was fixed before we got here
+    [[ -e "$duplicated_path" ]] || continue
 
     if [[ -f "$fixed_path" ]]; then
       # both 'file' and 'file (2)' exist, pick the newer one
