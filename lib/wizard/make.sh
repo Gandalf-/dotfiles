@@ -20,13 +20,6 @@ wizard_make_ctags() {
 }
 
 
-wizard_make_passwordless-sudo() {
-
-  common::echo "Add this to /etc/sudoers"
-  echo "$(whomai) ALL=(ALL) NOPASSWD:ALL"
-}
-
-
 wizard_make_hash() {
 
   head -c 50 /dev/urandom | md5sum | cut -f 1 -d ' '
@@ -50,11 +43,16 @@ wizard_make_tmpfs() {
   local -r uid="$(id -u)"
   local -r gid="$(id -g)"
 
+  unique-name() {
+    echo -n tmpfs_
+    wizard_make_hash '' | head -c 20
+  }
+
   common::do mkdir -p "$target"
   CONFIRM=1 common::sudo \
     mount -t tmpfs \
     -o size=12G,nr_inodes=0,mode=700,uid="$uid",gid="$gid" \
-    tmpfs_"$(basename "$target")" \
+    "$( unique-name )" \
     "$target"
 }
 

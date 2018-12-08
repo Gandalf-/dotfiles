@@ -125,8 +125,8 @@ wizard_devbot_list() {
   print out the current devbot schedule, we'll use this if we don't have a
   devbot_list binary somewhere
   "
-  if common::program-exists devbot_list; then
-    devbot_list
+  if common::program-exists devbot; then
+    devbot list
     return
   fi
 
@@ -162,4 +162,15 @@ wizard_devbot_list() {
   } > /dev/shm/devbot-list
 
   cat /dev/shm/devbot-list
+}
+
+
+wizard_devbot_wash() {
+
+  common::optional-help "$1" "
+
+  clean up stale pid file, truncate log
+  "
+  common::do rm -f ~/.devbot/pid
+  echo > ~/.devbot/log
 }

@@ -39,7 +39,7 @@ wizard_install_dot-files() {
     local here; here="$(readlink -e "${root}/$1")"
     local there="${HOME}/$2"
 
-    common::file-exists "$here" ||
+    [[ -e "$here" ]] ||
       common::error "Couldn't find $here"
 
     common::do ln -sf "$here" "$there"

@@ -3,10 +3,21 @@
 # configure - wizard libary
 
 
+wizard_configure_keyboard_swap-caps-escape() {
+
+  common::optional-help "$1" "
+
+  swap caps and escape, doesn't make sense on a Chromebook
+  "
+  common::require -f setxkbmap
+  common::do setxkbmap -option caps:swapescape
+}
+
+
 wizard_configure_passwordless-sudo() {
 
   common::echo "Add this to /etc/sudoers"
-  echo "$(whomai) ALL=(ALL) NOPASSWD:ALL"
+  echo "$(whoami) ALL=(ALL) NOPASSWD:ALL"
 }
 
 
@@ -48,4 +59,22 @@ wizard_configure_haskell_vim-depends() {
     hlint \
     apply-refact \
     stylish-haskell
+}
+
+
+wizard_configure_wiki() {
+
+  common::optional-help "$1" "
+
+  create database entries for all wiki pages
+  "
+  [[ -d ~/wiki ]] || common::error "~/wiki not found"
+
+  while read -r wikipage; do
+    path="$( basename "$wikipage" )"
+    path="${path//.md}"
+
+    d "$path" wiki = "$wikipage"
+
+  done < <( find -L ~/wiki/ -mindepth 1 -maxdepth 1 -type f )
 }
