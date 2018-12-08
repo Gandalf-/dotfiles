@@ -68,8 +68,6 @@ wizard_clean_haskell() {
 
 wizard_clean_files() {
 
-  local dry=0 counter=0
-
   common::optional-help "$1" "[--dry]
 
   smart remove duplicate file names and intermediary file types
@@ -78,52 +76,69 @@ wizard_clean_files() {
     removing duplicate files insync creates
   "
 
+  local dry=0
+  local counter=0
   case $1 in -d|--dry) dry=1; esac
 
-  while read -r file; do
+  run() {
+    # maybe execute the action
+    echo "$@"
 
-    local fixed; fixed="$(
-      sed -e 's/[ ]*([0-9]\+)//' <<< "$file"
-    )"
-
-    # make sure the file still exists
-    [[ -e "$file" ]] || continue
-
-    # target file exists too, make sure they're different
-    if [[ -f "$fixed" ]]; then
-
-      soriginal=$(sha1sum "$file")
-      snew=$(sha1sum "$fixed")
-
-      echo "remove dup: $file"
-      if [[ $soriginal != "$snew" ]]; then
-        (( dry )) \
-          || rm "$file" \
-          || exit
-
-      else
-        echo "$file $fixed both exist but are different"
-      fi
-
-    else
-      echo "rename dup: $file"
-      (( dry )) \
-        || mv "$file" "$fixed" \
-        || exit
+    if (( ! dry )); then
+      "$@" || {
+        echo "unexpected failure while running $*"
+        exit 1
+      }
     fi
 
     (( counter++ ))
-  done < <(find . -regex '.*([0-9]+).*')
+  }
 
   while read -r file; do
-    echo "remove: $file"
 
-    (( dry )) \
-      || rm "$file" \
-      || exit
+    # make sure the file still exists, this may not be the case if it's
+    # directory was fixed before we got here
+    [[ -e "$duplicated_path" ]] || continue
 
-    (( counter++ ))
+    # determine what the path 'should' be
+    local fixed_path; fixed_path="$(
+      sed -e 's/[ ]*([0-9]\+)//' <<< "$duplicated_path"
+    )"
 
+    if [[ -f "$fixed_path" ]]; then
+      # both 'file' and 'file (2)' exist, pick the newer one
+
+      fixed_path_time="$( stat -c '%Y' "$fixed_path" )"
+      duplicate_time="$( stat -c '%Y' "$duplicated_path" )"
+
+      if (( duplicate_time < fixed_path_time )); then
+        run rm "$duplicated_path"
+      else
+        run mv "$duplicated_path" "$fixed_path"
+      fi
+
+    elif [[ -d "$fixed_path" ]]; then
+      # both 'dir' and 'dir (2)' exist, pick the newer one
+
+      fixed_path_time="$( stat -c '%Y' "$fixed_path" )"
+      duplicate_time="$( stat -c '%Y' "$duplicated_path" )"
+
+      if (( duplicate_time < fixed_path_time )); then
+        run rm "$duplicated_path"
+      else
+        run mv "$duplicated_path" "$fixed_path"
+      fi
+
+    else
+      # only 'file (2)' exists, rename it
+      run mv "$duplicated_path" "$fixed_path"
+    fi
+
+  done < <(find . -regex '.*([0-9]+).*')
+
+  # delete junk files
+  while read -r file; do
+    run rm "$file"
   done < <(find . -regex '.*\.\(pyc\|class\|o\|bak\)')
 
   if (( dry )); then
