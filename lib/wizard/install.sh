@@ -15,6 +15,29 @@ wizard::apt() {
 }
 
 
+wizard_install_dist() {
+
+  common::optional-help "$1" "
+  "
+  local arch; arch="$( uname -p )"
+  local dist; dist=~/google_drive/downloads/dist/"$arch"
+
+  common::dir-exists "$dist" ||
+    common::error "Cannot find dist folder for $arch"
+
+  while read -r path; do
+
+    local binary; binary="$( basename "$path" )"
+    local target; target=~/.local/bin/"$binary"
+
+    common::file-exists "$target" || {
+      echo "linking $binary"
+      QUIET=1 common::do ln -s "$path" "$target"
+    }
+
+  done < <( find "$dist" -type f )
+}
+
 
 wizard_install_dot-files() {
 
