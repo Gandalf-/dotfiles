@@ -68,7 +68,7 @@ wizard_configure_wiki() {
 
   create database entries for all wiki pages
   "
-  [[ -d ~/wiki ]] || common::error '~/wiki not found'
+  [[ -d ~/wiki ]] || common::error "$HOME/wiki not found"
 
   while read -r wikipage; do
     path="$( basename "$wikipage" )"

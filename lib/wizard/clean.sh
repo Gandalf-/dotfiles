@@ -94,7 +94,7 @@ wizard_clean_files() {
     (( counter++ ))
   }
 
-  while read -r file; do
+  while read -r duplicated_path; do
 
     # determine what the path 'should' be
     local fixed_path; fixed_path="$(
