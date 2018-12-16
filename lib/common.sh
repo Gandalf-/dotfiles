@@ -386,7 +386,7 @@ common::color-error() {
   #
   # common:color-error "something went very wrong"
 
-  common::echo "$@"
+  QUIET=0 common::echo "$@"
   exit 1
 }
 
@@ -396,9 +396,11 @@ common::echo() {
   #
   # common:echo "something happened"
 
-  # shellcheck disable=SC1117
-  local green="\033[01;32m" normal="\033[00m"
-  printf "%b%s%b"\\n "$green" "$*" "$normal"
+  (( QUIET )) || {
+    # shellcheck disable=SC1117
+    local green="\033[01;32m" normal="\033[00m"
+    printf "%b%s%b"\\n "$green" "$*" "$normal"
+  }
 }
 
 

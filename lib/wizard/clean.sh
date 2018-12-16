@@ -86,8 +86,7 @@ wizard_clean_files() {
 
     if (( ! dry )); then
       "$@" || {
-        echo "unexpected failure while running $*"
-        exit 1
+        common::error "unexpected failure while running $*"
       }
     fi
 
@@ -142,8 +141,8 @@ wizard_clean_files() {
   done < <(find . -regex '.*\.\(pyc\|class\|o\|bak\)')
 
   if (( dry )); then
-    echo "Would have cleaned up $counter files"
+    common::echo "Would have cleaned up $counter files"
   else
-    echo "Cleaned up $counter files"
+    common::echo "Cleaned up $counter files"
   fi
 }
