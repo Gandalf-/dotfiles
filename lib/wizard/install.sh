@@ -27,6 +27,7 @@ wizard_install_dist() {
 
   while read -r path; do
 
+    chmod +x "$path"
     local binary; binary="$( basename "$path" )"
     local target; target=~/.local/bin/"$binary"
 

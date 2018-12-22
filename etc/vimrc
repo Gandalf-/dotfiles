@@ -246,8 +246,8 @@
     highlight link ALEErrorSign String
     highlight link ALEError String
 
-    let g:ale_sign_error = '✘'
-    let g:ale_sign_warning = '▶'
+    let g:ale_sign_error = 'X' " '✘'
+    let g:ale_sign_warning = '>' " '▶'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
