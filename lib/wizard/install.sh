@@ -18,25 +18,55 @@ wizard::apt() {
 wizard_install_dist() {
 
   common::optional-help "$1" "
+
+  synchonrize dist binaries with ~/.local/bin binaries
+
+  if we don't have a local version, link against dist
+  if we have a local version and it's not a symlink compare the times
+    if ours is newer, offer to replace the dist version with ours
+    otherwise offer to take the dist version
   "
   local arch; arch="$( uname -p )"
-  local dist; dist=~/google_drive/downloads/dist/"$arch"
+  local dist; dist=~/google_drive/share/dist/"$arch"
 
   common::dir-exists "$dist" ||
     common::error "Cannot find dist folder for $arch"
 
-  while read -r path; do
+  mapfile -t dist_files < <( find "$dist" -type f )
 
-    chmod +x "$path"
-    local binary; binary="$( basename "$path" )"
-    local target; target=~/.local/bin/"$binary"
+  for dist_path in "${dist_files[@]}"; do
 
-    common::file-exists "$target" || {
+    chmod +x "$dist_path"
+    local binary; binary="$( basename "$dist_path" )"
+    local bin_path; bin_path=~/.local/bin/"$binary"
+
+    if ! common::file-exists "$bin_path"; then
+      # we don't have anything locally
       echo "linking $binary"
-      QUIET=1 common::do ln -s "$path" "$target"
-    }
+      QUIET=1 common::do ln -s "$dist_path" "$bin_path"
 
-  done < <( find "$dist" -type f )
+    else
+      # we have something locally
+
+      if ! common::symlink-exists "$bin_path"; then
+        # it's not a symlink, which is newer?
+        bin_time="$( stat -c '%Y' "$bin_path" )"
+        dist_time="$( stat -c '%Y' "$dist_path" )"
+
+        if (( dist_time > bin_time )); then
+          common::echo "$binary - dist version is newer than local version"
+          CONFIRM=1 common::do ln -sf "$dist_path" "$bin_path"
+
+        elif (( bin_time > dist_time )); then
+          common::echo "$binary - local version is newer than dist version"
+          CONFIRM=1 common::do cp "$bin_path" "$dist_path"
+          common::do ln -sf "$dist_path" "$bin_path"
+        fi
+
+        # otherwise, they're the same
+      fi
+    fi
+  done
 }
 
 

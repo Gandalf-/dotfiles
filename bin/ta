@@ -22,7 +22,6 @@ switcher() {
   session="$(
     {
       tmux list-sessions -F "#{session_name}"
-      d switcher-options
     } 2>/dev/null \
       | fzf --exit-0 \
         --height 40 \

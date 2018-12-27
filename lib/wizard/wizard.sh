@@ -6,7 +6,6 @@
 #
 #   All the intermediary functions are produced by auto_cli.sh
 
-
 wizard_switch() {
 
   local selection; selection="$(wizard show projects | fzf --cycle)"

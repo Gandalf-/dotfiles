@@ -183,6 +183,12 @@ common::file-exists() {
 }
 
 
+common::symlink-exists() {
+
+  [[ -L "$1" ]]
+}
+
+
 common::require() {
 
   # ["-f" | progam name] -> exit code
