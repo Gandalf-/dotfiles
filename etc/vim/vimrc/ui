@@ -1,0 +1,105 @@
+" vi: ft=vim
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => UI
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" General
+  colorscheme desert
+  set t_Co=256
+  set number wrap textwidth=79 showcmd
+  set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
+  let g:tex_conceal = ""  " Don't hide LaTeX symbols
+
+" Fonts
+  if has("gui_running")
+    if has("gui_win32")
+      set guifont=Lucida_Console:h10:cANSI
+    endif
+  endif
+
+" ui autocommands
+  augroup ui_commands
+    autocmd!
+
+    " Resize vim windows when overall window size changes
+    autocmd VimResized * wincmd =
+
+    " cursor line
+    autocmd InsertEnter,InsertLeave * set cursorline!
+  augroup end
+
+" Be as wild as possible
+  set wildmode=full wildmenu
+  set wildignore=*.o,*~,*.pyc,/usr/include/*,*.class,*.bak,*.hi
+  set wildignore+=.git\*,.svn\*
+  set wildignorecase
+
+" Performance!?
+  set lazyredraw ttyfast
+
+" Syntax, Column and cursor lines
+  syntax on sync minlines=256
+
+  set colorcolumn=80          " Handy bar so we know when lines are too long
+  set synmaxcol=200           " Limit column highlights to 200 columns
+  highlight ColorColumn ctermbg=234
+
+" Cursor line
+  set cursorline              " Handy line so we know where we are
+  highlight CursorLine cterm=NONE ctermbg=234 ctermfg=NONE
+
+" Window split
+  set fillchars+=vert:│
+  highlight VertSplit cterm=NONE ctermbg=0 ctermfg=NONE
+
+" Status line
+  highlight StatusLine ctermfg=246
+  set statusline=%f    " Path.
+  set statusline+=%m   " Modified flag.
+  set statusline+=%r   " Readonly flag.
+  set statusline+=%w   " Preview window flag.
+  set statusline+=\    " Space.
+  set statusline+=%=   " Right align.
+
+  try
+    function! LinterStatus() abort
+        let l:counts = ale#statusline#Count(bufnr(''))
+
+        let l:all_errors = l:counts.error + l:counts.style_error
+        let l:all_non_errors = l:counts.total - l:all_errors
+
+        return l:counts.total == 0 ? '' : printf(
+        \   '%2dw %2de',
+        \   all_non_errors,
+        \   all_errors
+        \)
+    endfunction
+
+    set statusline+=%{LinterStatus()}
+  catch
+  endtry
+
+  try
+    set statusline+=\    " Space.
+    set statusline+=%{fugitive#statusline()}
+  catch
+  endtry
+
+  set statusline+=\    " Space.
+  set statusline+=\ %4l\ %3c\ %3p%%
+
+" Colors
+  highlight Pmenu      ctermbg=245
+  highlight PmenuSel   ctermbg=240
+  highlight PmenuSBar  ctermbg=238
+  highlight PmenuThumb ctermbg=234
+  highlight clear SignColumn
+
+" Vimwiki colors
+  highlight PreProc ctermfg=darkblue
+  highlight Title ctermfg=darkgreen
+
+" Be less obnoxious about 'Pattern not found' warnings
+  highlight Error    None
+  highlight ErrorMsg None

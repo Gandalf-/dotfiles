@@ -1,0 +1,39 @@
+" vi: ft=vim
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Abbreviations
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  iab w/ with
+  iab teh the
+  iab hav have
+  iab ona on a
+  iab waht what
+  iab tiem time
+  iab alot a lot
+  iab THis This
+  iab THat That
+  iab dont don't
+  iab wont won't
+  iab whcih which
+  iab diong doing
+  iab dont' don't
+  iab wont' won't
+  iab prety pretty
+  iab realy really
+  iab whould would
+  iab relaly really
+  iab shoudl should
+  iab haven' haven't
+  iab useable usable
+  iab recieve receive
+  iab similiar similar
+  iab tomorow tomorrow
+  iab shouldnt shouldn't
+  iab finacial financial
+  iab someting something
+  iab somethign something
+  iab diference difference
+  iab informatino information
+  iab opprotunity opportunity
+  iab occasionaly occasionally
+  iab explainations explanations
