@@ -72,9 +72,6 @@ wizard_install_dist() {
 
 wizard_install_dot-files() {
 
-  [[ "$0" =~ /dev/shm ]] &&
-    common::error "You must run this command with 'wizard', not 'w'"
-
   common::required-help "$1" "[link | copy]
 
   link all the configuration files in this repository to their correct
@@ -86,7 +83,7 @@ wizard_install_dot-files() {
 
   local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
 
-  common::do mkdir -p "$HOME"/.vim/
+  common::do mkdir -p "$HOME"/.vim
   common::do mkdir -p "$HOME"/.config/fish
   common::cd "$HOME"
 
@@ -114,6 +111,17 @@ wizard_install_dot-files() {
     common::do cp -r "$here" "$there"
   }
 
+  unpack-irssi() {
+    # unpack irssi scripts, since they're zipped
+
+    common::cd "$root/etc/irssi"
+
+    [[ -d scripts ]] ||
+      common::do unzip scripts.zip
+
+    common::cd -
+  }
+
   case $1 in
     link|copy)
       op="$1"
@@ -124,14 +132,13 @@ wizard_install_dot-files() {
   esac
 
   $op etc/config.fish         .config/fish/config.fish
+  $op etc/vimrc               .vimrc
   $op etc/tmux.conf           .tmux.conf
   $op etc/bashrc              .bashrc
   $op etc/pylintrc            .pylintrc
 
-  $op etc/vimrc               .vimrc
-  $op etc/vim/vimrc           .vim/
   $op etc/vim/snippets        .vim/
-
+  $op etc/irssi               .irssi
   $op lib/fish/functions      .config/fish/
 
   # remove directory, not symbolic link
@@ -139,6 +146,7 @@ wizard_install_dot-files() {
   [[ -L "$completions" ]] || common::do rm -rf "$completions"
 
   $op lib/fish/completions    .config/fish/
+  unpack-irssi
 }
 
 
