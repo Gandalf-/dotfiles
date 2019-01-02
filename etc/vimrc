@@ -32,11 +32,8 @@
     let hostname = "Windows"
   endif
 
-  if !exists("g:vimrc_loaded_extra")
-    let g:vimrc_loaded_extra="yes"
-    runtime vimrc/plugins
-    runtime vimrc/ui
-    runtime vimrc/macros
-    runtime vimrc/movement
-    runtime vimrc/abbreviations
-  endif
+  runtime vimrc/plugins
+  runtime vimrc/ui
+  runtime vimrc/macros
+  runtime vimrc/movement
+  runtime vimrc/abbreviations
