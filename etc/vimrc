@@ -57,20 +57,10 @@
         Plugin 'christoomey/vim-tmux-navigator'
         Plugin 'junegunn/fzf'
         Plugin 'junegunn/fzf.vim'
-
-        if dimension == "work"
-          Plugin 'Shougo/neocomplete.vim'
-          Plugin 'Shougo/neoinclude.vim'
-          Plugin 'Shougo/neosnippet-snippets'
-          Plugin 'Shougo/neosnippet.vim'
-        else
-          Plugin 'zxqfl/tabnine-vim'
-        endif
-
+        Plugin 'zxqfl/tabnine-vim'
         Plugin 'vimwiki/vimwiki'
         Plugin 'w0rp/ale'
         Plugin 'dag/vim2hs'
-        " Plugin 'nbouscal/vim-stylish-haskell'
         Plugin 'ehamberg/vim-cute-python'
         Plugin 'Gandalf-/vim-sh-syntax'
         Plugin 'justinmk/vim-syntax-extra'
@@ -117,7 +107,7 @@
   " vimwiki
     "autocmd TextChanged,TextChangedI *.md silent write
     let g:vimwiki_table_mappings = 0
-    let g:vimwiki_url_maxsave = 200
+    let g:vimwiki_url_maxsave    = 0
     let g:vimwiki_global_ext     = 0
     let g:vimwiki_folding        = 'custom'
 
