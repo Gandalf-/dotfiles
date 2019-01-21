@@ -134,6 +134,8 @@
       \}
     endif
 
+    let g:ale_pattern_options = {'ShellCheck': {'ale_fixers': ['trim_whitespace']}}
+
     autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
 
     nmap <Leader>wn <Plug>VimwikiNextLink
