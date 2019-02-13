@@ -91,9 +91,8 @@ test -d ~/.cabal/bin/
 
 # go
 if test -d /usr/local/go/bin
-  set PATH $HOME/google_drive/code/go/bin /usr/local/go/bin $PATH
-
-  set -x -U GOPATH $HOME/google_drive/code/go
+  set PATH $HOME/working/go/bin /usr/local/go/bin $PATH
+  set -x -U GOPATH $HOME/working/go
 end
 
 
