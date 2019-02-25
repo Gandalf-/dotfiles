@@ -138,20 +138,6 @@ wizard_transcode_movies() {
 }
 
 
-wizard_file_remove-trailing-whitespace() {
-
-  common::required-help "$1" "[file ...]
-
-  remove trailing whitespace in the target files
-  "
-
-  while [[ $1 ]]; do
-    common::do sed -i 's/[ \t]*$//' "$1"
-    shift
-  done
-}
-
-
 common::require 'service' 'ntpd' &&
 wizard_sync_time() {
 
@@ -163,17 +149,6 @@ wizard_sync_time() {
   common::sudo service ntp stop
   common::sudo ntpd -gq
   common::sudo service ntp start
-}
-
-
-wizard_file_pin-to-home() {
-
-  common::required-help "$1" "[target]
-
-  create a symbolic link in the home directory to [target]
-  "
-
-  [[ $1 ]] && common::do ln -s "$1" ~/;
 }
 
 

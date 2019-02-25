@@ -222,7 +222,7 @@
     let g:ale_lint_on_text_changed = 'normal'
     let g:ale_lint_delay = 500
     let g:ale_linters = {
-      \ 'python': ['pylint', 'flake8'],
+      \ 'python': ['pylint'],
       \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
       \ }
 
