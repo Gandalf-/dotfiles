@@ -34,6 +34,14 @@ wizard_install_dist() {
 
   mapfile -t dist_files < <( find "$dist" -type f )
 
+  file_equal() {
+    local first="$( sha1sum "$1" | awk '{print $1}' )"
+    local second="$( sha1sum "$2" | awk '{print $1}' )"
+    [[ "$first" == "$second" ]]
+  }
+
+  echo "considering ${#dist_files[@]} executables..."
+
   for dist_path in "${dist_files[@]}"; do
 
     chmod +x "$dist_path"
@@ -42,28 +50,30 @@ wizard_install_dist() {
 
     if ! common::file-exists "$bin_path"; then
       # we don't have anything locally
-      echo "linking $binary"
-      QUIET=1 common::do ln -s "$dist_path" "$bin_path"
+      echo "copying $binary"
+      QUIET=1 common::do cp "$dist_path" "$bin_path"
 
     else
       # we have something locally
 
-      if ! common::symlink-exists "$bin_path"; then
-        # it's not a symlink, which is newer?
+      if file_equal "$bin_path" "$dist_path"; then
+        # nothing to do here
+        true
+
+      else
+        # which is newer?
         bin_time="$( stat -c '%Y' "$bin_path" )"
         dist_time="$( stat -c '%Y' "$dist_path" )"
 
         if (( dist_time > bin_time )); then
           common::echo "$binary - dist version is newer than local version"
-          CONFIRM=1 common::do ln -sf "$dist_path" "$bin_path"
+          CONFIRM=1 common::do cp -f "$dist_path" "$bin_path"
 
         elif (( bin_time > dist_time )); then
           common::echo "$binary - local version is newer than dist version"
-          CONFIRM=1 common::do cp "$bin_path" "$dist_path"
-          common::do ln -sf "$dist_path" "$bin_path"
+          CONFIRM=1 common::do cp -f "$bin_path" "$dist_path"
         fi
 
-        # otherwise, they're the same
       fi
     fi
   done
