@@ -15,16 +15,23 @@ wizard::apt() {
 }
 
 
+wizard::file-equal() {
+  local first="$( sha1sum "$1" | awk '{print $1}' )"
+  local second="$( sha1sum "$2" | awk '{print $1}' )"
+  [[ "$first" == "$second" ]]
+}
+
+
 wizard_install_dist() {
 
   common::optional-help "$1" "
 
   synchonrize dist binaries with ~/.local/bin binaries
 
-  if we don't have a local version, link against dist
-  if we have a local version and it's not a symlink compare the times
-    if ours is newer, offer to replace the dist version with ours
-    otherwise offer to take the dist version
+  if we don't have a local version, copy from dist
+  if we have a local version and it's not the same as dist, compare the times.
+  if ours is newer, offer to replace the dist version with ours, otherwise
+  offer to take the dist version
   "
   local arch; arch="$( uname -p )"
   local dist; dist=~/google_drive/share/dist/"$arch"
@@ -33,12 +40,6 @@ wizard_install_dist() {
     common::error "Cannot find dist folder for $arch"
 
   mapfile -t dist_files < <( find "$dist" -type f )
-
-  file_equal() {
-    local first="$( sha1sum "$1" | awk '{print $1}' )"
-    local second="$( sha1sum "$2" | awk '{print $1}' )"
-    [[ "$first" == "$second" ]]
-  }
 
   echo "considering ${#dist_files[@]} executables..."
 
