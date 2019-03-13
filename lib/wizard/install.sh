@@ -16,8 +16,9 @@ wizard::apt() {
 
 
 wizard::file-equal() {
-  local first="$( sha1sum "$1" | awk '{print $1}' )"
-  local second="$( sha1sum "$2" | awk '{print $1}' )"
+  local first second
+  first="$( sha1sum "$1" | awk '{print $1}' )"
+  second="$( sha1sum "$2" | awk '{print $1}' )"
   [[ "$first" == "$second" ]]
 }
 
