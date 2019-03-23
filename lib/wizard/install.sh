@@ -58,7 +58,7 @@ wizard_install_dist() {
     else
       # we have something locally
 
-      if file_equal "$bin_path" "$dist_path"; then
+      if wizard::file-equal "$bin_path" "$dist_path"; then
         # nothing to do here
         true
 
