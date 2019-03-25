@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # shellcheck disable=SC1117
 
@@ -69,6 +69,19 @@ git::current-branch() {
   # get the current branch's name
 
   git rev-parse --abbrev-ref HEAD
+}
+
+
+common::sed() {
+
+  # wrapper for sed
+
+  if common::program-exists gsed; then
+    gsed "$@"
+
+  else
+    sed "$@"
+  fi
 }
 
 
@@ -191,7 +204,7 @@ common::symlink-exists() {
 
 common::require() {
 
-  # ["-f" | progam name] -> exit code
+  # ["-f" | program name] -> exit code
 
   local caller="${FUNCNAME[1]//_/ }"
   local force=0
@@ -289,9 +302,10 @@ common::mmap() {
     __items+=( "$__item" )
   done
 
+  local __tmpdir=/dev/shm; [[ -e "$__tmpdir" ]] || __tmpdir=/tmp
   local __tmps=()
   for __item in "${__items[@]}"; do
-    __tmp="$(mktemp /dev/shm/mmap.XXXXXXXXXXXXXXXXXXXXXX)"
+    __tmp="$(mktemp "$__tmpdir"/mmap.XXXXXXXXXXXXXXXXXXXXXX)"
     __tmps+=( "$__tmp" )
 
     "$@" "$__item" > "$__tmp" 2>&1 &

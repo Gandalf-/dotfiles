@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # devbot
 #
@@ -72,8 +72,12 @@ wizard_devbot_start() {
     common::error "devbot already running"
 
   (
-    flock -ne 200 ||
-      common::error "Could not get devbot lock"
+    if common::program-exists flock; then
+      flock -ne 200 ||
+        common::error "Could not get devbot lock"
+    else
+      echo "locking not supported, assuming devbot isn't already running..."
+    fi
 
     if common::program-exists devbot; then
       devbot >> $lfile 2>&1 &
@@ -122,15 +126,20 @@ wizard_devbot_list() {
 
   common::optional-help "$1" "
 
-  print out the current devbot schedule, we'll use this if we don't have a
-  devbot_list binary somewhere
+  print out the current devbot schedule
   "
+  if common::program-exists devbot_list; then
+    devbot_list
+    return
+  fi
+
   if common::program-exists devbot; then
     devbot list
     return
   fi
 
   common::require -f d
+  local tmp=/dev/shm; [[ -e "$tmp" ]] || tmp=/tmp
 
   {
     echo
@@ -159,9 +168,9 @@ wizard_devbot_list() {
       echo
 
     done < <(d devbot events --keys | sort)
-  } > /dev/shm/devbot-list
+  } > "$tmp"/devbot-list
 
-  cat /dev/shm/devbot-list
+  cat "$tmp"/devbot-list
 }
 
 
