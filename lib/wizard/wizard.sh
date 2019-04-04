@@ -268,6 +268,44 @@ wizard_parse_xml() {
 }
 
 
+wizard_update_blog_install-deps() {
+
+   common::do python3 -m pip \
+     install --user --upgrade \
+     markdown \
+     pelican \
+     s3cmd
+}
+
+
+wizard_update_blog_build() {
+
+  common::file-exists pelicanconf.py ||
+    common::error "Not in directory with source content"
+
+  local tmp=/dev/shm/www/
+
+  common::do mkdir -p "$tmp"
+  common::do pelican --ignore-cache -o "$tmp" -t alchemy
+}
+
+
+wizard_update_blog_sync() {
+
+  common::file-exists robots.txt ||
+    common::error "Not in directory with html output"
+
+  common::do s3cmd sync \
+    --no-mime-magic \
+    --guess-mime-type \
+    --delete-removed \
+    --recursive \
+    --acl-public \
+    ./* \
+    s3://mirror/web/blog/
+}
+
+
 wizard_update_platform() {
   # update everything, whatever that means
 
