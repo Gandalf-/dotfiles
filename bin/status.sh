@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # does the same as wizard devbot status, but without the overhead. this is
 # important because it's called every 5 seconds by each tmux session

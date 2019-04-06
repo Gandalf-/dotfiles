@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Script that compresses and encrypts directories or files with openssl and tar
 # also handles the reverse process to restore the files. Works on files and

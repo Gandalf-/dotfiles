@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # create fish completions for wizard
 #   writes them to {root}/lib/fish/completions/w.fish

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # wizard
 #   The main wizard library. Functions are defined here, processed by

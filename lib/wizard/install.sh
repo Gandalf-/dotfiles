@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # install - wizard libary
 #
@@ -204,7 +204,7 @@ wizard_install_vnc() {
   common::sudo vncserver
   common::sudo vncserver -kill :1
   cat > "$HOME"/.vnc/xstartup << EOF
-#!/bin/bash
+#!/usr/bin/env bash
 xrdb \$HOME/.Xresources
 startxfce4 &
 EOF

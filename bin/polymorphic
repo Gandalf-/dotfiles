@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 c='openssl enc'; o='-aes-256-cbc -a -salt -k'
 echo -n "password: "; read -sr p; echo
