@@ -117,6 +117,10 @@ end
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
 set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
 
+if test -e ~/.pythonrc
+  set -gx PYTHONSTARTUP ~/.pythonrc
+end
+
 
 # scripts
 test "$scripts"; and set PATH $scripts/bin $PATH

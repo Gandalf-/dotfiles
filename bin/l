@@ -1,2 +1,7 @@
 #!/bin/sh
-ls --color=auto "$@" --ignore='*.pyc' --ignore='__pycache__'
+if ls --color=auto / >/dev/null 2>/dev/null; then
+  ls --color=auto "$@" --ignore='*.pyc' --ignore='__pycache__'
+
+else
+  ls -G
+fi

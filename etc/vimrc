@@ -227,7 +227,7 @@
       \ }
 
     let g:ale_c_clang_options = "-std=c++11 -Wall"
-    let g:ale_cpp_clangcheck_options = "-std=c++11 -Wall"
+    let g:ale_cpp_clangcheck_options = "-std=c++11 -Wall --suppress=unusedStructMember"
 
     let g:ale_set_quickfix = 1
     let g:ale_set_highlights = 0
@@ -348,7 +348,6 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Miscellaneous
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
   " terminal!
   try
     nnoremap <leader>T :terminal fish<CR>
@@ -358,6 +357,9 @@
     tnoremap <silent> <C-l> <C-W>:TmuxNavigateRight<cr>
   catch
   endtry
+
+  " tags
+  set tags=./tags;,tags;
 
   " misc autocommands
   augroup misc_commands
@@ -590,6 +592,7 @@
 
   " tags
     nnoremap <leader>h :tselect<Space>
+    nnoremap <silent> <C-n> g<C-]>
 
   " windows
     nnoremap <silent> <leader>q :q<CR>
