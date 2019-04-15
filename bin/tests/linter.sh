@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 tested=0
 failures=0

@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # shellcheck disable=SC2155
 
@@ -147,7 +147,7 @@ wizard_make_file_shell() {
   "
 
   cat > "$1".sh << EOF
-#!/bin/bash
+#!/usr/bin/env bash
 
 EOF
 }

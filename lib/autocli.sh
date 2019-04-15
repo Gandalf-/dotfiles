@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # auto_cli
 #   generates intermediate functions for cli scripts
@@ -47,7 +47,7 @@ autocli::create() {
 
   # write the output script
   {
-    echo '#!/bin/bash
+    echo '#!/usr/bin/env bash
 # this is an auto generated file. do not edit manually
 {
     '

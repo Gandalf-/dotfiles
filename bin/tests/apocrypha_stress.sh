@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 async=0
 assign=0

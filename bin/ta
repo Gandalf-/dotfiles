@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # use fzf to fuzzy select a tmux session or create one
 
