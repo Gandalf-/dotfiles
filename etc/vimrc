@@ -1,7 +1,7 @@
 "" ============================================================================
 "" + File name:          vimrc
 "" + Description:        Vim startup settings
-"" + Author:             leaf
+"" + Author:             leaf@anardil.net
 "" ============================================================================
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -32,6 +32,7 @@
   nnoremap <SPACE> <Nop>
   let g:mapleader = " "
   let dimension=$DIMENSION
+
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Plugins
@@ -76,9 +77,6 @@
     endtry
     filetype plugin indent on
 
-  " vim2hs
-    " let g:haskell_conceal_wide = 1
-
   " vimux
     let g:VimuxOrientation = "h"
     let g:VimuxHeight = "33"
@@ -105,7 +103,6 @@
       \ 'ctrl-v': 'vsplit' }
 
   " vimwiki
-    "autocmd TextChanged,TextChangedI *.md silent write
     let g:vimwiki_table_mappings = 0
     let g:vimwiki_url_maxsave    = 0
     let g:vimwiki_global_ext     = 0
@@ -116,26 +113,6 @@
           \ 'path': '~/wiki/',
           \ 'syntax': 'markdown',
           \ 'ext': '.md'}]
-
-    if dimension == "work"
-      " work settings
-
-      let g:ale_fixers = {
-      \   '*': ['remove_trailing_lines', 'trim_whitespace'],
-      \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-      \   'python' : ['remove_trailing_lines', 'trim_whitespace']
-      \}
-
-    else
-      let g:ale_fixers = {
-      \   '*': ['remove_trailing_lines', 'trim_whitespace'],
-      \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-      \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace'],
-      \   'go' : ['gofmt', 'remove_trailing_lines', 'trim_whitespace']
-      \}
-    endif
-
-    let g:ale_pattern_options = {'ShellCheck': {'ale_fixers': ['trim_whitespace']}}
 
     autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
 
@@ -162,59 +139,15 @@
       endif
     endfunction
 
-  " neocomplete
-    if exists("neocomplete#data_directory")
-      "let g:acp_enableAtStartup = 0
-      let g:neocomplete#enable_at_startup = 1
-      let g:neocomplete#enable_smart_case = 1
-      let g:neocomplete#sources#syntax#min_keyword_length = 3
-
-      if !exists('g:neocomplete#keyword_patterns')
-          let g:neocomplete#keyword_patterns = {}
-      endif
-
-      let g:neocomplete#auto_completion_start_length = 2
-      let g:neocomplete#keyword_patterns['default']  = '\h\w*'
-      let g:neocomplete#max_list = 5
-
-      inoremap <expr><C-g> neocomplete#undo_completion()
-      inoremap <expr><C-l> neocomplete#complete_common_string()
-
-      " <CR>: close popup and save indent.
-        inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
-        function! s:my_cr_function()
-          return (pumvisible() ? "\<C-y>" : "" ) . "\<CR>"
-        endfunction
-
-      " <TAB>: completion.
-        inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-
-      " <BS>: close popup and delete backword char.
-        inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-    endif
-
-  " neosnippet
-    if exists("neosnippet#data_directory")
-      imap <C-l> <Plug>(neosnippet_expand_or_jump)
-      smap <C-l> <Plug>(neosnippet_expand_or_jump)
-      xmap <C-l> <Plug>(neosnippet_expand_target)
-
-      imap <C-j> <Plug>(neosnippet_jump)
-      smap <C-j> <Plug>(neosnippet_jump)
-
-      imap <expr><TAB>
-       \ pumvisible() ? "\<C-n>" :
-       \ neosnippet#expandable_or_jumpable() ?
-       \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
-
-      let g:neosnippet#snippets_directory = [ "~/.vim/snippets", "~/.vim/bundle/neosnippet-snippets/neosnippets/" ]
-
-      if has('conceal')
-        set conceallevel=2 concealcursor=i
-      endif
-    endif
-
   " ALE
+    let g:ale_fixers = {
+    \   '*': ['remove_trailing_lines', 'trim_whitespace'],
+    \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'go' : ['gofmt', 'remove_trailing_lines', 'trim_whitespace']
+    \}
+
+    let g:ale_pattern_options = {'ShellCheck': {'ale_fixers': ['trim_whitespace']}}
     let g:ale_fix_on_save = 1
 
     " let g:ale_lint_on_enter = 0
@@ -227,7 +160,6 @@
       \ }
 
     let g:ale_c_clang_options = "-std=c++11 -Wall"
-    let g:ale_cpp_clangcheck_options = "-std=c++11 -Wall --suppress=unusedStructMember"
 
     let g:ale_set_quickfix = 1
     let g:ale_set_highlights = 0
@@ -242,6 +174,7 @@
     let g:ale_sign_error = 'X' " '✘'
     let g:ale_sign_warning = '>' " '▶'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => UI
@@ -344,6 +277,7 @@
   " Be less obnoxious about 'Pattern not found' warnings
     highlight Error    None
     highlight ErrorMsg None
+
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Miscellaneous
@@ -486,38 +420,14 @@
       endif
     endfunction
 
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Text, tab and indent related
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   set backspace=indent,eol,start   " allow backspacing over everything
   set tabstop=4
-  " set softtabstop=4
-  " set shiftwidth=2                 " Set 2 spaces for indenting
-  " set expandtab smarttab
-  " set autoindent nocindent
   set showmatch                    " Show matched brackets
 
-  " " Detect tabs or spaces
-  "   function! TabsOrSpaces()
-  "       " Determines whether to use spaces or tabs on the current buffer.
-  "       if getfsize(bufname("%")) > 256000
-  "           " File is very large, just use the default.
-  "           return
-  "       endif
-
-  "       let numTabs=len(filter(getbufline(bufname("%"), 1, 250), 'v:val =~ "^\\t"'))
-  "       let numSpaces=len(filter(getbufline(bufname("%"), 1, 250), 'v:val =~ "^ "'))
-
-  "       if numTabs > numSpaces
-  "           setlocal noexpandtab
-  "       endif
-  "   endfunction
-
-  " augroup tabs_or_spaces_group
-  "   autocmd!
-  " " Call the function after opening a buffer
-  "   autocmd BufReadPost * call TabsOrSpaces()
-  " augroup end
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Macros
@@ -744,6 +654,7 @@
     endfunction
     nnoremap <leader>N :call CurrentDir()<cr>
 
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Movement
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -820,6 +731,7 @@
     set scrollopt+=hor
     nnoremap <ScrollWheelLeft> :echo HELLO
 
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Abbreviations
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -857,3 +769,9 @@
   iab opprotunity opportunity
   iab occasionaly occasionally
   iab explainations explanations
+
+
+" work settings
+if dimension == "work"
+  source ~/scripity-scripts/etc/vimrc
+endif

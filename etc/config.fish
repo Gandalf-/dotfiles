@@ -6,6 +6,7 @@
 
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
 set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.*/work/')
+set -gx __HOST__ (echo $__HOST__ | sed 's/usxxvoeckam1.*/work/')
 
 set -gx auto_proxy "http://proxy.west.isilon.com/proxy.pac"
 set -gx EDITOR vim
@@ -14,7 +15,7 @@ set -gx BROWSER google-chrome
 
 
 # where are we?
-test (hostname | head -c 13) = 'wkstn-avoecks'; and set at_work yes
+test $__HOST__ = 'work'; and set at_work yes
 test (whoami) = 'chronos'; and set at_cros yes
 set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 
