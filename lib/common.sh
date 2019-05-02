@@ -29,14 +29,38 @@ db::get() {
 
 
 # git functions
+git::can-fastforward() {
+
+  local msg='can be fast-forwarded'
+  grep -q "$msg" <<< "$(git status)"
+}
+
+
+git::is-dirty() {
+
+  local msg='Changes not staged for commit'
+  grep -q "$msg" <<< "$(git status)"
+}
+
+
+git::have-diverged() {
+
+  local msg='have diverged'
+  grep -q "$msg" <<< "$(git status)"
+}
+
+
+git::ahead-of-master() {
+
+  local msg='Your branch is ahead of'
+  grep -q "$msg" <<< "$(git status)"
+}
+
+
 git::is-clean() {
 
-  # exit code
-  #
-  # check for non committed changes
-
-  local clean='nothing to commit, working directory clean'
-  grep -q "$clean" <<< "$(git status)"
+  local msg='nothing to commit, working .* clean'
+  grep -q "$msg" <<< "$(git status)"
 }
 
 

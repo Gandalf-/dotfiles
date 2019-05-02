@@ -66,7 +66,7 @@ autocli::create() {
           declare -f -p "$fname"
           ;;
         *)
-          declare -f -p "$fname" | sed -e 's/^}$/    return $#;\n}/'
+          declare -f -p "$fname" | common::sed -e 's/^}$/    return $#;\n}/'
           ;;
       esac
     done < <(declare -F | awk '{print $3}')
@@ -220,7 +220,7 @@ autocli::make-reflective-functions() {
 
       local sub_name="${meta_func}_${sub_func}"
 
-      if (( meta_locked["$sub_name"] )); then
+      if (( meta_locked["$sub_name"] )) && common::program-exists flock; then
         # user has says this function should run with a lock
         function_body+="
           $cases)

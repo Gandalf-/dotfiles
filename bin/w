@@ -1,6 +1,12 @@
 #!/bin/sh
 
-tmp="$(mktemp /dev/shm/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
+if [ -e /dev/shm ]; then
+  tmp="/dev/shm"
+else
+  tmp="/tmp"
+fi
+
+tmp="$(mktemp "$tmp"/wizard.XXXXXXXXXXXXXXXXXXXXXX)"
 cp "$(command -v wizard)" "$tmp"
 
 bash "$tmp" "$@"
