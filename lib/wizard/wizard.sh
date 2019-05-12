@@ -268,6 +268,24 @@ wizard_parse_xml() {
 }
 
 
+wizard_update_share() {
+
+  common::cd ~/google_drive/share/
+
+  common::do s3cmd sync \
+    --no-mime-magic \
+    --guess-mime-type \
+    --delete-removed \
+    --exclude-from ~/working/s3cmd-exclude \
+    --follow-symlinks \
+    --recursive \
+    --acl-public ./* \
+    s3://mirror/share/
+
+  common::do python3 ~/google_drive/code/python/s3_indexer.py
+}
+
+
 wizard_update_blog_install-deps() {
 
    common::do python3 -m pip \

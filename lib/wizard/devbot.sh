@@ -38,8 +38,12 @@ wizard_devbot_config_load() {
 
   read the current devbot configuration file from disk into apocrypha
   "
-  local -r devbot_config=~/.devbot/config.yml
+  if common::program-exists devbot; then
+    devbot load
+    return
+  fi
 
+  local -r devbot_config=~/.devbot/config.yml
   test -s "$devbot_config" ||
     common::error "$devbot_config not found"
 
