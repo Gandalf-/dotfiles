@@ -84,7 +84,7 @@ wizard_devbot_start() {
     fi
 
     if common::program-exists devbot; then
-      devbot >> $lfile 2>&1 &
+      devbot start >> $lfile 2>&1 &
     else
       devbot::main >> $lfile 2>&1 &
     fi
@@ -132,11 +132,6 @@ wizard_devbot_list() {
 
   print out the current devbot schedule
   "
-  if common::program-exists devbot_list; then
-    devbot_list
-    return
-  fi
-
   if common::program-exists devbot; then
     devbot list
     return
