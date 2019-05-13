@@ -177,6 +177,15 @@
     let g:ale_sign_warning = '>' " '▶'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
 
+  " formatting
+    if executable('black')
+      function! RunBlack()
+        silent !clear
+        execute "!black -S " . bufname("%")
+      endfunction
+
+      command! Black call RunBlack()
+    endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => UI
@@ -184,7 +193,7 @@
   " General
     colorscheme desert
     set t_Co=256
-    set number wrap textwidth=79 showcmd
+    set number wrap textwidth=88 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
   " Fonts
@@ -217,8 +226,8 @@
   " Syntax, Column and cursor lines
     syntax on sync minlines=256
 
-    set colorcolumn=80          " Handy bar so we know when lines are too long
-    set synmaxcol=200           " Limit column highlights to 200 columns
+    set colorcolumn=+1           " Handy bar so we know when lines are too long
+    set synmaxcol=200            " Limit column highlights to 200 columns
     highlight ColorColumn ctermbg=234
 
   " Cursor line

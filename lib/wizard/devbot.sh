@@ -84,7 +84,7 @@ wizard_devbot_start() {
     fi
 
     if common::program-exists devbot; then
-      devbot start >> $lfile 2>&1 &
+      devbot 'start' >> $lfile 2>&1 &
     else
       devbot::main >> $lfile 2>&1 &
     fi

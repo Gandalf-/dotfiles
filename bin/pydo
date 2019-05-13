@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 
-# pydo
-#   read in lines from stdin and apply the commands given from the command line
-#   to them
-#
-#   example
-#       pydo '%s[::-1]' < file.txt
-#       ip addr | pydo '[ord(_) for _ in %s]'
+'''
+read in lines from stdin and apply the commands given from the command line
+to them
 
-# pylint: disable=eval-used
+example
+  pydo 'line[::-1]' < file.txt
+  ip addr | pydo '[ord(_) for _ in line]'
+'''
+
+# pylint: disable=exec-used
 
 import sys
 
 command = sys.argv[1]
-data = [_.strip() for _ in sys.stdin.readlines()]
+cmd = print
+exec('cmd = lambda line : ' + command)
+
+data = (_.strip() for _ in sys.stdin.readlines())
 
 for line in data:
-    line = '"' + line.replace('"', '\\"') + '"'
-    print(eval(command % line))
+    print(cmd(line))
