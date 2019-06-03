@@ -22,9 +22,9 @@ set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 
 # 'aliases'
 function sfish; source ~/.config/fish/config.fish; end
-function    ..; builtin cd ../;      command ls --color=auto ; end
-function   ...; builtin cd ../../;   command ls --color=auto ; end
-function  ....; builtin cd ../../../;command ls --color=auto ; end
+function    ..; builtin cd ../;      l ; end
+function   ...; builtin cd ../../;   l ; end
+function  ....; builtin cd ../../../;l ; end
 
 
 # location specific settings
