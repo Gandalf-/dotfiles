@@ -5,6 +5,11 @@ function l
     ls --color=auto "$argv"
 
   else
-    ls -G
+    if string length -- "$argv" >/dev/null
+      ls -G "$argv"
+    else
+      ls -G
+    end
+
   end
 end

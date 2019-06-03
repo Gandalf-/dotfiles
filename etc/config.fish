@@ -83,10 +83,6 @@ end
 test -d ~/.cargo/bin/
   and set PATH ~/.cargo/bin/ $PATH
 
-# haskell
-test -d ~/.local/bin/
-  and set PATH ~/.local/bin $PATH
-
 test -d ~/.cabal/bin/
   and set PATH ~/.cabal/bin $PATH
 
@@ -95,6 +91,10 @@ if test -d /usr/local/go/bin
   set PATH $HOME/working/go/bin /usr/local/go/bin $PATH
   set -x -U GOPATH $HOME/working/go
 end
+
+# haskell & misc
+test -d ~/.local/bin/
+  and set PATH ~/.local/bin $PATH
 
 
 # Other executables
