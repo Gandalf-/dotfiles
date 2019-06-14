@@ -583,6 +583,7 @@
     vnoremap <leader>s :s/
     nnoremap <leader>s V:s/
     nnoremap <leader>S :%s/
+    nnoremap <Leader>c :%s/\<<C-r><C-w>\>//gc<Left><Left><Left>
 
   " repeat last colon command
     nnoremap <leader>. q:k<cr>
