@@ -397,7 +397,8 @@ common::required-help "$1" "(-q | -s | -e)
 $__usage
 "
 
-NUM_CPUS=$(getconf _NPROCESSORS_ONLN)
+NUM_CPUS=$(getconf _NPROCESSORS_ONLN 2>/dev/null)
+[[ $NUM_CPUS ]] || NUM_CPUS=4
 '
 
 meta_body[wizard]='
