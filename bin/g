@@ -102,7 +102,7 @@ while [[ $1 ]]; do
             exit 1
         }
         branch="$(git rev-parse --abbrev-ref HEAD)"
-        diff="$DIFFDIR/${branch}.diff"
+        diff="$DIFFDIR/${branch//\//-}.diff"
 
         if [ "$2" -eq "$2" ] 2>/dev/null ; then # checks if $2 is a number
           common::do "git diff --full-index HEAD~$2 > $diff"

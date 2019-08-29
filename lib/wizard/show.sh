@@ -1,6 +1,59 @@
 #!/usr/bin/env bash
 
 
+wizard_show_file-system_files-per-directory() {
+
+  common::required-help "$1" "
+
+  show distribution of number of files in directories below the curent working directory
+  "
+  find "$@" -type f \
+    | sed -e 's/\/[^\/]\+$//' \
+    | sort \
+    | uniq -c \
+    | awk '{print $1}' \
+    | sort -n \
+    | uniq -c
+}
+
+
+wizard_show_file-system_directory_depth() {
+
+  common::required-help "$1" "
+
+  show distribution of directory depth below the current working directory
+  "
+  find "$@" -type d \
+    | tr -c -d '\n/' \
+    | sort \
+    | uniq -c
+}
+
+
+wizard_show_file-system_directory_hash() {
+
+  common::required-help "$1" "
+
+  create a composite hash from everything in a directory
+  "
+  local dir="$1"
+
+  if common::program-exists sha1sum; then
+    hasher=sha1sum
+
+  elif common::program-exists sha1; then
+    hasher=sha1
+
+  else
+    common::error "no hashing program found!"
+  fi
+
+  find "$dir" -exec "$hasher" {} + 2>/dev/null \
+    | sha1sum \
+    | awk '{print $1}'
+}
+
+
 wizard_show_next-break() {
 
   common::optional-help "$1" "[--script | break period]
@@ -119,19 +172,4 @@ wizard_show_haskell_documentation() {
   common::cd "$latest"/share/doc/"$latest"/html
   common::echo "http://localhost:8000"
   common::do python3 -m http.server
-}
-
-
-wizard_show_dir-hash() {
-
-  common::required-help "$1" "
-
-  create a composite hash from everything in a directory
-  "
-
-  local dir="$1"
-
-  find "$dir" -exec sha1sum {} + 2>/dev/null \
-    | sha1sum \
-    | awk '{print $1}'
 }

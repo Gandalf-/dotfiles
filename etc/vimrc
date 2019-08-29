@@ -114,7 +114,7 @@
           \ 'syntax': 'markdown',
           \ 'ext': '.md'}]
 
-    autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
+    " autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
 
     nmap <Leader>wn <Plug>VimwikiNextLink
     nmap <Leader>wp <Plug>VimwikiPrevLink
@@ -161,7 +161,8 @@
       \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
       \ }
 
-    let g:ale_c_clang_options = "-std=c++11 -Wall"
+    let g:ale_c_clang_options = "-std=c++11 -Wall -D_BSD_SOURCE"
+    let g:ale_c_gcc_options = "-std=c++11 -Wall -D_BSD_SOURCE"
 
     let g:ale_set_quickfix = 1
     let g:ale_set_highlights = 0
@@ -181,7 +182,7 @@
     if executable('black')
       function! RunBlack()
         silent !clear
-        execute "!black -S " . bufname("%")
+        execute "!black -l 80 -S " . bufname("%")
       endfunction
 
       command! Black call RunBlack()
@@ -193,7 +194,7 @@
   " General
     colorscheme desert
     set t_Co=256
-    set number wrap textwidth=88 showcmd
+    set number wrap textwidth=79 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
   " Fonts
@@ -370,9 +371,14 @@
       let nucolwidth = &fdc + &number*&numberwidth
       let winwd = winwidth(0) - nucolwidth - 5
       let foldlinecount = foldclosedend(v:foldstart) - foldclosed(v:foldstart) + 1
-      let prefix = " >>> "
-      let fdnfo = prefix . string(v:foldlevel) . "," . string(foldlinecount)
-      let line =  strpart(getline(v:foldstart), 0 , winwd - len(fdnfo))
+      if v:foldlevel == 1
+        let prefix = " >>> "
+      else
+        let prefix = " >>> " . string(v:foldlevel) . ","
+      endif
+      let fdnfo = prefix . printf("%3s ", foldlinecount)
+      " let line = strpart(getline(v:foldstart), 0 , winwd - len(fdnfo))
+      let line =  "  ..."
       let fillcharcount = winwd - len(line) - len(fdnfo)
       return line . repeat(" ",fillcharcount) . fdnfo
     endfunction
@@ -461,7 +467,7 @@
           \K : auto scroll down          \| k : save                      \n
           \L : list!                     \| l : reload file               \n
           \M :                           \| m : mundo toggle              \n
-          \N : print pwd                 \| n : cycle windows             \n
+          \N : print pwd                 \| n : toggle line numbers       \n
           \O : insert line above         \| o : insert line below         \n
           \P :                           \| p : toggle paste              \n
           \Q : close all windows         \| q : close window              \n
@@ -481,7 +487,7 @@
     nnoremap <leader>] :Files<CR>
 
   " vimux
-    nnoremap <C-i> :VimuxPromptCommand<CR>
+    " nnoremap <C-i> :VimuxPromptCommand<CR>
     nnoremap <C-b> :VimuxRunLastCommand<CR>
 
   " ale
@@ -519,7 +525,9 @@
     nnoremap <silent> <leader>q :q<CR>
     nnoremap <silent> <leader>Q :qall<CR>
     command! Q :qall
-    nnoremap <silent> <leader>n <C-w><C-w>
+
+  " line number toggle
+    nnoremap <silent> <leader>n :set nu!<CR>
 
   " stay in visual mode while changing indentation
     vnoremap < <gv

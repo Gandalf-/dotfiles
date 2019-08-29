@@ -6,6 +6,28 @@
 #
 #   All the intermediary functions are produced by auto_cli.sh
 
+
+wizard_start_watcher() {
+
+  common::required-help "$2" "[path] [command...]
+  "
+  local path="$1"
+  local previous_value=""
+
+  while :; do
+    value="$( sha1sum "$path" )"
+
+    if [[ "$value" != "$previous_value" ]]; then
+      echo "detected change"
+      "${@:2}"
+    fi
+
+    previous_value="$value"
+    sleep 1
+  done
+}
+
+
 wizard_switch() {
 
   local selection; selection="$(wizard show projects | fzf --cycle)"
@@ -13,6 +35,7 @@ wizard_switch() {
   [[ $selection ]] || common::error "no selection made"
   wizard make session "$selection"
 }
+
 
 wizard_hunt() {
 
@@ -37,6 +60,7 @@ wizard_hunt() {
     | awk '{print $1}' \
     | xargs kill "$signal"
 }
+
 
 wizard_regenerate() {
 
