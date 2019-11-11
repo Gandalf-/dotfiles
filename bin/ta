@@ -12,10 +12,10 @@ switcher() {
   # shellcheck disable=SC2016
   picker='
   set item (echo {} | cut -f 1 -d " ")
-  if test -z (d "$item" -k) 2>/dev/null
-    d (echo {})
-  else
+  if test -z (d {} -k) 2>/dev/null
     d "$item"
+  else
+    d {}
   end
   '
 
@@ -33,7 +33,7 @@ switcher() {
           --preview "$picker" \
           --preview-window up:60% \
         | tail -n 1
-      )"
+    )"
   fi
   [[ -n $session ]] || exit 0
 

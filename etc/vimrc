@@ -61,7 +61,7 @@
         Plugin 'zxqfl/tabnine-vim'
         Plugin 'vimwiki/vimwiki'
         Plugin 'w0rp/ale'
-        Plugin 'dag/vim2hs'
+        " Plugin 'dag/vim2hs'
         Plugin 'ehamberg/vim-cute-python'
         Plugin 'Gandalf-/vim-sh-syntax'
         Plugin 'justinmk/vim-syntax-extra'
@@ -76,6 +76,8 @@
     catch
     endtry
     filetype plugin indent on
+
+    let g:markdown_fenced_languages = ['haskell', 'c']
 
   " vimux
     let g:VimuxOrientation = "h"
@@ -230,6 +232,7 @@
     set colorcolumn=+1           " Handy bar so we know when lines are too long
     set synmaxcol=200            " Limit column highlights to 200 columns
     highlight ColorColumn ctermbg=234
+    highlight CursorLineNr ctermfg=yellow cterm=bold
 
   " Cursor line
     set cursorline              " Handy line so we know where we are

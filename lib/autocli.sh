@@ -45,6 +45,8 @@ autocli::create() {
   # generate all the intermediary functions
   autocli::make-reflective-functions
 
+  local tmp; tmp="$( mktemp -p /tmp wizard-write.XXXXXXXX )"
+
   # write the output script
   {
     echo '#!/usr/bin/env bash
@@ -76,7 +78,9 @@ autocli::create() {
 true
 } || exit
 "
-  } > "$output"
+  } > "$tmp"
+
+  mv "$tmp" "$output"
 
   # make the output script executable
   chmod +x "$output"

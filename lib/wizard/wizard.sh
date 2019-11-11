@@ -15,11 +15,11 @@ wizard_start_watcher() {
   local previous_value=""
 
   while :; do
-    value="$( sha1sum "$path" )"
+    value="$( stat -c '%Y' "$path" )"
 
     if [[ "$value" != "$previous_value" ]]; then
       echo "detected change"
-      "${@:2}"
+      "${@:2}" || common::error "command failure, breaking"
     fi
 
     previous_value="$value"
@@ -93,6 +93,8 @@ wizard_git_fetch() {
 
   while read -r directory; do
     (
+      # sub shell because we're changing directories
+
       local dir; dir="$(dirname "$directory")"
       cd "$dir" || exit
       git fetch --quiet --all --recurse-submodules --prune
