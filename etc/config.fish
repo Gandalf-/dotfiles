@@ -96,6 +96,10 @@ end
 test -d ~/.local/bin/
   and set PATH ~/.local/bin $PATH
 
+# ubuntu snaps
+test -d /snap/bin
+  and set PATH /snap/bin/ $PATH
+
 
 # Other executables
 #===========================

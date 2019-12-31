@@ -294,62 +294,6 @@ wizard_parse_xml() {
 }
 
 
-wizard_update_share() {
-
-  common::cd ~/google_drive/share/
-
-  common::do s3cmd sync \
-    --no-mime-magic \
-    --guess-mime-type \
-    --delete-removed \
-    --exclude-from ~/working/s3cmd-exclude \
-    --follow-symlinks \
-    --recursive \
-    --acl-public ./* \
-    s3://mirror/share/
-
-  common::do python3 ~/google_drive/code/python/s3_indexer.py
-}
-
-
-wizard_update_blog_install-deps() {
-
-   common::do python3 -m pip \
-     install --user --upgrade \
-     markdown \
-     pelican \
-     s3cmd
-}
-
-
-wizard_update_blog_build() {
-
-  common::file-exists pelicanconf.py ||
-    common::error "Not in directory with source content"
-
-  local tmp=/dev/shm/www/
-
-  common::do mkdir -p "$tmp"
-  common::do pelican --ignore-cache -o "$tmp" -t alchemy
-}
-
-
-wizard_update_blog_sync() {
-
-  common::file-exists robots.txt ||
-    common::error "Not in directory with html output"
-
-  common::do s3cmd sync \
-    --no-mime-magic \
-    --guess-mime-type \
-    --delete-removed \
-    --recursive \
-    --acl-public \
-    ./* \
-    s3://mirror/web/blog/
-}
-
-
 wizard_update_platform() {
   # update everything, whatever that means
 
@@ -423,7 +367,15 @@ common::required-help "$1" "(-q | -s | -e)
 $__usage
 "
 
-NUM_CPUS=$(getconf _NPROCESSORS_ONLN 2>/dev/null)
+case $OSTYPE in
+  linux*)
+    NUM_CPUS="$( getconf _NPROCESSORS_ONLN )"
+    ;;
+  *bsd*)
+    NUM_CPUS="$( sysctl -n hw.ncpu )"
+    ;;
+esac
+
 [[ $NUM_CPUS ]] || NUM_CPUS=4
 '
 
