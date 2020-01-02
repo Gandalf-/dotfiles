@@ -5,7 +5,13 @@ function fish_prompt
   if test $status -ne 0
     set_color bryellow
   else
-    set_color normal
+
+    if test -e ~/.config/fish/color
+      set_color (cat ~/.config/fish/color)
+    else
+      set_color normal
+    end
+
   end
 
   echo -n (whoami)"@$__HOST__"
@@ -20,4 +26,3 @@ function fish_prompt
   echo '> '
 
 end
-

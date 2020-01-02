@@ -109,6 +109,7 @@ parse_git_branch() {
     fi
   fi
 
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+[[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
+[[ -f ~/DotFiles/lib/common.sh ]] && source ~/DotFiles/lib/common.sh
 
 complete -C /home/leaf/.local/bin/mc mc

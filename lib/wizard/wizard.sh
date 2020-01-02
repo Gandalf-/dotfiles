@@ -299,8 +299,8 @@ wizard_update_platform() {
 
   case $PLATFORM in
     Linux)
-      wizard update apt
-      wizard update pip
+      wizard_update_apt ''
+      wizard_update_pip ''
       ;;
   esac
 }
