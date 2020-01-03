@@ -42,7 +42,6 @@ wizard_media_public_upload() {
   local config="$HOME"/.s3cfg-sfo
   [[ $1 ]] && config="$1"
 
-  indexer ~/google_drive/code/haskell/indexer/thumbnail.py || exit 0
   sync "$config"
 }
 
