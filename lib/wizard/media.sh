@@ -93,7 +93,7 @@ wizard_media_sensors_create() {
 
   create the html charts for all sensor data. extremely CPU heavy
   "
-  grep time ~/working/pi/ping-timing.csv \
+  grep time ~/working/pi/sensors/elm-pings.csv \
     | tr -cd '[:digit:]. \n' \
     | awk '{print $1, $6}' > ~/working/pi/ping-data.csv
 

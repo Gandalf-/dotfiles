@@ -45,7 +45,15 @@ autocli::create() {
   # generate all the intermediary functions
   autocli::make-reflective-functions
 
-  local tmp; tmp="$( mktemp -p /tmp wizard-write.XXXXXXXX )"
+  local tmp;
+  case $OSTYPE in
+    *bsd*)
+      tmp="$( mktemp /tmp/wizard-write.XXXXXXXX )"
+      ;;
+    *)
+      tmp="$( mktemp -p /tmp wizard-write.XXXXXXXX )"
+      ;;
+  esac
 
   # write the output script
   {
