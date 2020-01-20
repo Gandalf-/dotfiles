@@ -309,6 +309,13 @@ common::mapl() {
 }
 
 
+common::maybe-filter() {
+
+  [[ $1 ]] && grep "$1"
+  cat
+}
+
+
 common::filterl() {
 
   [[ $1 ]] || return
@@ -341,6 +348,18 @@ common::mmap() {
     cat "$__tmp"
     rm -f "$__tmp"
   done
+}
+
+
+common::multi-menu() {
+
+  fzf --reverse --cycle --multi
+}
+
+
+common::single-menu() {
+
+  fzf --reverse --cycle
 }
 
 
@@ -552,4 +571,22 @@ common::choice() {
 
   items=( "$@" )
   echo "${items[$RANDOM % ${#items[@]} ]}"
+}
+
+
+common::try-json-parse() {
+  # try to parse the stdin stream as json, otherwise just print it
+
+  if common::dir-exists /dev/shm; then
+    local tmp=/dev/shm/
+  else
+    local tmp=/tmp/
+  fi
+
+  tmp+=json-parse-$RANDOM$RANDOM$RANDOM
+  cat - > "$tmp"
+
+  python -m json.tool < "$tmp" 2>/dev/null || cat "$tmp"
+
+  rm "$tmp"
 }

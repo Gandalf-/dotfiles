@@ -307,16 +307,29 @@ wizard_update_platform() {
 
 wizard_update_apt() {
 
-  common::optional-help "$1" "
+  common::optional-help "$1" "[--quiet]
 
   update all apt packages
   "
-
   common::check-network || common::error "no network connection"
 
-  common::sudo apt update
-  common::sudo apt upgrade -y
-  common::sudo apt-get autoremove -y
+  local quiet=0
+  case $1 in
+    -q|--quiet)
+      quiet=1
+      ;;
+  esac
+
+  if (( quiet )); then
+    common::sudo apt update -y -qq
+    common::sudo apt upgrade -y -qq
+    common::sudo apt-get autoremove -y -qq
+
+  else
+    common::sudo apt update
+    common::sudo apt upgrade -y
+    common::sudo apt-get autoremove -y
+  fi
 }
 
 
@@ -328,10 +341,10 @@ wizard_update_pip() {
   "
   common::check-network || common::error "no network connection"
 
-  sudo -H pip freeze --local \
+  python3 -m pip freeze --user --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \
-    | xargs -n1 sudo -H python3 -m pip install -U
+    | xargs -n1 python3 -m pip install --user
 }
 
 
