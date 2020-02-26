@@ -51,6 +51,12 @@ while [[ $1 ]]; do
           "git push --set-upstream \"${2:?g pu [remote]}\" $branch"
       shift
       ;;
+    puf)
+      branch="$(git rev-parse --abbrev-ref HEAD)"
+      common::do \
+          "git push --force --set-upstream \"${2:?g pu [remote]}\" $branch"
+      shift
+      ;;
     pf) common::do "git push --force \"${2%.}\""; shift ;;
 
     pfr) common::do "git push --force \"$2\" \"$3\""; shift 2;;
@@ -105,11 +111,11 @@ while [[ $1 ]]; do
         diff="$DIFFDIR/${branch//\//-}.diff"
 
         if [ "$2" -eq "$2" ] 2>/dev/null ; then # checks if $2 is a number
-          common::do "git diff --full-index HEAD~$2 > $diff"
+          common::do "git diff --minimal --full-index HEAD~$2 > $diff"
           shift
 
         else
-          common::do "git diff --full-index HEAD~1 > $diff"
+          common::do "git diff --minimal --full-index HEAD~1 > $diff"
         fi
         true
       ;;

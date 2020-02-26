@@ -78,3 +78,16 @@ wizard_configure_wiki() {
 
   done < <( find -L ~/wiki/ -mindepth 1 -maxdepth 1 -type f )
 }
+
+
+wizard_configure_tmux_layout_vertical() {
+  tmux select-layout even-vertical
+}
+
+wizard_configure_tmux_layout_horizontal() {
+  tmux select-layout even-horizontal
+}
+
+wizard_configure_tmux_layout_tiled() {
+  tmux select-layout tiled
+}

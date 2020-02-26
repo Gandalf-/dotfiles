@@ -10,6 +10,7 @@
 #   this approach makes devbot's schedule persist between runs, allowing very
 #   infrequent tasks to be scheduled with confidence
 
+common::program-exists devbot ||
 wizard_devbot_config_dump() {
 
   common::optional-help "$1" "
@@ -32,17 +33,13 @@ with open('$devbot_config', 'w+') as yaml_file:
 }
 
 
+common::program-exists devbot ||
 wizard_devbot_config_load() {
 
   common::optional-help "$1" "
 
   read the current devbot configuration file from disk into apocrypha
   "
-  if common::program-exists devbot; then
-    devbot load
-    return
-  fi
-
   local -r devbot_config=~/.devbot/config.yml
   test -s "$devbot_config" ||
     common::error "$devbot_config not found"
@@ -61,6 +58,7 @@ for key in data:
 }
 
 
+common::program-exists devbot ||
 wizard_devbot_start() {
 
   common::optional-help "$1" "
@@ -83,11 +81,7 @@ wizard_devbot_start() {
       echo "locking not supported, assuming devbot isn't already running..."
     fi
 
-    if common::program-exists devbot; then
-      devbot 'start' >> $lfile 2>&1 &
-    else
-      devbot::main >> $lfile 2>&1 &
-    fi
+    devbot::main >> $lfile 2>&1 &
 
     local -r pid=$!
     disown
@@ -98,6 +92,7 @@ wizard_devbot_start() {
 }
 
 
+common::program-exists devbot ||
 wizard_devbot_bounce() {
 
   common::optional-help "$1" "
@@ -110,6 +105,7 @@ wizard_devbot_bounce() {
 }
 
 
+common::program-exists devbot ||
 wizard_devbot_kill() {
 
   common::optional-help "$1" "
@@ -126,17 +122,13 @@ wizard_devbot_kill() {
 }
 
 
+common::program-exists devbot ||
 wizard_devbot_list() {
 
   common::optional-help "$1" "
 
   print out the current devbot schedule
   "
-  if common::program-exists devbot; then
-    devbot list
-    return
-  fi
-
   common::require -f d
   local tmp=/dev/shm; [[ -e "$tmp" ]] || tmp=/tmp
 
@@ -173,6 +165,7 @@ wizard_devbot_list() {
 }
 
 
+common::program-exists devbot ||
 wizard_devbot_wash() {
 
   common::optional-help "$1" "

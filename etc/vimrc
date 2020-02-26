@@ -159,7 +159,7 @@
 
     let g:ale_lint_delay = 500
     let g:ale_linters = {
-      \ 'python': ['pylint'],
+      \ 'python': ['pylint', 'flake8'],
       \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
       \ }
 
@@ -184,7 +184,7 @@
     if executable('black')
       function! RunBlack()
         silent !clear
-        execute "!black -l 80 -S " . bufname("%")
+        execute "!black -l 79 -S " . bufname("%")
       endfunction
 
       command! Black call RunBlack()

@@ -353,13 +353,13 @@ common::mmap() {
 
 common::multi-menu() {
 
-  fzf --reverse --cycle --multi
+  fzf --reverse --cycle --multi "$@"
 }
 
 
 common::single-menu() {
 
-  fzf --reverse --cycle
+  fzf --reverse --cycle "$@"
 }
 
 

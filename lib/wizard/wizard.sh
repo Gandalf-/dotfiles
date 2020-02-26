@@ -72,7 +72,7 @@ wizard_regenerate() {
   regenerate wizard using auto_wizard, without clobbering ourselves
   "
 
-  ( sleep .5
+  ( sleep 0.5
     auto_wizard | grep -v 'scripity'
   ) &
 

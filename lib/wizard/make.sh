@@ -126,18 +126,6 @@ wizard_make_session() {
   fi
 }
 
-wizard_layout_vertical() {
-  tmux select-layout even-vertical
-}
-
-wizard_layout_horizontal() {
-  tmux select-layout even-horizontal
-}
-
-wizard_layout_tiled() {
-  tmux select-layout tiled
-}
-
 
 wizard_make_file_shell() {
 
