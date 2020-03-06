@@ -26,23 +26,21 @@ wizard_media_public_upload() {
   "
   common::program-exists -f 's3cmd'
 
-  sync() {
-    local config="$1"
+  local config="$HOME"/.s3cfg-sfo
+  [[ $1 ]] && config="$1"
 
+  for folder in ~/google_drive/share/*; do
     common::do \
       s3cmd sync -c "$config" \
       --no-mime-magic --guess-mime-type \
       --delete-removed --follow-symlinks --recursive \
       --exclude-from ~/working/s3cmd-exclude \
       --include '*/.indexes/*' --acl-public \
-      ~/google_drive/share/ \
-      s3://anardil-public/share/
-  }
+      "$folder" \
+      s3://anardil-public/share/ &
+  done
 
-  local config="$HOME"/.s3cfg-sfo
-  [[ $1 ]] && config="$1"
-
-  sync "$config"
+  wait
 }
 
 
@@ -56,11 +54,19 @@ wizard_media_diving_create() {
   "
   common::program-exists -f 'convert'
 
+  if common::dir-exists /mnt/zfs/Media/; then
+    base=/mnt/zfs/Media
+  elif common::dir-exists "$HOME"/media/; then
+    base="$HOME"/media
+  else
+    common::error "Can't find media directory"
+  fi
+
   common::cd ~/working/diving-web
   common::do \
     bash \
     ~/google_drive/code/shell/diving/runner.sh \
-    ~/media/Pictures/Diving/
+    "$base"/Pictures/Diving/
 }
 
 wizard_media_diving_upload() {
@@ -82,6 +88,53 @@ wizard_media_diving_upload() {
     --delete-removed --acl-public \
     ~/working/diving-web/ \
     s3://diving/
+}
+
+
+# photos
+
+wizard_media_photos_create() {
+
+  common::optional-help "$1" "
+
+  generate the html and thumbnails for photos.anardil.net.
+  "
+  common::program-exists -f 'convert'
+
+  if common::dir-exists /mnt/zfs/Media/; then
+    base=/mnt/zfs/Media
+  elif common::dir-exists "$HOME"/media/; then
+    base="$HOME"/media
+  else
+    common::error "Can't find media directory"
+  fi
+
+  common::cd ~/working/photos-web
+  common::do \
+    bash \
+    ~/google_drive/code/shell/photos/runner.sh \
+    "$base"/Pictures/Photography/
+}
+
+wizard_media_photos_upload() {
+
+  common::optional-help "$1" "[s3cmd config]
+
+  upload the generated html files for photos.anardil.net.
+
+  default config is ~/.s3cfg-sfo
+  "
+  common::program-exists -f 's3cmd'
+
+  local config="$HOME"/.s3cfg-sfo
+  [[ $1 ]] && config="$1"
+
+  common::do s3cmd sync \
+    -c "$config" \
+    --no-mime-magic --guess-mime-type \
+    --delete-removed --acl-public \
+    ~/working/photos-web/ \
+    s3://anardil-photos/
 }
 
 
