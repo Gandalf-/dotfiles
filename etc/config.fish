@@ -30,6 +30,13 @@ function  ....; builtin cd ../../../;l ; end
 # location specific settings
 #===========================
 
+if test -d ~/DotFiles
+  set scripts ~/DotFiles
+
+else if test -d ~/dotfiles
+  set scripts ~/dotfiles
+end
+
 # workstation
 if test "$at_work"
   set -gx DIMENSION work
@@ -39,36 +46,23 @@ if test "$at_work"
 
   set PATH      ~/scripity-scripts/bin $PATH
   set wiki_loc  ~/wiki/index.md
-  set scripts   ~/DotFiles
-
-# chrome os native
-else if test "$at_cros"
-  set -gx DIMENSION cros
-  set -gx PAGER     /usr/local/bin/less
-  set -gx TERM      screen
-
-  set scripts   /usr/local/home/DotFiles
-  set wiki_loc  /usr/local/home/google_drive/personal/wiki/index.md
 
 # gallium
-else if test -d ~/Documents/DotFiles
+else if test -d ~/Documents/dotfiles
   set -gx DIMENSION gallium
 
-  set scripts   ~/Documents/DotFiles
+  set scripts   ~/Documents/dotfiles
   set wiki_loc  ~/google_drive/personal/wiki/index.md
 
 # birch, chroot
-else if test -d ~/DotFiles
+else if test -d ~/dotfiles
   set -gx DIMENSION ubuntu
 
-  set scripts  ~/DotFiles
   set wiki_loc ~/wiki/index.md
 
 # raspberry pi
 else if test (whoami) = pi
   set -gx DIMENSION raspberry
-
-  set scripts   ~/DotFiles
 
 # temporary
 else
@@ -87,7 +81,7 @@ test -d ~/.cabal/bin/
   and set PATH ~/.cabal/bin $PATH
 
 # go
-if test -d /usr/local/go/bin
+if test -d /usr/local/go/bin; and test -d $HOME/working/go/bin
   set PATH $HOME/working/go/bin /usr/local/go/bin $PATH
   set -x -U GOPATH $HOME/working/go
 end
