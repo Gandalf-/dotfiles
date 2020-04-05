@@ -29,18 +29,53 @@ wizard_media_public_upload() {
   local config="$HOME"/.s3cfg-sfo
   [[ $1 ]] && config="$1"
 
-  for folder in ~/google_drive/share/*; do
+  upload() {
     common::do \
       s3cmd sync -c "$config" \
       --no-mime-magic --guess-mime-type \
       --delete-removed --follow-symlinks --recursive \
       --exclude-from ~/working/s3cmd-exclude \
-      --include '*/.indexes/*' --acl-public \
-      "$folder" \
-      s3://anardil-public/share/ &
+      --acl-public \
+      "$1" \
+      s3://anardil-public/share/
+  }
+
+  upload ~/google_drive/share/.indexes &
+  upload ~/google_drive/share/.thumbnails &
+
+  for folder in ~/google_drive/share/* ; do
+    upload "$folder" &
   done
 
   wait
+}
+
+
+wizard_media_public_upload-hidden() {
+
+  common::optional-help "$1" "[s3cmd config]
+
+  synchronize hidden folder to public.anardil.net
+
+  default config is ~/.s3cfg-sfo
+  "
+  common::program-exists -f 's3cmd'
+
+  local config="$HOME"/.s3cfg-sfo
+  [[ $1 ]] && config="$1"
+
+  upload() {
+    common::do \
+      s3cmd sync -c "$config" \
+      --no-mime-magic --guess-mime-type \
+      --delete-removed --follow-symlinks --recursive \
+      --exclude-from ~/working/s3cmd-exclude \
+      --acl-public \
+      "$1" \
+      s3://anardil-public/share/
+  }
+
+  upload ~/google_drive/share/zb3
 }
 
 
@@ -221,6 +256,6 @@ wizard_media_blog_upload() {
     --delete-removed \
     --recursive \
     --acl-public \
-    "$(pwd)" \
+    "$(pwd)"/* \
     s3://mirror/web/blog/
 }

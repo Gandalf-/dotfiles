@@ -97,12 +97,10 @@ wizard_install_dot-files() {
 
   common::do mkdir -p "$HOME"/.vim
   common::do mkdir -p "$HOME"/.config/fish
-  common::cd "$HOME"
 
   link() {
     # create symbolic links between here and there
-
-    local here; here="$(readlink -e "${root}/$1")"
+    local here; here="$(readlink -f "${root}/$1")"
     local there="${HOME}/$2"
 
     [[ -e "$here" ]] ||
@@ -114,7 +112,7 @@ wizard_install_dot-files() {
   copy() {
     # copy files from here to there
 
-    local here; here="$(readlink -e "${root}/$1")"
+    local here; here="$(readlink -f "${root}/$1")"
     local there="${HOME}/$2"
 
     common::file-exists "$here" ||
