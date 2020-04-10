@@ -68,6 +68,7 @@
         Plugin 'tpope/vim-fugitive'
         Plugin 'tpope/vim-sleuth'
         Plugin 'simnalamburt/vim-mundo.git'
+        Plugin 'rhysd/vim-clang-format'
 
         if has_vundle == 0
           :PluginInstall

@@ -7,6 +7,7 @@
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
 set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.*/work/')
 set -gx __HOST__ (echo $__HOST__ | sed 's/usxxvoeckam1.*/work/')
+set -gx __HOST__ (echo $__HOST__ | sed 's/remotedev-avoecks.*/work/')
 
 set -gx auto_proxy "http://proxy.west.isilon.com/proxy.pac"
 set -gx EDITOR vim

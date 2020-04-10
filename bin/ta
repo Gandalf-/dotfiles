@@ -6,7 +6,7 @@ switcher() {
   if [[ -n $TMUX ]]; then
     change="switch-client"
   else
-    change="attach-session"
+    change="attach-session -d"
   fi
 
   # shellcheck disable=SC2016
@@ -42,7 +42,9 @@ switcher() {
   fi
 
   _set_context "$session"
-  tmux "$change" -t "$session"
+
+  # shellcheck disable=SC2086
+  tmux $change -t "$session"
 }
 
 if tmux ls >/dev/null 2>&1; then

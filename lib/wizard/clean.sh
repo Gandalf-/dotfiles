@@ -4,6 +4,33 @@
 #
 #   remove unnecessary files or packages intelligently
 
+
+wizard_clean_docker_images() {
+
+  case $1 in
+    -f|--force) force="--force" ;;
+  esac
+
+  docker images \
+    | common::multi-menu \
+    | awk '{ print $3 }' \
+    | common::map docker image rm "$force"
+}
+
+
+wizard_clean_docker_containers() {
+
+  case $1 in
+    -f|--force) force="--force" ;;
+  esac
+
+  docker ps -a \
+    | common::multi-menu \
+    | awk '{ print $1 }' \
+    | common::map docker rm "$force"
+}
+
+
 wizard_clean_every-other() {
 
   common::optional-help "$1" "
@@ -97,6 +124,7 @@ wizard_clean_files() {
 
     # determine what the path 'should' be
     local fixed_path; fixed_path="$(
+      # shellcheck disable=SC2001
       sed -e 's/[ ]*([0-9]\+)//' <<< "$duplicated_path"
     )"
 

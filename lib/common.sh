@@ -488,7 +488,8 @@ common::cd() {
     return
   fi
 
-  common::do cd "$target"
+  # always actually cd
+  ECHO=0 common::do cd "$target"
 }
 
 
@@ -497,10 +498,6 @@ common::do() {
   #
   # common::do rm -rf /tmp/*
 
-  if ! (( "$AUTO" )); then
-    common::echo "$*"
-  fi
-
   if (( "$CONFIRM" )); then
     common::echo "Continue? [Yn]"
     read -r reply
@@ -508,20 +505,25 @@ common::do() {
   fi
 
   if (( "$ECHO" )); then
-    true
+    # print command only
+    common::echo "$*"
 
   elif (( "$QUIET" )); then
-    eval "${@/ \"\"/}" >/dev/null \
+    # don't print command, run, check for errors
+    eval "${@/ \"\"/}" \
       || common::color-error "error running \"$*\""
 
   elif (( "$SILENT" )); then
+    # don't print command or output, check for error
     eval "${@/ \"\"/}" >/dev/null 2>/dev/null \
       || common::color-error "error running \"$*\""
 
   elif (( "$IGNORE" )); then
+    # don't print command, don't check for error
     eval "${@/ \"\"/}"
 
   else
+    common::echo "$*"
     eval "${@/ \"\"/}" \
       || common::color-error "error running \"$*\""
   fi
@@ -540,9 +542,8 @@ common::confirm() {
   #
   # common::confirm "are you sure?"
 
-  common::echo "$@"
-
   if ! (( "$AUTO" )); then
+    common::echo "$@"
     read -r reply; [[ "$reply" =~ [Nn] ]] && exit 1
   fi
 }

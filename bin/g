@@ -11,6 +11,7 @@ source "${root}/lib/common.sh"
 [[ -z $1 ]] && { g --help; exit 1; }
 
 export CONFIRM=0
+export QUIET=1
 export AUTO=1
 fmt="\
 %Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
@@ -96,7 +97,8 @@ while [[ $1 ]]; do
 
     l)  common::do git log --color=always \| head -n 20 ;;
     lo) common::do git log --oneline \| head -n 10 ;;
-    ll) common::do git log --graph --pretty=format:"$fmt" --abbrev-commit ;;
+    lom) common::do git log --oneline \| head -n 20 ;;
+    ll) common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit ;;
 
     d)  common::do git diff --ws-error-highlight=all ;;
     dc) common::do git diff --ws-error-highlight=all --cached ;;
