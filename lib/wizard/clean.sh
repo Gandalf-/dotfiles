@@ -5,6 +5,20 @@
 #   remove unnecessary files or packages intelligently
 
 
+wizard_clean_git_branches() {
+
+  common::optional-help "$1" "
+
+  select branches to delete with 'git branch -D'
+  "
+  git branch --verbose \
+    | common::multi-menu \
+    | cut -c 3- \
+    | awk '{ print $1 }' \
+    | common::map common::do git branch -D
+}
+
+
 wizard_clean_docker_images() {
 
   case $1 in
