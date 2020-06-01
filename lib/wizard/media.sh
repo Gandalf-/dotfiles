@@ -34,7 +34,7 @@ wizard_media_public_upload() {
       s3cmd sync -c "$config" \
       --no-mime-magic --guess-mime-type \
       --delete-removed --follow-symlinks --recursive \
-      --exclude-from ~/working/s3cmd-exclude \
+      --exclude-from ~/working/config/s3cmd-exclude \
       --acl-public \
       "$1" \
       s3://anardil-public/share/
@@ -69,7 +69,7 @@ wizard_media_public_upload-hidden() {
       s3cmd sync -c "$config" \
       --no-mime-magic --guess-mime-type \
       --delete-removed --follow-symlinks --recursive \
-      --exclude-from ~/working/s3cmd-exclude \
+      --exclude-from ~/working/config/s3cmd-exclude \
       --acl-public \
       "$1" \
       s3://anardil-public/share/
@@ -185,9 +185,12 @@ wizard_media_sensors_create() {
     | tr -cd '[:digit:]. \n' \
     | awk '{print $1, $6}' > ~/working/pi/ping-data.csv
 
-  common::do python3 \
-    ~/google_drive/code/python/sensors/sensor-web.py \
-    2>/dev/null
+  common::do MPLBACKEND=Agg python3 \
+    ~/google_drive/code/python/sensors/sensor-web.py
+
+  common::do MPLBACKEND=Agg python3 \
+    ~/google_drive/code/python/sensors/sensor-extremes.py \
+    ~/google_drive/share/sensors/extremes/
 }
 
 wizard_media_sensors_upload() {
@@ -205,7 +208,7 @@ wizard_media_sensors_upload() {
       s3cmd sync -c "$config" \
       --no-mime-magic --guess-mime-type \
       --delete-removed --follow-symlinks --recursive \
-      --exclude-from ~/working/s3cmd-exclude \
+      --exclude-from ~/working/config/s3cmd-exclude \
       --acl-public --quiet \
       ~/google_drive/share/sensors/ \
       s3://anardil-public/share/sensors/
