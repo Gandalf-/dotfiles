@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ -e /dev/shm ]]; then
   tmp="/dev/shm"

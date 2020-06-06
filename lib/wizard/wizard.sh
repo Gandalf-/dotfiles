@@ -39,7 +39,7 @@ wizard_switch() {
 
 wizard_hunt() {
 
-  common::optional-help "$1" "(-#) (pid or process name)
+  common::optional-help "$1" "(-#)
 
   find processes and send them a signal, default SIGTERM
   can signal multiple processes at once
@@ -56,9 +56,9 @@ wizard_hunt() {
   ps ax \
     | { [[ $1 ]] && grep "$1"; cat; } \
     | cut -c 1-250 \
-    | fzf --multi --cycle \
+    | common::multi-menu \
     | awk '{print $1}' \
-    | xargs kill "$signal"
+    | common::map kill "$signal"
 }
 
 
