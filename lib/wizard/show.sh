@@ -8,12 +8,17 @@ wizard_show_file-system_files-per-directory() {
   show distribution of number of files in directories below the curent working directory
   "
   find "$@" -type f \
-    | sed -e 's/\/[^\/]\+$//' \
+    | common::sed -e 's/\/[^\/]\+$//' \
     | sort \
     | uniq -c \
     | awk '{print $1}' \
     | sort -n \
-    | uniq -c
+    | \
+    {
+      echo instances files-in-dir
+      uniq -c
+    } \
+    | column -t
 }
 
 

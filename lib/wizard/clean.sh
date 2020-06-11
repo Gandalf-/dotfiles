@@ -21,27 +21,45 @@ wizard_clean_git_branches() {
 
 wizard_clean_docker_images() {
 
+  common::optional-help "$1" "(--force)
+
+  select docker images for deletion
+  "
   case $1 in
-    -f|--force) force="--force" ;;
+    -f|--force)
+      remove() { docker image rm --force "$@"; }
+      ;;
+    *)
+      remove() { docker image rm "$@"; }
+      ;;
   esac
 
   docker images \
     | common::multi-menu \
     | awk '{ print $3 }' \
-    | common::map docker image rm "$force"
+    | common::map remove
 }
 
 
 wizard_clean_docker_containers() {
 
+  common::optional-help "$1" "(--force)
+
+  select docker containers for deletion
+  "
   case $1 in
-    -f|--force) force="--force" ;;
+    -f|--force)
+      remove() { docker rm --force "$@"; }
+      ;;
+    *)
+      remove() { docker rm "$@"; }
+      ;;
   esac
 
   docker ps -a \
     | common::multi-menu \
     | awk '{ print $1 }' \
-    | common::map docker rm "$force"
+    | common::map remove
 }
 
 
@@ -55,11 +73,10 @@ wizard_clean_every-other() {
   local delete=0
 
   for file in *; do
-    (( delete )) && rm -v "$file" &
+    (( delete )) &&
+      common::do rm -v "$file"
     delete=$(( ! delete ))
   done
-
-  wait
 }
 
 
@@ -75,7 +92,7 @@ wizard_clean_boot() {
     | grep linux-image \
     | awk '{ print $2 }' \
     | sort -V \
-    | sed -n '/'"$(uname -r)"'/q;p' \
+    | common::sed -n '/'"$(uname -r)"'/q;p' \
     | xargs sudo apt-get -y purge
 }
 
@@ -102,8 +119,7 @@ wizard_clean_haskell() {
 
   remove intermediary GHC compilation files, *.hi *.o
   "
-
-  common::do rm ./*.hi ./*.o || common::error "No files to clean"
+  common::do rm ./*.hi ./*.o
 }
 
 
@@ -139,7 +155,7 @@ wizard_clean_files() {
     # determine what the path 'should' be
     local fixed_path; fixed_path="$(
       # shellcheck disable=SC2001
-      sed -e 's/[ ]*([0-9]\+)//' <<< "$duplicated_path"
+      common::sed -e 's/[ ]*([0-9]\+)//' <<< "$duplicated_path"
     )"
 
     # make sure the file still exists, this may not be the case if it's

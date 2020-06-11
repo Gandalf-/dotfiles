@@ -191,7 +191,7 @@ common::check-network() {
   # exit code
 
   common::verify-global "DNSSERVER"
-  nc -w 1 -z "$DNSSERVER" 53
+  nc -w 1 -z "$DNSSERVER" 53 >/dev/null 2>&1
 }
 
 

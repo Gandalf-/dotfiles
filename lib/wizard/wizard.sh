@@ -203,10 +203,7 @@ wizard_show_largest-packages() {
 
 wizard_start_http-server() {
 
-  common::optional-help "$1" "(arguments)
-
-  start an http server
-  "
+  # start an http server
 
 python3 -c "
 from http.server import SimpleHTTPRequestHandler, test
@@ -236,7 +233,7 @@ if __name__ == '__main__':
                         help='Specify alternate port [default: 8000]')
     args = parser.parse_args()
     test(InlineHandler, port=args.port, bind=args.bind)
-"
+" "$@"
 }
 
 
@@ -295,68 +292,50 @@ wizard_parse_xml() {
 
 
 wizard_update_platform() {
-  # update everything, whatever that means
 
-  case $PLATFORM in
+  common::optional-help "$1" "
+
+  update system packages, whatever that means on this system
+  "
+  case "$( uname )" in
     Linux)
-      wizard_update_apt ''
-      wizard_update_pip ''
+      (( QUIET )) && extra="-qq"
+      common::sudo apt update "$extra"
+      common::sudo apt upgrade -y "$extra"
+      common::sudo apt-get autoremove -y "$extra"
+      ;;
+
+    FreeBSD)
+      common::sudo pkg update
+      common::sudo pkg upgrade
+      ;;
+
+    *)
+      common::error "Unknown platform $( uname )"
       ;;
   esac
 }
 
 wizard_update_apt() {
 
-  common::optional-help "$1" "[--quiet]
-
-  update all apt packages
-  "
-  common::check-network || common::error "no network connection"
-
-  local quiet=0
-  case $1 in
-    -q|--quiet)
-      quiet=1
-      ;;
-  esac
-
-  if (( quiet )); then
-    common::sudo apt update -y -qq
-    common::sudo apt upgrade -y -qq
-    common::sudo apt-get autoremove -y -qq
-
-  else
-    common::sudo apt update
-    common::sudo apt upgrade -y
-    common::sudo apt-get autoremove -y
-  fi
+  wizard_update_platform "$@"
 }
 
 
-wizard_update_pip() {
+wizard_update_python() {
 
   common::optional-help "$1" "
 
   update all python packages installed by pip
   "
-  common::check-network || common::error "no network connection"
+  common::check-network ||
+    common::error "no network connection"
 
+  python3 -m pip install --upgrade pip
   python3 -m pip freeze --user --local \
     | grep -v '^\-e' \
     | cut -d = -f 1  \
     | xargs -n1 python3 -m pip install --user
-}
-
-
-wizard_start_sshd() {
-
-  common::optional-help "$1" "
-
-  start sshd on Chrome OS
-  "
-
-  common::sudo mkdir -p -m0755 /var/run/sshd
-  common::sudo /usr/sbin/sshd
 }
 
 
