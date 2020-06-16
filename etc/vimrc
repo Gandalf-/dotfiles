@@ -308,6 +308,9 @@
   catch
   endtry
 
+  " virtual edit
+  set virtualedit=block
+
   " tags
   set tags=./tags;,tags;
 
@@ -323,8 +326,8 @@
 
   " Make pylint happy
     autocmd FileType c,cpp,python setlocal tabstop=4
-    " autocmd BufNewFile,BufRead *.py setlocal tabstop=4
-  augroup end
+      " autocmd BufNewFile,BufRead *.py setlocal tabstop=4
+    augroup end
 
   " silver searcher-ing
     if executable('ag')

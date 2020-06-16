@@ -467,6 +467,19 @@ common::echo() {
 }
 
 
+common::echo-n() {
+  # print a colored message
+  #
+  # common:echo "something happened"
+
+  (( QUIET )) || {
+    # shellcheck disable=SC1117
+    local green="\033[01;32m" normal="\033[00m"
+    printf "%b%s%b" "$green" "$*" "$normal"
+  }
+}
+
+
 common::wait-until() {
   # keep running a command sequence until it passes
   #
@@ -543,7 +556,7 @@ common::confirm() {
   # common::confirm "are you sure?"
 
   if ! (( "$AUTO" )); then
-    common::echo "$@"
+    common::echo-n "$* [yN] "
     read -r reply; [[ "$reply" =~ [Nn] ]] && exit 1
   fi
 }
@@ -590,4 +603,142 @@ common::try-json-parse() {
   python -m json.tool < "$tmp" 2>/dev/null || cat "$tmp"
 
   rm "$tmp"
+}
+
+common::quick() {
+
+  common::optional-help "$1" "(--add|--del|--edit) [name] [command]
+
+  manage and run dynamic commands specific to the current context. commands are
+  stored in the remote database accessed with 'd'.
+
+  --add  <name> <command ...>   create a new quick command
+  --del  <name>                 delete a quick command
+  --edit <name>                 edit a quick command with \$EDITOR
+  --copy <context>              copy quick commands from somewhere else
+  <name ...>                    run one or more quick commands
+  ''                            lists currently available quick commands
+
+  q --add b stack build
+  q b
+  q
+  q --del b
+  "
+  [[ $QUICK_CONTEXT ]] ||
+    common::error "programming error: \$QUICK_CONTEXT not defined"
+
+  case "$1" in
+    -a|--add)
+      local action=add
+      local name="$2"
+      local cmd="${*:3}"
+      [[ $name ]] || common::error "no name provided"
+      [[ $cmd  ]] || common::error "no command provided"
+      ;;
+
+    -d|--del)
+      local action=del
+      local name="$2"
+      [[ $name ]] || common::error "no name provided"
+      ;;
+
+    -e|--edit)
+      local action=edit
+      local name="$2"
+      [[ $name ]] || common::error "no name provided"
+      ;;
+
+    -c|--copy)
+      local action=copy
+      local other="${*:2}"
+      [[ $other ]] || common::error "no other context provided"
+      ;;
+
+    *)
+      # this doesn't match an empty string
+      action=run
+      ;;
+  esac
+
+  [[ $1 ]] || action=list
+
+  case $action in
+    add)
+      d !current-context quick "$QUICK_CONTEXT" "$name" = "$cmd"
+      ;;
+
+    del)
+      d !current-context quick "$QUICK_CONTEXT" "$name" --del
+      ;;
+
+    edit)
+      local tmp; tmp="$( mktemp )"
+      d !current-context quick "$QUICK_CONTEXT" "$name" > "$tmp"
+
+      "${EDITOR:-vi}" "$tmp"
+
+      d !current-context quick "$QUICK_CONTEXT" "$name" = "$( cat "$tmp" )"
+      rm "$tmp"
+      ;;
+
+    copy)
+      copy() {
+        local name="$1"
+        d !current-context quick "$QUICK_CONTEXT" "$name" = "$(
+          d "$other" quick "$QUICK_CONTEXT" "$name"
+        )"
+      }
+
+      d "$other" quick "$QUICK_CONTEXT" --keys \
+        | common::multi-menu \
+          --preview "d '$other' quick '$QUICK_CONTEXT' {}" \
+          --preview-window up \
+        | common::map copy
+      ;;
+
+    list)
+      d !current-context quick "$QUICK_CONTEXT" | python -c '
+import json
+import sys
+
+try:
+  data = json.load(sys.stdin)
+except:
+  print("No quick commands available")
+  sys.exit(0)
+
+print("")
+for k, v in sorted(data.items()):
+  if isinstance(v, list):
+    print("{k: >10}".format(k=k))
+    for e in v:
+      print("{k: >10}   {e}".format(k="", e=e))
+    print("")
+  else:
+    print("{k: >10}   {v}".format(k=k, v=v))
+print("")
+      '
+      ;;
+
+    run)
+      # save the context ahead of time instead of dereferencing at execution
+      # time, in case we switch contexts while running a long string of commands
+      local context; context="$( d current-context )"
+
+      find_and_run() {
+
+        local name="$1"
+        local cmd; cmd="$( d "$context" quick "$QUICK_CONTEXT" "$name" )"
+        [[ $cmd ]] || common::error "couldn't find a command for $name"
+
+        common::echo "$cmd"
+        eval "$cmd"
+      }
+
+      common::for "$@" | common::map find_and_run
+      ;;
+
+    *)
+      common::error "programming error"
+  esac
 }
