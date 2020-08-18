@@ -19,22 +19,47 @@ fmt="\
 while [[ $1 ]]; do
   case "$1" in
     !)  CONFIRM=1; AUTO=0 ;;
-    a)  common::do "git add -A :/" ;;
-    bv) common::do "git branch -vv" ;;
-    rv) common::do "git remote -vv" ;;
-    f)  common::do "git fetch --all" ;;
-    s)  common::do "git status" ;;
 
+    # status
+    s)  common::do "git status -uno" ;;
+    sa) common::do "git status" ;;
+    l)  common::do git log --color=always \| head -n 20 ;;
+    lo) common::do git log --oneline \| head -n 10 ;;
+    ll) common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit ;;
+
+    # committing
     c)  common::do "git commit" ;;
     ca) common::do "git commit --amend" ;;
     cn) common::do "git commit --amend --no-edit" ;;
 
+    # checkout
     co) common::do "git checkout \"$2\""; shift ;;
     cb) common::do "git checkout -b \"${2:?g cb [branch]}\""; shift ;;
     cl) common::do \
       "git checkout ${2:?g cn [remote] [local]} -b ${3:?g cn [remote] [local]}"
       shift; shift ;;
+    cf)
+      branch="$(
+        git branch -q \
+          | fzf)"
+      common::required-help "$branch" "g cf [branch]"
+      common::do git checkout "$branch"; shift
+      ;;
+    cs)
+      branch="$(
+        git branch -q \
+          | grep -i "$2" \
+          | xargs \
+          | cut -f1 -d' ')"
+      common::required-help "$branch" "g cs [branch]"
+      common::do git checkout "$branch"; shift
+      ;;
 
+    # branching
+    a)  common::do "git add -A :/" ;;
+    bv) common::do "git branch -vv" ;;
+    rv) common::do "git remote -vv" ;;
+    f)  common::do "git fetch --all" ;;
     rh) common::do "git reset --hard HEAD" ;;
     ri) common::do "git rebase -i \"$2\""; shift ;;
     rc) common::do "git rebase --continue" ;;
@@ -42,10 +67,15 @@ while [[ $1 ]]; do
     cm) common::do "git commit -m \"${2:?g cm [message]}\""; shift ;;
     m)  common::do "git merge \"${2%-}\""    ; shift ;;
 
+    # pulling
     pm) common::do "git pull \"${2%-}\""          ; shift ;;
     pl) common::do "git pull --no-edit \"${2%-}\""; shift ;;
 
+    # pushing
     ph) common::do "git push \"${2%.}\""; shift ;;
+    pf)  common::do "git push --force \"${2%.}\""; shift ;;
+    pfr) common::do "git push --force \"$2\" \"$3\""; shift 2;;
+    phr) common::do "git push \"$2\" \"$3\""; shift 2;;
     pu)
       branch="$(git rev-parse --abbrev-ref HEAD)"
       common::do \
@@ -58,53 +88,27 @@ while [[ $1 ]]; do
           "git push --force --set-upstream \"${2:?g pu [remote]}\" $branch"
       shift
       ;;
-    pf) common::do "git push --force \"${2%.}\""; shift ;;
 
-    pfr) common::do "git push --force \"$2\" \"$3\""; shift 2;;
-    phr) common::do "git push \"$2\" \"$3\""; shift 2;;
-
+    # other
+    cc) common::do "git clean -nfd"
+        common::confirm "Continue?"
+        common::do "git clean -fd"
+        ;;
     su)
       common::do git branch --set-upstream-to="${2:?g su [remote/branch]}"
       shift
       ;;
+
+    # diffing
     sc) common::do git diff --name-only --diff-filter=U;;
     oc)
       # shellcheck disable=SC2046
       vim $(git diff --name-only --diff-filter=U)
       ;;
-    cc) common::do "git clean -nfd"
-        common::confirm "Continue?"
-        common::do "git clean -fd"
-        ;;
-
-    cf)
-      branch="$(
-        git branch -q \
-          | fzf)"
-      common::required-help "$branch" "g cf [branch]"
-      common::do git checkout "$branch"; shift
-      ;;
-
-    cs)
-      branch="$(
-        git branch -q \
-          | grep -i "$2" \
-          | xargs \
-          | cut -f1 -d' ')"
-      common::required-help "$branch" "g cs [branch]"
-      common::do git checkout "$branch"; shift
-      ;;
-
-    l)  common::do git log --color=always \| head -n 20 ;;
-    lo) common::do git log --oneline \| head -n 10 ;;
-    lom) common::do git log --oneline \| head -n 20 ;;
-    ll) common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit ;;
-
     d)  common::do git diff --ws-error-highlight=all ;;
     dc) common::do git diff --ws-error-highlight=all --cached ;;
     dw) common::do git diff --ignore-space-at-eol ;;
     dh) common::do git diff --ws-error-highlight=all HEAD~"${2:-1}" ;;
-
     ds) [[ -z "$DIFFDIR" ]] && {
             echo "error: smart diff not available"
             exit 1
@@ -126,6 +130,7 @@ while [[ $1 ]]; do
       exit 0
       ;;
 
+    # help, probably out of date
     *)
       echo "
   g - super git wrapper

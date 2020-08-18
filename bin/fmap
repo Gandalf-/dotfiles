@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC1090
+
+root="$(dirname "${BASH_SOURCE[0]}")"/..
+source "${root}/lib/common.sh"
+
+if [[ "$*" =~ {} ]]; then
+  common::mapl "$@"
+
+elif common::program-exists "$1"; then
+  common::map "$@"
+
+else
+  common::mapl "$@"
+fi

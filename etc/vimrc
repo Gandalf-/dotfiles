@@ -191,6 +191,13 @@
       command! Black call RunBlack()
     endif
 
+    augroup format_commands
+      autocmd!
+      autocmd FileType python command! Format :Black
+      autocmd FileType c      command! Format :ClangFormat
+      autocmd FileType cpp    command! Format :ClangFormat
+    augroup end
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => UI
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
