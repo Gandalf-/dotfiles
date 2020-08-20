@@ -16,7 +16,7 @@ wizard_media_public_create() {
   indexer ~/google_drive/code/haskell/indexer/thumbnail.py || exit 0
 }
 
-wizard_media_public_upload() {
+wizard_media_public_upload_all() {
 
   common::optional-help "$1" "[s3cmd config]
 
@@ -30,52 +30,72 @@ wizard_media_public_upload() {
   [[ $1 ]] && config="$1"
 
   upload() {
-    common::do \
-      s3cmd sync -c "$config" \
-      --no-mime-magic --guess-mime-type \
-      --delete-removed --follow-symlinks --recursive \
-      --exclude-from ~/working/config/s3cmd-exclude \
-      --acl-public \
-      "$1" \
-      s3://anardil-public/share/
+    common::do s3cmd sync -c "$config" \
+        --no-mime-magic \
+        --guess-mime-type \
+        --delete-removed \
+        --follow-symlinks \
+        --recursive \
+        --exclude-from ~/working/config/s3cmd-exclude \
+        --acl-public \
+        --no-check-md5 \
+        "$1" \
+        s3://anardil-public/share/
   }
 
   upload ~/google_drive/share/.indexes &
   upload ~/google_drive/share/.thumbnails &
 
   for folder in ~/google_drive/share/* ; do
+    common::dir-exists "$folder" || {
+      echo "ignoring $folder"
+      continue
+    }
     upload "$folder" &
   done
 
   wait
 }
 
+wizard::upload() {
+  [[ $config ]] || common::error "programming error"
 
-wizard_media_public_upload-hidden() {
+  common::do \
+    s3cmd sync -c "$config" \
+    --no-mime-magic --guess-mime-type \
+    --delete-removed --follow-symlinks --recursive \
+    --exclude-from ~/working/config/s3cmd-exclude \
+    --acl-public \
+    "$1" \
+    s3://anardil-public/share/
+}
+
+# dynamic commands for each directory in share
+
+common::dir-exists ~/google_drive/share/ && {
+
+  cd ~/google_drive/share/ ||
+    common::error "does it exist or not?"
+
+  for directory in * .*; do
+
+    [[ "$directory" == . ]] && continue
+    [[ "$directory" == .. ]] && continue
+    common::dir-exists "$directory" || continue
+
+    eval '
+wizard_media_public_upload_'"$directory"'() {
 
   common::optional-help "$1" "[s3cmd config]
 
-  synchronize hidden folder to public.anardil.net
-
-  default config is ~/.s3cfg-sfo
+  synchronize '"$directory"' to public.anardil.net
   "
-  common::program-exists -f 's3cmd'
-
   local config="$HOME"/.s3cfg-sfo
-  [[ $1 ]] && config="$1"
 
-  upload() {
-    common::do \
-      s3cmd sync -c "$config" \
-      --no-mime-magic --guess-mime-type \
-      --delete-removed --follow-symlinks --recursive \
-      --exclude-from ~/working/config/s3cmd-exclude \
-      --acl-public \
-      "$1" \
-      s3://anardil-public/share/
-  }
-
-  upload ~/google_drive/share/zb3
+  wizard::upload ~/google_drive/share/'"$directory"'
+}
+    '
+  done
 }
 
 
@@ -98,9 +118,15 @@ wizard_media_diving_create() {
   fi
 
   common::cd ~/working/diving-web
+
   common::do \
     bash \
     ~/google_drive/code/shell/diving/runner.sh \
+    "$base"/Pictures/Diving/
+
+  common::do \
+    python3 \
+    ~/google_drive/code/shell/diving/gallery.py \
     "$base"/Pictures/Diving/
 }
 
@@ -119,8 +145,11 @@ wizard_media_diving_upload() {
 
   common::do s3cmd sync \
     -c "$config" \
-    --no-mime-magic --guess-mime-type \
-    --delete-removed --acl-public \
+    --no-mime-magic \
+    --guess-mime-type \
+    --delete-removed \
+    --acl-public \
+    --follow-symlinks \
     ~/working/diving-web/ \
     s3://diving/
 }
@@ -175,23 +204,28 @@ wizard_media_photos_upload() {
 
 # sensors
 
-wizard_media_sensors_create() {
+wizard_media_sensors_create_basic() {
 
   common::optional-help "$1" "
 
-  create the html charts for all sensor data. extremely CPU heavy
+  create the html charts for all sensor data.
   "
-  grep time ~/working/pi/sensors/elm-pings.csv \
-    | tr -cd '[:digit:]. \n' \
-    | awk '{print $1, $6}' > ~/working/pi/ping-data.csv
-
   common::do MPLBACKEND=Agg python3 \
-    ~/google_drive/code/python/sensors/sensor-web.py
+    ~/google_drive/code/python/sensors/sensors.py
+}
 
+
+wizard_media_sensors_create_extremes() {
+
+  common::optional-help "$1" "
+
+  create the html charts for weekly extremes
+  "
   common::do MPLBACKEND=Agg python3 \
     ~/google_drive/code/python/sensors/sensor-extremes.py \
     ~/google_drive/share/sensors/extremes/
 }
+
 
 wizard_media_sensors_upload() {
 
@@ -204,12 +238,12 @@ wizard_media_sensors_upload() {
   sync() {
     local config="$1"
 
-    common::do \
-      s3cmd sync -c "$config" \
+    common::do s3cmd sync -c "$config" \
       --no-mime-magic --guess-mime-type \
       --delete-removed --follow-symlinks --recursive \
       --exclude-from ~/working/config/s3cmd-exclude \
       --acl-public --quiet \
+      --no-check-md5 \
       ~/google_drive/share/sensors/ \
       s3://anardil-public/share/sensors/
   }
