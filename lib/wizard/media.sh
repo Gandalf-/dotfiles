@@ -38,7 +38,6 @@ wizard_media_public_upload_all() {
         --recursive \
         --exclude-from ~/working/config/s3cmd-exclude \
         --acl-public \
-        --no-check-md5 \
         "$1" \
         s3://anardil-public/share/
   }
@@ -60,12 +59,14 @@ wizard_media_public_upload_all() {
 wizard::upload() {
   [[ $config ]] || common::error "programming error"
 
-  common::do \
-    s3cmd sync -c "$config" \
-    --no-mime-magic --guess-mime-type \
-    --delete-removed --follow-symlinks --recursive \
-    --exclude-from ~/working/config/s3cmd-exclude \
+  common::do s3cmd sync -c "$config" \
     --acl-public \
+    --delete-removed \
+    --exclude-from ~/working/config/s3cmd-exclude \
+    --follow-symlinks \
+    --guess-mime-type \
+    --no-mime-magic \
+    --recursive \
     "$1" \
     s3://anardil-public/share/
 }
@@ -117,7 +118,7 @@ wizard_media_diving_create() {
     common::error "Can't find media directory"
   fi
 
-  common::cd ~/working/diving-web
+  common::cd ~/working/object-publish/diving-web
 
   common::do \
     bash \
@@ -143,14 +144,13 @@ wizard_media_diving_upload() {
   local config="$HOME"/.s3cfg-sfo
   [[ $1 ]] && config="$1"
 
-  common::do s3cmd sync \
-    -c "$config" \
-    --no-mime-magic \
-    --guess-mime-type \
-    --delete-removed \
+  common::do s3cmd sync -c "$config" \
     --acl-public \
+    --delete-removed \
     --follow-symlinks \
-    ~/working/diving-web/ \
+    --guess-mime-type \
+    --no-mime-magic \
+    ~/working/object-publish/diving-web/ \
     s3://diving/
 }
 
@@ -173,7 +173,7 @@ wizard_media_photos_create() {
     common::error "Can't find media directory"
   fi
 
-  common::cd ~/working/photos-web
+  common::cd ~/working/object-publish/photos-web
   common::do \
     bash \
     ~/google_drive/code/shell/photos/runner.sh \
@@ -193,11 +193,12 @@ wizard_media_photos_upload() {
   local config="$HOME"/.s3cfg-sfo
   [[ $1 ]] && config="$1"
 
-  common::do s3cmd sync \
-    -c "$config" \
-    --no-mime-magic --guess-mime-type \
-    --delete-removed --acl-public \
-    ~/working/photos-web/ \
+  common::do s3cmd sync -c "$config" \
+    --acl-public \
+    --delete-removed \
+    --guess-mime-type \
+    --no-mime-magic \
+    ~/working/object-publish/photos-web/ \
     s3://anardil-photos/
 }
 
@@ -235,23 +236,20 @@ wizard_media_sensors_upload() {
 
   default config is ~/.s3cfg-sfo
   "
-  sync() {
-    local config="$1"
-
-    common::do s3cmd sync -c "$config" \
-      --no-mime-magic --guess-mime-type \
-      --delete-removed --follow-symlinks --recursive \
-      --exclude-from ~/working/config/s3cmd-exclude \
-      --acl-public --quiet \
-      --no-check-md5 \
-      ~/google_drive/share/sensors/ \
-      s3://anardil-public/share/sensors/
-  }
-
   local config="$HOME"/.s3cfg-sfo
   [[ $1 ]] && config="$1"
 
-  sync "$config"
+  common::do s3cmd sync -c "$config" \
+    --acl-public \
+    --delete-removed \
+    --exclude-from ~/working/config/s3cmd-exclude \
+    --follow-symlinks \
+    --guess-mime-type \
+    --no-mime-magic \
+    --quiet \
+    --recursive \
+    ~/google_drive/share/sensors/ \
+    s3://anardil-public/share/sensors/
 }
 
 
@@ -286,8 +284,7 @@ wizard_media_blog_upload() {
   common::file-exists robots.txt ||
     common::error "Not in directory with html output"
 
-  common::do s3cmd sync \
-    -c ~/.s3cfg-sfo \
+  common::do s3cmd sync -c ~/.s3cfg-sfo \
     --no-mime-magic \
     --guess-mime-type \
     --delete-removed \

@@ -121,17 +121,6 @@ wizard_install_dot-files() {
     common::do cp -r "$here" "$there"
   }
 
-  unpack-irssi() {
-    # unpack irssi scripts, since they're zipped
-
-    common::cd "$root/etc/irssi"
-
-    [[ -d scripts ]] ||
-      common::do unzip scripts.zip
-
-    common::cd -
-  }
-
   case $1 in
     link|copy)
       op="$1"
@@ -148,7 +137,6 @@ wizard_install_dot-files() {
   $op etc/pylintrc            .pylintrc
 
   $op etc/vim/snippets        .vim/
-  $op etc/irssi               .irssi
   $op lib/fish/functions      .config/fish/
 
   # remove directory, not symbolic link
@@ -156,26 +144,6 @@ wizard_install_dot-files() {
   [[ -L "$completions" ]] || common::do rm -rf "$completions"
 
   $op lib/fish/completions    .config/fish/
-  unpack-irssi
-}
-
-
-wizard_install_irssi() {
-
-  common::optional-help "$1" "
-
-  install irssi's dependencies with apt, then clone and compile from source
-  "
-  wizard::apt libtool libglib2.0-dev libssl-dev
-
-  common::do cd /tmp
-  [[ -d irssi ]] ||
-    common::do git clone --depth 1 https://github.com/irssi/irssi.git
-
-  common::do cd irssi
-  common::do ./autogen.sh
-  common::do make -j
-  common::sudo make install
 }
 
 

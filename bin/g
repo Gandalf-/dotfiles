@@ -3,9 +3,8 @@
 # g
 #   super git wrapper
 
-# shellcheck disable=SC1090
-
 root="$(dirname "${BASH_SOURCE[0]}")"/..
+# shellcheck disable=SC1090
 source "${root}/lib/common.sh"
 
 [[ -z $1 ]] && { g --help; exit 1; }
@@ -21,8 +20,9 @@ while [[ $1 ]]; do
     !)  CONFIRM=1; AUTO=0 ;;
 
     # status
-    s)  common::do "git status -uno" ;;
-    sa) common::do "git status" ;;
+    s)  common::do "git status" ;;
+    sf) common::do "git status -uno" ;;
+
     l)  common::do git log --color=always \| head -n 20 ;;
     lo) common::do git log --oneline \| head -n 10 ;;
     ll) common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit ;;

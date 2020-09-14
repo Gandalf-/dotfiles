@@ -1,14 +1,8 @@
-all: d devbot_status
-
-CFLAGS  = -Wall -Wextra
-
-
-devbot_status:
-	cp status.sh $@
+CFLAGS=-Wall -Wextra -O2 -std=c99
 
 d: d.c
-	gcc -std=c99 ${CFLAGS} d.c -o $@
+	cc ${CFLAGS} $^ -o $@
 
 clean:
-	-rm -f d devbot_status
+	-rm -f d
 	@echo Done

@@ -82,7 +82,7 @@ main(int argc, char **argv) {
 
   // read length of the reply, throw it away
   char bytes[4];
-  read(sockfd, bytes, 4);
+  check(read(sockfd, bytes, 4) != 4, "error reading length");
 
   // receive the response
   while (read(sockfd, buffer, buffer_size - 1) > 0) {
