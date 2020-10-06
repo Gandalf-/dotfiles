@@ -654,6 +654,12 @@ common::quick() {
       [[ $other ]] || common::error "no other context provided"
       ;;
 
+    --clone)
+      local action=clone
+      local name="$2"
+      [[ $name ]] || common::error "no name provided"
+      ;;
+
     *)
       # this doesn't match an empty string
       action=run
@@ -694,6 +700,23 @@ common::quick() {
           --preview "d '$other' quick '$QUICK_CONTEXT' {}" \
           --preview-window up \
         | common::map copy
+      ;;
+
+    clone)
+      assign() {
+        local source="$1"
+        d !current-context quick "$QUICK_CONTEXT" "$name" = "$(
+          d !current-context quick "$QUICK_CONTEXT" "$source"
+        )"
+      }
+
+      d !current-context quick "$QUICK_CONTEXT" --keys \
+        | common::single-menu \
+          --preview "d !current-context quick '$QUICK_CONTEXT' {}" \
+          --preview-window up \
+        | common::map assign
+
+      common::quick --edit "$name"
       ;;
 
     list)

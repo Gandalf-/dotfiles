@@ -24,7 +24,7 @@ while [[ $1 ]]; do
     sf) common::do "git status -uno" ;;
 
     l)  common::do git log --color=always \| head -n 20 ;;
-    lo) common::do git log --oneline \| head -n 10 ;;
+    lo) common::do git log --oneline \| cut -c 1-120 \| head -n 10 ;;
     ll) common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit ;;
 
     # committing
