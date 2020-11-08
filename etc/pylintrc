@@ -15,7 +15,7 @@ profile=no
 ignore=CVS
 
 # Pickle collected data for later comparisons.
-persistent=yes
+persistent=no
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.

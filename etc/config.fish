@@ -95,6 +95,10 @@ test -d ~/.local/bin/
 test -d /snap/bin
   and set PATH /snap/bin/ $PATH
 
+# npm
+test -d ~/.local/bin/node/
+  and set PATH ~/.local/bin/node/ $PATH
+
 
 # Other executables
 #===========================
