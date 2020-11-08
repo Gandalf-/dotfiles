@@ -17,9 +17,10 @@ function fish_user_key_bindings
   bind -M default I edit_command_buffer
 
   # fuzzy completion
+  fzf_key_bindings
+
   bind -M insert \ci fzf-complete           # context aware tab complete
   bind -M insert \ei fzf-file-widget        # files by name
-  bind -M insert \eo fzf-contents-widget    # files by content
   bind -M insert \cr fzf-history-widget     # backwards history search
   bind -M insert \ec fzf-cd-widget          # forward cd
   bind -M insert \eb cb                     # backwards cd

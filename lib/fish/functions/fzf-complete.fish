@@ -29,7 +29,7 @@ function fzf-complete -d 'fzf completion and print selection back to commandline
   string join -- \n $complist | \
     sort | \
     uniq | \
-    eval (__fzfcmd) -m --select-1 --exit-0 --header '(commandline)' | \
+    eval (__fzfcmd) -m --select-1 --exit-0 --query=(commandline -ct) | \
     cut -f1 | \
     while read -l r; set result $result $r; end
 
