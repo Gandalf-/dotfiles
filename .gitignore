@@ -11,8 +11,6 @@ __pycache__
 htmlcov
 *.hi
 *.o
-devbot_list_hs
 devbot
-devbot_status
 mc.fish
 etc/vim/bundle
