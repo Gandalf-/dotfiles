@@ -9,14 +9,68 @@
 #   All the intermediary functions are produced by auto_cli.sh
 
 common::require ctags &&
-wizard_make_ctags() {
+wizard_make_ctags_python() {
 
-  ctags \
-    --c++-kinds=+p \
-    --fields=+iaS \
-    --extra=+q \
-    --language-force=C++ \
-    -R .
+  ctags -R --fields=+l --languages=python --python-kinds=-iv
+}
+
+common::require ctags &&
+wizard_make_ctags_c() {
+
+  cat << EOF > /tmp/ctags-ignore.txt
+__attribute__
+__attribute_deprecated__
+__attribute_format_arg__+
+__attribute_format_strfmon__+
+__attribute_malloc__
+__attribute_noinline__
+__attribute_pure__
+__attribute_used__
+__attribute_warn_unused_result__
+__attribute_alloc_size__+
+__attribute_const__
+__attribute_artificial__
+__wur
+__THROW
+__THROWNL
+__BEGIN_DECLS
+__END_DECLS
+__BEGIN_NAMESPACE_STD
+__END_NAMESPACE_STD
+__USING_NAMESPACE_STD+
+__BEGIN_NAMESPACE_C99
+__END_NAMESPACE_C99
+__USING_NAMESPACE_C99+
+__warndecl+
+__warnattr+
+__errordecl+
+__flexarr=[]
+__fortify_function
+__REDICRECT+
+__REDIRECT_NTH+
+__REDIRECT_NTHNL+
+__ASMNAME+
+__ASMNAME2+
+__nonnull+
+__always_inline
+__extern_inline=extern
+__extern_always_inline=extern
+__extension__
+__restrict
+__restrict_arr
+EOF
+
+  # shellcheck disable=SC2038
+  find . -type f \( -name '*.c' -o -name '*.cpp' \) -not -path '*.cquery*' \
+    | xargs gcc -M 2>/dev/null \
+    | sed -e 's/[\\ ]/\n/g' \
+    | sed -e '/^$/d' -e '/\.o:[ \t]*$/d' \
+    | sort \
+    | uniq \
+    | ctags \
+      -L - \
+      -I /tmp/ctags-ignore.txt \
+      --c++-kinds=+p --fields=+iaS --extra=+q
 }
 
 

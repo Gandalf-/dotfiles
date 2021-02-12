@@ -21,6 +21,7 @@
   set encoding=utf-8 termencoding=utf-8 fileencodings=utf-8
   set hidden nobackup nowritebackup noswapfile
   set ttimeout ttimeoutlen=20
+  set visualbell
 
   if has("unix")
     let hostname = substitute(system('hostname'), '\n', '', '') " where are we?
