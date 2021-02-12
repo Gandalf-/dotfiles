@@ -16,6 +16,7 @@
   set fileformat=unix     " Use Unix line endings
   set confirm             " Ask to save instead of complaining
   set nocompatible
+  set visualbell
 
   set splitbelow splitright
   set encoding=utf-8 termencoding=utf-8 fileencodings=utf-8

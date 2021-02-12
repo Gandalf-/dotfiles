@@ -607,7 +607,7 @@ common::try-json-parse() {
 
 common::quick() {
 
-  common::optional-help "$1" "(--add|--del|--edit) [name] [command]
+  common::optional-help "$1" "(--global) (--add|--del|--edit) [name] [command]
 
   manage and run dynamic commands specific to the current context. commands are
   stored in the remote database accessed with 'd'.
@@ -626,6 +626,16 @@ common::quick() {
   "
   [[ $QUICK_CONTEXT ]] ||
     common::error "programming error: \$QUICK_CONTEXT not defined"
+
+  local context; context="$( d current-context )"
+  local global=''
+  case "$1" in
+    -g|--global)
+      context="$QUICK_CONTEXT"
+      global='global '
+      shift
+      ;;
+  esac
 
   case "$1" in
     -a|--add)
@@ -670,27 +680,27 @@ common::quick() {
 
   case $action in
     add)
-      d !current-context quick "$QUICK_CONTEXT" "$name" = "$cmd"
+      d "$context" quick "$QUICK_CONTEXT" "$name" = "$cmd"
       ;;
 
     del)
-      d !current-context quick "$QUICK_CONTEXT" "$name" --del
+      d "$context" quick "$QUICK_CONTEXT" "$name" --del
       ;;
 
     edit)
       local tmp; tmp="$( mktemp )"
-      d !current-context quick "$QUICK_CONTEXT" "$name" > "$tmp"
+      d "$context" quick "$QUICK_CONTEXT" "$name" > "$tmp"
 
       "${EDITOR:-vi}" "$tmp"
 
-      d !current-context quick "$QUICK_CONTEXT" "$name" = "$( cat "$tmp" )"
+      d "$context" quick "$QUICK_CONTEXT" "$name" = "$( cat "$tmp" )"
       rm "$tmp"
       ;;
 
     copy)
       copy() {
         local name="$1"
-        d !current-context quick "$QUICK_CONTEXT" "$name" = "$(
+        d "$context" quick "$QUICK_CONTEXT" "$name" = "$(
           d "$other" quick "$QUICK_CONTEXT" "$name"
         )"
       }
@@ -705,12 +715,12 @@ common::quick() {
     clone)
       assign() {
         local source="$1"
-        d !current-context quick "$QUICK_CONTEXT" "$name" = "$(
-          d !current-context quick "$QUICK_CONTEXT" "$source"
+        d "$context" quick "$QUICK_CONTEXT" "$name" = "$(
+          d "$context" quick "$QUICK_CONTEXT" "$source"
         )"
       }
 
-      d !current-context quick "$QUICK_CONTEXT" --keys \
+      d "$context" quick "$QUICK_CONTEXT" --keys \
         | common::single-menu \
           --preview "d !current-context quick '$QUICK_CONTEXT' {}" \
           --preview-window up \
@@ -720,14 +730,14 @@ common::quick() {
       ;;
 
     list)
-      d !current-context quick "$QUICK_CONTEXT" | python -c '
+      d "$context" quick "$QUICK_CONTEXT" | python -c '
 import json
 import sys
 
 try:
   data = json.load(sys.stdin)
 except:
-  print("No quick commands available")
+  print("no quick commands available for '"$QUICK_CONTEXT"' namespace")
   sys.exit(0)
 
 print("")
@@ -746,13 +756,15 @@ print("")
     run)
       # save the context ahead of time instead of dereferencing at execution
       # time, in case we switch contexts while running a long string of commands
-      local context; context="$( d current-context )"
-
       find_and_run() {
 
         local name="$1"
-        local cmd; cmd="$( d "$context" quick "$QUICK_CONTEXT" "$name" )"
-        [[ $cmd ]] || common::error "couldn't find a command for $name"
+        local cmd; cmd="$(
+          d "$context" quick "$QUICK_CONTEXT" "$name" | grep . ||
+            d "$QUICK_CONTEXT" quick "$QUICK_CONTEXT" "$name"
+        )"
+        [[ $cmd ]] ||
+          common::error "couldn't find a command for $name in $global$QUICK_CONTEXT namespace"
 
         common::echo "$cmd"
         eval "$cmd"

@@ -18,6 +18,13 @@
 
 IFS=' ' read -ra arguments      < <(echo "$1")
 
+is_bug() {
+    local what="$1"
+    {
+        [ "$what" -eq "$what" ] || [[ $what =~ pscale ]]
+    } 2>/dev/null
+}
+
 # arguments override everything
 if [[ ${arguments[0]} ]]; then
     if [ "${arguments[0]}" -eq "${arguments[0]}" ] 2>/dev/null; then
@@ -35,7 +42,7 @@ else
     IFS=' ' read -ra window_header  < <(tmux display-message -p "#W")
 
     # window name bug?
-    if [ "${window_header[0]}" -eq "${window_header[0]}" ] 2>/dev/null; then
+    if is_bug "${window_header[0]}"; then
         # bug
         context="${window_header[0]}"
 
@@ -44,7 +51,7 @@ else
         context="${window_header[*]}"
 
     # session name bug?
-    elif [ "${session_header[0]}" -eq "${session_header[0]}" ] 2>/dev/null; then
+    elif is_bug "${session_header[0]}"; then
         # bug
         context="${session_header[0]}"
 

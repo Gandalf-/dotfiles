@@ -3,6 +3,7 @@
 
 # public
 
+common::dir-exists ~/google_drive &&
 wizard_media_public_create() {
 
   common::optional-help "$1" "
@@ -16,6 +17,7 @@ wizard_media_public_create() {
   indexer ~/google_drive/code/haskell/indexer/thumbnail.py || exit 0
 }
 
+common::dir-exists ~/google_drive &&
 wizard_media_public_upload_all() {
 
   common::optional-help "$1" "[s3cmd config]
@@ -56,6 +58,7 @@ wizard_media_public_upload_all() {
   wait
 }
 
+common::dir-exists ~/working &&
 wizard::upload() {
   [[ $config ]] || common::error "programming error"
 
@@ -102,6 +105,7 @@ wizard_media_public_upload_'"$directory"'() {
 
 # diving
 
+common::dir-exists ~/google_drive &&
 wizard_media_diving_create() {
 
   common::optional-help "$1" "
@@ -131,6 +135,7 @@ wizard_media_diving_create() {
     "$base"/Pictures/Diving/
 }
 
+common::dir-exists ~/working &&
 wizard_media_diving_upload() {
 
   common::optional-help "$1" "[s3cmd config]
@@ -157,6 +162,7 @@ wizard_media_diving_upload() {
 
 # photos
 
+common::dir-exists ~/working &&
 wizard_media_photos_create() {
 
   common::optional-help "$1" "
@@ -180,6 +186,7 @@ wizard_media_photos_create() {
     "$base"/Pictures/Photography/
 }
 
+common::dir-exists ~/working &&
 wizard_media_photos_upload() {
 
   common::optional-help "$1" "[s3cmd config]
@@ -205,6 +212,7 @@ wizard_media_photos_upload() {
 
 # sensors
 
+common::dir-exists ~/google_drive &&
 wizard_media_sensors_create_basic() {
 
   common::optional-help "$1" "
@@ -216,6 +224,7 @@ wizard_media_sensors_create_basic() {
 }
 
 
+common::dir-exists ~/google_drive &&
 wizard_media_sensors_create_extremes() {
 
   common::optional-help "$1" "
@@ -228,6 +237,7 @@ wizard_media_sensors_create_extremes() {
 }
 
 
+common::dir-exists ~/google_drive &&
 wizard_media_sensors_upload() {
 
   common::optional-help "$1" "[s3cmd config]
@@ -264,9 +274,9 @@ wizard_media_blog_dependencies() {
      s3cmd
 }
 
-wizard_media_blog_create() {
 
-  common::program-exists -f 'pelican'
+common::program-exists 'pelican' &&
+wizard_media_blog_create() {
 
   common::file-exists pelicanconf.py ||
     common::error "Not in directory with source content"
@@ -277,9 +287,8 @@ wizard_media_blog_create() {
   common::do pelican --ignore-cache -o "$tmp" -t alchemy
 }
 
+common::program-exists 's3cmd' &&
 wizard_media_blog_upload() {
-
-  common::program-exists -f 's3cmd'
 
   common::file-exists robots.txt ||
     common::error "Not in directory with html output"
