@@ -1,5 +1,60 @@
 #!/bin/bash
 
+cloudflare::request() {
+
+  method="$1"
+  target="$2"
+  shift
+  shift
+
+  case "$target" in
+    https://*)
+      ;;
+    *)
+      target="https://api.cloudflare.com/client/v4/$target"
+      ;;
+  esac
+
+  local token; token="$( d wizard cloudflare token )"
+  [[ $token ]] ||
+    common::error "Need token at: wizard cloudflare token"
+
+  curl \
+    --silent \
+    -X "$method" "$target" \
+    -H "Authorization: Bearer $token" \
+    -H "Content-Type:application/json" \
+    "$@"
+}
+
+cloudflare::fetch-zone() {
+
+  cloudflare::request GET zones \
+    | python3 -c '
+import json
+import sys
+from apocrypha.client import Client
+
+data = json.load(sys.stdin)
+zone = data.get("result", [None])[0]
+Client().set("wizard", "cloudflare", "zones", value=zone)
+'
+}
+
+cloudflare::purge() {
+
+  local zone; zone="$( d wizard cloudflare zones id )"
+  [[ $zone ]] || {
+    cloudflare::fetch-zone
+    zone="$( d wizard cloudflare zones id )"
+  }
+
+  [[ $zone ]] || common::error "Couldn't find the Zone ID"
+
+  cloudflare::request POST \
+    zones/"$zone"/purge_cache \
+    --data '{"purge_everything":true}'
+}
 
 # public
 
@@ -135,6 +190,30 @@ wizard_media_diving_create() {
     "$base"/Pictures/Diving/
 }
 
+common::program-exists 'doctl' &&
+wizard_media_diving_purge_digital-ocean() {
+
+  common::optional-help "$1" "
+
+  purge the caches for digital ocean's CDN
+  "
+  (
+    common::cd "$HOME"
+    common::do \
+      doctl compute cdn flush e8494d7e-70fa-48ba-80e1-209ef6a9fed2
+  )
+}
+
+wizard_media_diving_purge_cloudflare() {
+
+  common::optional-help "$1" "
+
+  purge the caches for cloudflare
+  "
+  common::echo "purging cloudflare cache"
+  cloudflare::purge
+}
+
 common::dir-exists ~/working &&
 wizard_media_diving_upload() {
 
@@ -157,6 +236,9 @@ wizard_media_diving_upload() {
     --no-mime-magic \
     ~/working/object-publish/diving-web/ \
     s3://diving/
+
+  wizard_media_diving_purge_digital-ocean ''
+  wizard_media_diving_purge_cloudflare ''
 }
 
 
