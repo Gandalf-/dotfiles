@@ -166,8 +166,8 @@
       \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
       \ }
 
-    let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE"
-    let g:ale_c_gcc_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE"
+    let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
+    let g:ale_c_gcc_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
 
     let g:ale_set_quickfix = 1
     let g:ale_set_highlights = 0

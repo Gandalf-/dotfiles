@@ -201,9 +201,25 @@ wizard_show_largest-packages() {
 }
 
 
+http::docker() {
+
+  local port="${1:-8080}"
+
+  docker run -it --rm \
+    -p "$port":80 \
+    -v "$( pwd )":/usr/share/nginx/html \
+    nginx
+}
+
+
 wizard_start_http-server() {
 
   # start an http server
+
+  if common::program-exists docker; then
+    http::docker "$@"
+
+  else
 
 python3 -c "
 from http.server import SimpleHTTPRequestHandler, test
@@ -234,6 +250,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     test(InlineHandler, port=args.port, bind=args.bind)
 " "$@"
+  fi
 }
 
 

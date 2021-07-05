@@ -195,7 +195,7 @@ wizard_media_diving_purge_digital-ocean() {
 
   common::optional-help "$1" "
 
-  purge the caches for digital ocean's CDN
+  purge the CDN for digital ocean
   "
   (
     common::cd "$HOME"
@@ -208,10 +208,34 @@ wizard_media_diving_purge_cloudflare() {
 
   common::optional-help "$1" "
 
-  purge the caches for cloudflare
+  purge the CDN for cloudflare
   "
   common::echo "purging cloudflare cache"
   cloudflare::purge
+}
+
+wizard_media_diving_purge_nginx() {
+
+  common::optional-help "$1" "
+
+  purge the caches for nginx
+  "
+  ssh alpine \
+    docker exec diving /bin/sh -c 'rm -rf /tmp/example-cache/*'
+}
+
+wizard_media_diving_purge_all() {
+  common::optional-help "$1" "
+
+  purge everything in order
+  "
+  wizard_media_diving_purge_digital-ocean ''
+  common::sleep 60
+
+  wizard_media_diving_purge_cloudflare ''
+  common::sleep 30
+
+  wizard_media_diving_purge_nginx ''
 }
 
 common::dir-exists ~/working &&
@@ -219,26 +243,22 @@ wizard_media_diving_upload() {
 
   common::optional-help "$1" "[s3cmd config]
 
-  upload the generated html files for diving.anardil.net.
-
-  default config is ~/.s3cfg-sfo
+  upload the generated html files for diving.anardil.net
   "
   common::program-exists -f 's3cmd'
 
   local config="$HOME"/.s3cfg-sfo
-  [[ $1 ]] && config="$1"
+  local purge=1
+  [[ $1 ]] && {
+    config="$1"
+    purge=0
+  }
 
-  common::do s3cmd sync -c "$config" \
-    --acl-public \
-    --delete-removed \
-    --follow-symlinks \
-    --guess-mime-type \
-    --no-mime-magic \
-    ~/working/object-publish/diving-web/ \
-    s3://diving/
+  rsync -avL ~/working/object-publish/diving-web/ alpine:diving-web
 
-  wizard_media_diving_purge_digital-ocean ''
-  wizard_media_diving_purge_cloudflare ''
+  (( purge )) && {
+    wizard_media_diving_purge_cloudflare ''
+  }
 }
 
 
@@ -340,8 +360,8 @@ wizard_media_sensors_upload() {
     --no-mime-magic \
     --quiet \
     --recursive \
-    ~/google_drive/share/sensors/ \
-    s3://anardil-public/share/sensors/
+    ~/google_drive/share/code/sensors/ \
+    s3://anardil-public/share/code/sensors/
 }
 
 

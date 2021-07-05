@@ -109,6 +109,20 @@ common::sed() {
 }
 
 
+common::sleep() {
+
+  local amount="$1"
+  local index=0
+
+  while (( index < amount )); do
+    echo -en "\rsleeping ($index/$amount)..."
+    sleep 1
+    (( index++ ))
+  done
+  echo
+}
+
+
 common::pip() {
 
   common::do python3 -m pip "$*"
