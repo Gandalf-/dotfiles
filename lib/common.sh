@@ -269,6 +269,13 @@ common::require() {
 }
 
 
+common::join() {
+
+  tr '\n' ' '
+  echo
+}
+
+
 common::map() {
 
   # stdin: items to map
@@ -354,6 +361,74 @@ common::mmap() {
     __tmps+=( "$__tmp" )
 
     "$@" "$__item" > "$__tmp" 2>&1 &
+  done
+
+  wait
+
+  for __tmp in "${__tmps[@]}"; do
+    cat "$__tmp"
+    rm -f "$__tmp"
+  done
+}
+
+
+common::rucmap() {
+
+  # restricted unordered concurrent map
+
+  local size="$1"
+  local running=0
+  shift
+
+  local __items=()
+  local __item
+  while read -r __item; do
+    __items+=( "$__item" )
+  done
+
+  [[ ${__items[*]} ]] || exit 1
+
+  for __item in "${__items[@]}"; do
+    "$@" "$__item" &
+
+    (( running++ ))
+    while (( running > size )); do
+      sleep 0.1
+      running="$( jobs -p | wc -l )"
+    done
+  done
+
+  wait
+}
+
+
+common::rocmap() {
+
+  # restricted ordered concurrent map
+
+  local size="$1"
+  local running=0
+  shift
+
+  local __items=()
+  local __item
+  while read -r __item; do
+    __items+=( "$__item" )
+  done
+
+  local __tmpdir=/dev/shm; [[ -e "$__tmpdir" ]] || __tmpdir=/tmp
+  local __tmps=()
+  for __item in "${__items[@]}"; do
+    __tmp="$( mktemp "$__tmpdir"/mmap.XXXXXXXXXXXXXXXXXXXXXX )"
+    __tmps+=( "$__tmp" )
+
+    "$@" "$__item" > "$__tmp" 2>&1 &
+
+    (( running++ ))
+    while (( running > size )); do
+      sleep 0.1
+      running="$( jobs -p | wc -l )"
+    done
   done
 
   wait
@@ -453,7 +528,7 @@ common::error() {
   #
   # common:error "something went wrong"
 
-  echo "$*"
+  echo "$*" >&2
   exit 1
 }
 
@@ -573,6 +648,7 @@ common::confirm() {
     common::echo-n "$* [yN] "
     read -r reply; [[ "$reply" =~ [Nn] ]] && exit 1
   fi
+  true
 }
 
 common::translate-time() {
@@ -626,10 +702,11 @@ common::quick() {
   manage and run dynamic commands specific to the current context. commands are
   stored in the remote database accessed with 'd'.
 
-  --add  <name> <command ...>   create a new quick command
-  --del  <name>                 delete a quick command
-  --edit <name>                 edit a quick command with \$EDITOR
-  --copy <context>              copy quick commands from somewhere else
+  --add    <name> <command ...> create a new quick command
+  --del    <name>               delete a quick command
+  --edit   <name>               edit a quick command with \$EDITOR
+  --rename <old> <new>          rename a quick command
+  --copy   <context>            copy quick commands from somewhere else
   <name ...>                    run one or more quick commands
   ''                            lists currently available quick commands
 
@@ -643,13 +720,24 @@ common::quick() {
 
   local context; context="$( d current-context )"
   local global=''
-  case "$1" in
-    -g|--global)
-      context="$QUICK_CONTEXT"
-      global='global '
-      shift
-      ;;
-  esac
+  local verbose=0
+
+  while [[ $1 ]]; do
+    case "$1" in
+      -g|--global)
+        context="$QUICK_CONTEXT"
+        global='global '
+        shift
+        ;;
+      -v|--verbose)
+        verbose=1
+        shift
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
 
   case "$1" in
     -a|--add)
@@ -676,6 +764,13 @@ common::quick() {
       local action=copy
       local other="${*:2}"
       [[ $other ]] || common::error "no other context provided"
+      ;;
+
+    -r|--rename)
+      local action=rename
+      local old="$2"
+      local new="$3"
+      [[ $old && $new ]] || common::error "<old> and <new> must be provided"
       ;;
 
     --clone)
@@ -726,6 +821,15 @@ common::quick() {
         | common::map copy
       ;;
 
+    rename)
+      local cmd=/tmp/quick-command
+      trap 'rm -f $cmd' EXIT
+
+      d "$context" quick "$QUICK_CONTEXT" "$old" --edit > "$cmd"
+      d "$context" quick "$QUICK_CONTEXT" "$new" --set "$( tr -d '\n' < "$cmd" )"
+      d "$context" quick "$QUICK_CONTEXT" "$old" --del
+      ;;
+
     clone)
       assign() {
         local source="$1"
@@ -748,6 +852,12 @@ common::quick() {
 import json
 import sys
 
+verbose = sys.argv[1] == "1"
+def tidy(s):
+  if not verbose and len(s) > 90:
+    s = s[:87] + "..."
+  return s
+
 try:
   data = json.load(sys.stdin)
 except:
@@ -759,12 +869,12 @@ for k, v in sorted(data.items()):
   if isinstance(v, list):
     print("{k: >10}".format(k=k))
     for e in v:
-      print("{k: >10}   {e}".format(k="", e=e))
+      print("{k: >10}   {e}".format(k="", e=tidy(e)))
     print("")
   else:
-    print("{k: >10}   {v}".format(k=k, v=v))
+    print("{k: >10}   {v}".format(k=k, v=tidy(v)))
 print("")
-      '
+      ' "$verbose"
       ;;
 
     run)

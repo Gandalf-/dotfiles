@@ -296,7 +296,7 @@
     highlight clear SignColumn
 
   " Vimwiki colors
-    highlight PreProc ctermfg=darkblue
+    highlight PreProc ctermfg=gray
     highlight Title ctermfg=darkgreen
 
   " Be less obnoxious about 'Pattern not found' warnings
@@ -711,12 +711,12 @@
   " Switch buffers, tabs with parens, braces
     noremap  <silent> ( :bp<cr>zz
     noremap  <silent> ) :bn<cr>zz
-    " nnoremap <silent> { :tabp<cr>
-    " nnoremap <silent> } :tabn<cr>
+    nnoremap <silent> { :tabp<cr>
+    nnoremap <silent> } :tabn<cr>
 
   " cycle through quickfix
-    nnoremap { :cp<cr>
-    nnoremap } :cn<cr>
+    " nnoremap { :cp<cr>
+    " nnoremap } :cn<cr>
 
   " List navigation with arrows
     noremap <silent> <Left>  :lprev<cr>zz

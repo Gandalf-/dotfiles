@@ -115,4 +115,5 @@ parse_git_branch() {
 # minio being messy
 complete -C /home/leaf/.local/bin/mc mc
 complete -C /usr/home/leaf/.local/bin/mc mc
-source "$HOME/.cargo/env"
+
+[[ -f "$HOME"/.cargo/env ]] && source "$HOME"/.cargo/env

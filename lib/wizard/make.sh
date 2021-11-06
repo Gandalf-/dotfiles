@@ -171,13 +171,13 @@ wizard_make_session() {
     fi
   }
 
-  _set_context "$name" 2>/dev/null
-
   if [[ $TMUX ]]; then
     tmux switch-client -t "$name"
   else
     tmux attach-session -t "$name"
   fi
+
+  _set_context 2>/dev/null
 }
 
 

@@ -8,7 +8,7 @@
 
 set -o pipefail
 
-declare -A meta_head meta_body meta_locked   # these are accessible to the caller
+declare -A meta_head meta_body meta_default meta_locked   # these are accessible to the caller
 sources=''
 inline=''
 
@@ -72,18 +72,14 @@ autocli::create() {
       case $fname in
         'autocli::'*)
           ;;
-        *'::'*)
-          declare -f -p "$fname"
-          ;;
         *)
-          declare -f -p "$fname" | common::sed -e 's/^}$/    return $#;\n}/'
+          declare -f -p "$fname"
           ;;
       esac
     done < <(declare -F | awk '{print $3}')
 
     echo "
 [[ \"\${BASH_SOURCE[0]}\" == \"\${0}\" ]] && $name \"\$@\"
-true
 } || exit
 "
   } > "$tmp"
@@ -250,6 +246,7 @@ autocli::make-reflective-functions() {
         function_body+="
           $cases)
             $sub_name \"\${@:2}\"
+            exit \$?
             ;;
         "
       fi
@@ -279,26 +276,29 @@ autocli::make-reflective-functions() {
       ;;
     "
 
+    if [[ ${meta_default[$meta_func]} ]]; then
+      alt="${meta_default[$meta_func]}"
+    else
+      # shellcheck disable=SC2016
+      alt='"${FUNCNAME[0]}" --help'
+    fi
+
     eval "
     $meta_func() {
-      [[ \$1 ]] || \"\${FUNCNAME[0]}\" --help
+      [[ \$1 ]] || $alt
       local \
-        __shifts=0 \
         __usage=\"$auto_usage\" \
         __name=\"${auto_name}\"
 
       ${meta_head[$meta_func]}
 
-      while [[ \$1 ]]; do
+      while [[ -n \$1 ]]; do
         case \$1 in
           ${meta_body[$meta_func]}
           $function_body
         esac
-
-        local __ret=\$?; shift; shift \$__ret
-        (( __shifts += __ret + 1 ))
+        shift
       done
-      return \$__shifts
     }
     "
   done

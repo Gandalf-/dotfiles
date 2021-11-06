@@ -300,7 +300,7 @@ wizard_install_vim() {
     --prefix=/usr/local
 
   common::do make -j CFLAGS='"-oFast -march=native"'
-  common::sudo make install
+  # common::sudo make install
 }
 
 
