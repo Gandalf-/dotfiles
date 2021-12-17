@@ -248,13 +248,13 @@ wizard_media_diving_upload() {
   common::program-exists -f 's3cmd'
 
   local config="$HOME"/.s3cfg-sfo
-  local purge=1
+  local purge=0
   [[ $1 ]] && {
     config="$1"
     purge=0
   }
 
-  rsync -avL ~/working/object-publish/diving-web/ alpine:diving-web
+  rsync -avL ~/working/object-publish/diving-web/ alpine:local/diving-web
 
   (( purge )) && {
     wizard_media_diving_purge_cloudflare ''
@@ -281,11 +281,19 @@ wizard_media_photos_create() {
     common::error "Can't find media directory"
   fi
 
+  common::echo public
   common::cd ~/working/object-publish/photos-web
   common::do \
     bash \
     ~/google_drive/code/shell/photos/runner.sh \
     "$base"/Pictures/Photography/
+
+  common::echo hidden
+  common::cd ~/working/object-publish/photos-web/zb3
+  common::do \
+    bash \
+    ~/google_drive/code/shell/photos/runner.sh \
+    "$base"/Pictures/Photography/zb3/
 }
 
 common::dir-exists ~/working &&

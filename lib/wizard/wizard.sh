@@ -164,6 +164,60 @@ wizard_transcode_movies() {
 }
 
 
+wizard_transcode_mov-to-mp4() {
+
+  common::required-help "$1" "(--mute) [input.mov ...]
+
+  convert a .mov to .mp4 that's HTML5 compatible
+  "
+  local count=$#
+
+  case "$1" in
+    -m|--mute)
+      mute=-an
+      shift
+      ;;
+  esac
+
+  while [[ $1 ]]; do
+    common::echo "processing $1"
+
+    local input="$1"
+    local name="${input%.*}"
+    local output="$name.mp4"
+
+    common::file-exists "$output" && {
+      "$output already exists"
+      continue
+    }
+
+    # https://gist.github.com/jaydenseric/220c785d6289bcfd7366
+    QUIET=1 common::do ffmpeg \
+      -hide_banner \
+      -loglevel error \
+      -i "'$input'" \
+      $mute \
+      -c:v libx264 \
+      -pix_fmt yuv420p \
+      -profile:v baseline \
+      -level 3.0 \
+      -crf 20 \
+      -preset veryslow \
+      -vf scale=1280:-2 \
+      -c:a aac \
+      -strict experimental \
+      -movflags +faststart \
+      -threads 0 \
+      "'$output'"
+
+    QUIET=1 common::do chmod 644 "'$output'"
+    shift
+  done
+
+  return $count
+}
+
+
 common::require 'service' 'ntpd' &&
 wizard_sync_time() {
 
