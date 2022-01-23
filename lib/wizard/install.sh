@@ -16,69 +16,11 @@ wizard::apt() {
 
 
 wizard::file-equal() {
+
   local first second
   first="$( sha1sum "$1" | awk '{print $1}' )"
   second="$( sha1sum "$2" | awk '{print $1}' )"
   [[ "$first" == "$second" ]]
-}
-
-
-wizard_install_dist() {
-
-  common::optional-help "$1" "
-
-  synchonrize dist binaries with ~/.local/bin binaries
-
-  if we don't have a local version, copy from dist
-  if we have a local version and it's not the same as dist, compare the times.
-  if ours is newer, offer to replace the dist version with ours, otherwise
-  offer to take the dist version
-  "
-  local arch; arch="$( uname -p )"
-  local dist; dist=~/google_drive/share/dist/"$arch"
-
-  common::dir-exists "$dist" ||
-    common::error "Cannot find dist folder for $arch"
-
-  mapfile -t dist_files < <( find "$dist" -type f )
-
-  echo "considering ${#dist_files[@]} executables..."
-
-  for dist_path in "${dist_files[@]}"; do
-
-    chmod +x "$dist_path"
-    local binary; binary="$( basename "$dist_path" )"
-    local bin_path; bin_path=~/.local/bin/"$binary"
-
-    if ! common::file-exists "$bin_path"; then
-      # we don't have anything locally
-      echo "copying $binary"
-      QUIET=1 common::do cp "$dist_path" "$bin_path"
-
-    else
-      # we have something locally
-
-      if wizard::file-equal "$bin_path" "$dist_path"; then
-        # nothing to do here
-        true
-
-      else
-        # which is newer?
-        bin_time="$( stat -c '%Y' "$bin_path" )"
-        dist_time="$( stat -c '%Y' "$dist_path" )"
-
-        if (( dist_time > bin_time )); then
-          common::echo "$binary - dist version is newer than local version"
-          CONFIRM=1 common::do cp -f "$dist_path" "$bin_path"
-
-        elif (( bin_time > dist_time )); then
-          common::echo "$binary - local version is newer than dist version"
-          CONFIRM=1 common::do cp -f "$bin_path" "$dist_path"
-        fi
-
-      fi
-    fi
-  done
 }
 
 
@@ -91,8 +33,6 @@ wizard_install_dot-files() {
 
   if the system doesn't support links (SMB mount), you can use 'copy'
   "
-  common::require -f unzip
-
   local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
 
   common::do mkdir -p "$HOME"/.vim
@@ -190,17 +130,6 @@ wizard_install_java() {
 }
 
 
-wizard_install_shellcheck() {
-
-  common::optional-help "$1" "
-
-  download and install the latest shellcheck
-  "
-  common::require -f stack
-  common::do stack install shellcheck
-}
-
-
 wizard_install_lua() {
 
   common::optional-help "$1" "
@@ -234,7 +163,6 @@ wizard_install_tmux() {
     build-essential \
     libncurses5-dev
 
-  common::cd /tmp/
   local builddir='tmux-2.7'
 
   [[ -d $builddir ]] || {
@@ -246,8 +174,6 @@ wizard_install_tmux() {
   common::cd $builddir
   common::do ./configure
   common::do make -j 4
-
-  common::sudo make install
 }
 
 
@@ -269,9 +195,6 @@ wizard_install_vim() {
   common::optional-help "$1" "
 
   compile and install with all feaures enabled
-
-  run these first
-    - w install lua
   "
   wizard::apt \
     git \
@@ -279,11 +202,8 @@ wizard_install_vim() {
     silversearcher-ag \
     python3-pip
 
-  common::do cd /tmp/
-
   [[ -d vim ]] ||
     common::do git clone --depth 1 https://github.com/vim/vim.git
-
   common::do cd vim
 
   common::do ./configure \
@@ -300,24 +220,4 @@ wizard_install_vim() {
     --prefix=/usr/local
 
   common::do make -j CFLAGS='"-oFast -march=native"'
-  # common::sudo make install
-}
-
-
-wizard_install_docker() {
-
-  common::optional-help "$1" "
-
-  install the dependencies and kernel headers for docker-ce
-  "
-
-  common::do curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' \
-    | sudo apt-key add -
-
-  common::sudo add-apt-repository -y \
-    "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\""
-
-  common::sudo apt-get update
-  common::do apt-cache policy docker-ce
-  wizard::apt -y docker-ce
 }

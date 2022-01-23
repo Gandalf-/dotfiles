@@ -69,7 +69,6 @@ wizard_clean_every-other() {
 
   delete every other file in the current directory
   "
-
   local delete=0
 
   for file in *; do
@@ -87,7 +86,6 @@ wizard_clean_boot() {
 
   safely cleans up old Linux kernel versions from /boot
   "
-
   dpkg --list \
     | grep linux-image \
     | awk '{ print $2 }' \
@@ -104,7 +102,6 @@ wizard_clean_apt() {
 
   force purge removed apt packages. this will remove configuration files too.
   "
-
   dpkg --list \
     | grep "^rc" \
     | cut -d " " -f 3 \
