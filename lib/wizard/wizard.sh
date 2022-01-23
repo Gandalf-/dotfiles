@@ -7,6 +7,47 @@
 #   All the intermediary functions are produced by auto_cli.sh
 
 
+wizard_execute_timeless() {
+
+  common::required-help "$2" "[command...] -- [paths...]
+
+  Execute the command against the paths but preserve the timestamp after the
+  command completes, regardless of success
+  "
+  local cmd=()
+  local paths=()
+  local found=0
+
+  for var in "$@"; do
+    if [[ $var == -- ]]; then
+      found=1
+    elif (( ! found )); then
+      cmd+=( "$var" )
+    else
+      paths+=( "$var" )
+    fi
+  done
+
+  (( found )) || common::error
+    "didn't find -- delimiter to separate the command from the paths"
+
+  execute() {
+    local path="$1"
+    local when=0
+    when="$( find "$path" -printf '%Ty%Tm%Td%TH%TM\n' )" \
+      || common::error "couldn't fetch timestamp for $path"
+
+    "${cmd[@]}" "$path"
+
+    touch -m -t "$when" "$path" \
+      || die "restoring timestamp $when to $path returned $?"
+  }
+
+  common::for "${paths[@]}" |
+    common::map execute
+}
+
+
 wizard_start_watcher() {
 
   common::required-help "$2" "[path] [command...]
