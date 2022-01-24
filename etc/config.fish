@@ -10,19 +10,17 @@ set -gx EDITOR vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
 set -gx TMP /tmp
 
-# where are we?
 test $__HOST__ = 'work'; and set at_work yes
 test (whoami) = 'chronos'; and set at_cros yes
 set fish_version (fish --version | grep -o '[0-9]\+' | tr -d '\n')
 
-# 'aliases'
 function sfish; source ~/.config/fish/config.fish; end
 function    ..; builtin cd ../;      l ; end
 function   ...; builtin cd ../../;   l ; end
 function  ....; builtin cd ../../../;l ; end
 
 
-# location specific settings
+# Location Specific
 #===========================
 
 if test -d ~/DotFiles
@@ -32,6 +30,12 @@ else if test -d ~/dotfiles
   set scripts ~/dotfiles
   set wiki_loc ~/wiki/index.md
 end
+
+if test "$wiki_loc"
+  function vws; v "$wiki_loc" +"VimwikiSearch $argv"; end
+  function vw ; cd (dirname "$wiki_loc"); vim "$wiki_loc"; end
+end
+
 
 # Languages
 #===========================
@@ -66,11 +70,13 @@ test -d "$scripts"
 test -d ~/.local/bin/
   and fish_add_path ~/.local/bin
 
+# python
+test -e ~/.pythonrc
+  and set -gx PYTHONSTARTUP ~/.pythonrc
 
-# Other executables
+
+# FZF
 #===========================
-
-# fzf
 if not test (command -v fzf)
   if test -e ~/.vim/bundle/fzf.vim/bin/fzf
     fish_add_path ~/.vim/bundle/fzf.vim/bin
@@ -80,22 +86,23 @@ if not test (command -v fzf)
   end
 end
 
-set -U FZF_COMPLETE 3
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
 set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
+
+# https://github.com/jethrokuan/fzf
+set -U FZF_COMPLETE 3
+if test (command -v bat)
+  set -U FZF_PREVIEW_FILE_CMD 'bat'
+else
+  set -U FZF_PREVIEW_FILE_CMD 'cat'
+end
+set -U FZF_PREVIEW_DIR_CMD 'ls -h --color=always'
+
+# https://github.com/PatrickF1/fzf.fish
 fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 
-test -e ~/.pythonrc
-  and set -gx PYTHONSTARTUP ~/.pythonrc
 
-# vimwiki
-if test "$wiki_loc"
-  function vws; v "$wiki_loc" +"VimwikiSearch $argv"; end
-  function vw ; cd (dirname "$wiki_loc"); vim "$wiki_loc"; end
-end
-
-
-# Fish git prompt and colors
+# git prompt and colors
 #===========================
 
 set __fish_git_prompt_showupstream 'yes'
