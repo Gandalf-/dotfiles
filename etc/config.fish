@@ -1,15 +1,11 @@
 # vim: set syntax=bash
 
-
 # fish global settings
 #===========================
 
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
-set -gx __HOST__ (echo $__HOST__ | sed 's/wkstn-avoecks.*/work/')
-set -gx __HOST__ (echo $__HOST__ | sed 's/usxxvoeckam1.*/work/')
 set -gx __HOST__ (echo $__HOST__ | sed 's/remotedev-avoecks.*/work/')
 
-set -gx auto_proxy "http://proxy.west.isilon.com/proxy.pac"
 set -gx EDITOR vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
 set -gx BROWSER google-chrome
@@ -38,32 +34,9 @@ else if test -d ~/dotfiles
   set scripts ~/dotfiles
 end
 
-# workstation
-if test "$at_work"
-  set -gx DIMENSION work
-  set -gx DIFFDIR   ~/diffs/
-  set -gx SCRIPITY  /mnt/ssd/
-  set -gx ONEFSGIT  /mnt/ssd/onefs/
-
-  set PATH      ~/scripity-scripts/bin $PATH
-  set wiki_loc  ~/wiki/index.md
-
-# gallium
-else if test -d ~/Documents/dotfiles
-  set -gx DIMENSION gallium
-
-  set scripts   ~/Documents/dotfiles
-  set wiki_loc  ~/google_drive/personal/wiki/index.md
-
-# birch, chroot
-else if test -d ~/dotfiles
+if test -d ~/dotfiles
   set -gx DIMENSION ubuntu
-
   set wiki_loc ~/wiki/index.md
-
-# raspberry pi
-else if test (whoami) = pi
-  set -gx DIMENSION raspberry
 
 # temporary
 else
@@ -115,11 +88,11 @@ if not test (command -v fzf)
   else if test -e ~/.vim/bundle/fzf/bin/fzf
     set PATH ~/.vim/bundle/fzf/bin $PATH
   end
-
 end
 
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
 set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
+fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 
 if test -e ~/.pythonrc
   set -gx PYTHONSTARTUP ~/.pythonrc
@@ -172,23 +145,3 @@ set -x LESS_TERMCAP_se (printf "\033[0m")
 set -x LESS_TERMCAP_so (printf "\033[01;44;33m")
 set -x LESS_TERMCAP_ue (printf "\033[0m")
 set -x LESS_TERMCAP_us (printf "\033[01;32m")
-
-
-# Experiments
-
-# function preexec_test --on-event fish_preexec
-#   set -g directory (pwd)
-#   set -g epoc (date +%s)
-#   set -g branch (git branch 2> /dev/null)
-# end
-#
-# function postexec_test --on-event fish_postexec
-#   # d fish-history "$epoc" dir = "$directory"
-#   # d fish-history "$epoc" cmd = "$argv"
-#   # d fish-history "$epoc" status = "$status"
-#   d fish-history (string split ' ' "$argv") epoc + "$epoc"
-# end
-
-# function postexec_test --on-event fish_postexec
-#   _set_context 2>/dev/null
-# end

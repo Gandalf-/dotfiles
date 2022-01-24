@@ -33,18 +33,16 @@ wizard_install_dot-files() {
 
   if the system doesn't support links (SMB mount), you can use 'copy'
   "
-  local root; root="$(dirname "${BASH_SOURCE[0]}")"/..
-
   common::do mkdir -p "$HOME"/.vim
   common::do mkdir -p "$HOME"/.config/fish
 
   link() {
     # create symbolic links between here and there
-    local here; here="$(readlink -f "${root}/$1")"
+    local here; here="$( readlink -f "$1" )"
     local there="${HOME}/$2"
 
-    [[ -e "$here" ]] ||
-      common::error "Couldn't find $here"
+    common::file-exists "$here" ||
+      common::error "Couldn't find '$1'"
 
     common::do ln -sf "$here" "$there"
   }
@@ -52,11 +50,11 @@ wizard_install_dot-files() {
   copy() {
     # copy files from here to there
 
-    local here; here="$(readlink -f "${root}/$1")"
+    local here; here="$( readlink -f "$1" )"
     local there="${HOME}/$2"
 
     common::file-exists "$here" ||
-      common::error "Couldn't find $here"
+      common::error "Couldn't find '$1'"
 
     common::do cp -r "$here" "$there"
   }
@@ -76,13 +74,7 @@ wizard_install_dot-files() {
   $op etc/bashrc              .bashrc
   $op etc/pylintrc            .pylintrc
 
-  $op etc/vim/snippets        .vim/
   $op lib/fish/functions      .config/fish/
-
-  # remove directory, not symbolic link
-  local completions="$HOME/.config/fish/completions";
-  [[ -L "$completions" ]] || common::do rm -rf "$completions"
-
   $op lib/fish/completions    .config/fish/
 }
 
@@ -118,6 +110,15 @@ EOF
 }
 
 
+wizard_install_rust() {
+
+  common::program-exists cargo &&
+    common::error "Rust is already installed"
+
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+}
+
+
 wizard_install_java() {
 
   common::optional-help "$1" "
@@ -136,7 +137,6 @@ wizard_install_lua() {
 
   install dependencies with apt, compile and install lua 5.3.3
   "
-
   common::sudo apt install gcc build-essential libreadline-dev
   local builddir='lua-5.3.3'
 
@@ -173,7 +173,8 @@ wizard_install_tmux() {
 
   common::cd $builddir
   common::do ./configure
-  common::do make -j 4
+  common::do make -j
+  common::echo "Run sudo make install"
 }
 
 
@@ -181,12 +182,40 @@ wizard_install_fish() {
 
   common::optional-help "$1" "
 
-  install fish from the official repository so we get the most recent version
+  download and compile fish
   "
-  wizard::apt software-properties-common python-software-properties
-  common::sudo apt-add-repository -y ppa:fish-shell/release-2
-  common::sudo apt-get update
-  wizard::apt fish
+  local version=3.3.1
+  case $( fish --version ) in
+    *3.3.1)
+      common::error "fish $version already installed"
+      ;;
+    *)
+      ;;
+  esac
+
+  common::do wget \
+    https://github.com/fish-shell/fish-shell/releases/download/$version/fish-$version.tar.xz
+  tar xf fish-$version.tar.xz
+  common::cd fish-$version
+
+  common::do cmake .
+  common::do make -j
+  common::echo "Run sudo make install"
+}
+
+
+wizard_install_fish-dependencies() {
+
+  common::program-exists fd ||
+    common::do cargo install fd-find
+
+  common::program-exists bat ||
+    common::do cargo install --locked bat
+
+  common::program-exists fisher ||
+    fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
+
+  common::do fisher install PatrickF1/fzf.fish
 }
 
 
