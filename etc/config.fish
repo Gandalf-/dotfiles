@@ -92,13 +92,16 @@ set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
 # https://github.com/jethrokuan/fzf
 set -U FZF_COMPLETE 3
 if test (command -v bat)
-  set -U FZF_PREVIEW_FILE_CMD 'bat'
+  set -gx FZF_PREVIEW_FILE_CMD 'bat'
 else
-  set -U FZF_PREVIEW_FILE_CMD 'cat'
+  set -gx FZF_PREVIEW_FILE_CMD 'cat'
 end
-set -U FZF_PREVIEW_DIR_CMD 'ls -h --color=always'
+set -gx FZF_PREVIEW_DIR_CMD 'ls -h --color=always'
 
 # https://github.com/PatrickF1/fzf.fish
+test (command -v exa)
+  and set -gx fzf_preview_dir_cmd exa --all --long
+
 fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 
 
