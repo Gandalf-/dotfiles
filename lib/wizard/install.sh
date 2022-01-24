@@ -41,7 +41,7 @@ wizard_install_dot-files() {
     local here; here="$( readlink -f "$1" )"
     local there="${HOME}/$2"
 
-    common::file-exists "$here" ||
+    [[ "$here" ]] ||
       common::error "Couldn't find '$1'"
 
     common::do ln -sf "$here" "$there"
@@ -53,7 +53,7 @@ wizard_install_dot-files() {
     local here; here="$( readlink -f "$1" )"
     local there="${HOME}/$2"
 
-    common::file-exists "$here" ||
+    [[ "$here" ]] ||
       common::error "Couldn't find '$1'"
 
     common::do cp -r "$here" "$there"
@@ -76,6 +76,7 @@ wizard_install_dot-files() {
 
   $op lib/fish/functions      .config/fish/
   $op lib/fish/completions    .config/fish/
+  $op lib/fish/conf.d         .config/fish/
 }
 
 
