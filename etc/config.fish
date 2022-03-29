@@ -4,7 +4,6 @@
 #===========================
 
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
-set -gx __HOST__ (echo $__HOST__ | sed 's/remotedev-avoecks.*/work/')
 
 set -gx EDITOR vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
@@ -18,7 +17,6 @@ function sfish; source ~/.config/fish/config.fish; end
 function    ..; builtin cd ../;      l ; end
 function   ...; builtin cd ../../;   l ; end
 function  ....; builtin cd ../../../;l ; end
-
 
 # Location Specific
 #===========================
@@ -39,6 +37,13 @@ end
 
 # Languages
 #===========================
+
+# work
+test -d /opt/qumulo/toolchain/bin
+  and fish_add_path /opt/qumulo/toolchain/bin
+
+test -d ~/scripts/bin
+  and fish_add_path ~/scripts/bin
 
 # rust
 test -d ~/.cargo/bin/
@@ -140,3 +145,5 @@ set -x LESS_TERMCAP_se (printf "\033[0m")
 set -x LESS_TERMCAP_so (printf "\033[01;44;33m")
 set -x LESS_TERMCAP_ue (printf "\033[0m")
 set -x LESS_TERMCAP_us (printf "\033[01;32m")
+
+test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish ; or true

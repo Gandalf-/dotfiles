@@ -16,6 +16,7 @@ location="${root}/bin/"
 export sources=(
   "${root}/lib/wizard/"*
   "${root}/lib/devbot.sh"
+  ~/scripts/lib/wizard/*
 )
 
 export inline=(
