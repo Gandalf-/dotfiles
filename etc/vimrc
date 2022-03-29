@@ -68,9 +68,11 @@
         Plugin 'Gandalf-/vim-sh-syntax'
         Plugin 'justinmk/vim-syntax-extra'
         Plugin 'tpope/vim-fugitive'
-        Plugin 'tpope/vim-sleuth'
+        " Plugin 'tpope/vim-sleuth'
         Plugin 'simnalamburt/vim-mundo.git'
         Plugin 'rhysd/vim-clang-format'
+
+        Plugin 'prabirshrestha/vim-lsp'
 
         if has_vundle == 0
           :PluginInstall
@@ -81,6 +83,7 @@
     filetype plugin indent on
 
     let g:markdown_fenced_languages = ['haskell', 'c']
+    set tags=./tags;,tags;
 
   " vimux
     let g:VimuxOrientation = "h"
@@ -149,7 +152,8 @@
     \   '*': ['remove_trailing_lines', 'trim_whitespace'],
     \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
     \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'go' : ['gofmt', 'remove_trailing_lines', 'trim_whitespace']
+    \   'go' : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'rust' : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace']
     \}
 
     let g:ale_pattern_options = {'ShellCheck': {'ale_fixers': ['trim_whitespace']}}
@@ -236,6 +240,9 @@
   " Performance!?
     set lazyredraw ttyfast
 
+  " Popup menu
+    highlight Pmenu ctermbg=white
+
   " Syntax, Column and cursor lines
     syntax on sync minlines=256
 
@@ -320,9 +327,6 @@
   " virtual edit
   set virtualedit=block
 
-  " tags
-  set tags=./tags;,tags;
-
   " misc autocommands
   augroup misc_commands
     autocmd!
@@ -348,7 +352,13 @@
     nnoremap \ :Ag<SPACE>
 
   " Searching
-    set hlsearch incsearch showmatch ignorecase smartcase infercase ruler
+    set hlsearch
+    set incsearch
+    " set ignorecase
+    " set smartcase
+    " set infercase
+    set showmatch
+    set ruler
 
   " Search for visually selected text, forwards or backwards!
     vnoremap <silent> * :<C-U>
@@ -404,27 +414,6 @@
     set foldlevel=2
     set foldcolumn=1
 
-  " Cool file explorer stuff in a pane
-    function! ToggleVExplorer()
-        if exists("t:expl_buf_num")
-            let expl_win_num = bufwinnr(t:expl_buf_num)
-            if expl_win_num != -1
-                let cur_win_nr = winnr()
-                exec expl_win_num . 'wincmd w'
-                close
-                exec cur_win_nr . 'wincmd w'
-                unlet t:expl_buf_num
-            else
-                unlet t:expl_buf_num
-            endif
-        else
-            exec '1wincmd w'
-            Vexplore .
-            let t:expl_buf_num = bufnr("%")
-        endif
-    endfunction
-    nnoremap <silent> <leader>d :call ToggleVExplorer()<CR>
-
   " Hit enter in the file browser to open the selected
   " file with :vsplit to the right of browser
     let g:netrw_sort_sequence = '[\/]$,*'   " directories first
@@ -465,53 +454,16 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Macros
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  " List macros
-    nnoremap <leader>? :echo "
-          \  : clear highlighting        \n
-          \+ : toggle dictionary         \n
-          \1 : jump to tab number        \n
-          \A :                           \| a : jump to next error        \n
-          \B :                           \| b : toggle mouse              \n
-          \C :                           \| c :                           \n
-          \D : git buffer with orig file \| d : file explorer             \n
-          \E :                           \| e : open in new buffer        \n
-          \F :                           \| f : rewrap paragraph          \n
-          \G :                           \| g :                           \n
-          \H : horizontal split          \| h : tag select                \n
-          \I :                           \| i : paste result of command   \n
-          \J : scroll to bottom of screen\| j : jump to last buffer       \n
-          \K : auto scroll down          \| k : save                      \n
-          \L : list!                     \| l : reload file               \n
-          \M :                           \| m : mundo toggle              \n
-          \N : print pwd                 \| n : toggle line numbers       \n
-          \O : insert line above         \| o : insert line below         \n
-          \P :                           \| p : toggle paste              \n
-          \Q : close all windows         \| q : close window              \n
-          \R : toggle relative numbering \| r : run buffer                \n
-          \S : global substitute         \| s : line substitute           \n
-          \T :                           \| t : tab current buffer        \n
-          \U : source vimrc              \| u : open vimrc                \n
-          \V : vertical split            \| v : visual block              \n
-          \W : sudo save                 \| w : close window              \n
-          \X :                           \| x : close buffer              \n
-          \Y :                           \| y : run in right pane         \n
-          \Z :                           \| z : toggle spell check        \n
-          \"<CR>
-
   " fzf
     nnoremap <leader>[ :Buffers<CR>
     nnoremap <leader>] :Files<CR>
 
   " vimux
-    " nnoremap <C-i> :VimuxPromptCommand<CR>
     nnoremap <C-b> :VimuxRunLastCommand<CR>
 
   " ale
     nnoremap <leader>a :ALENextWrap<CR>
     nnoremap <C-a> :ALEDetail<CR>
-
-  " diff buffer with original file
-    nnoremap <leader>D :w !git diff % -<CR>
 
   " clear highlighting
     nnoremap <silent> <leader><Space> :nohl<CR>
@@ -522,10 +474,6 @@
   " super secret encryption algorithm
     nnoremap <silent> <leader>G ggg?G<C-o>
 
-  " open vimrc, source vimrc
-    nnoremap <silent> <leader>u :tabe $MYVIMRC<cr>
-    nnoremap <silent> <leader>U :so $MYVIMRC<cr>
-
   " re hardwrap a paragraph
     nnoremap <silent> <leader>f gqip<cr>
 
@@ -535,7 +483,36 @@
 
   " tags
     nnoremap <leader>h :tselect<Space>
-    nnoremap <silent> <C-n> g<C-]>
+    let g:tagdirection = "forward"
+    let g:tagprevious = ""
+
+    function! TagTraverse()
+      let l:tagcurrent = expand('<cword>')
+      if g:tagprevious != l:tagcurrent
+          " reset
+          exe 'tag ' . l:tagcurrent
+          let g:tagdirection = "forward"
+          let g:tagprevious = l:tagcurrent
+      else
+        if g:tagdirection == "forward"
+          try
+            :silent tnext
+          catch
+            try | :silent tprevious | catch | :echo "No other entries for this tag" | endtry
+            let g:tagdirection = "backwards"
+          endtry
+        else
+          try
+            :silent tprevious
+          catch
+            try | :silent tnext | catch | :echo "No other entries for this tag" | endtry
+            let g:tagdirection = "forward"
+          endtry
+        endif
+      endif
+      :norm zz
+    endfunction
+    nnoremap <silent> <C-n>  :call TagTraverse()<CR>
 
   " windows
     nnoremap <silent> <leader>q :q<CR>
@@ -579,17 +556,13 @@
     nnoremap <silent> <leader>t :tabe %<cr>
 
   " paste result of command
-    nnoremap          <leader>i :r!
+    nnoremap <leader>i :r!
 
   " open buffer, open tab, reload, save, sudo save current file
     nnoremap <leader>e :e<space>
     nnoremap <leader>E :tabe<space>
     nnoremap <leader>l :e % <cr>zz
     nnoremap <leader>k :w<CR>
-
-  " insert a blank line above,below the current line
-    nnoremap <silent> <leader>O O<Esc>
-    nnoremap <silent> <leader>o o<Esc>
 
   " Mundo Undo Tree
     nnoremap <silent> <leader>m :MundoToggle<CR>
@@ -600,8 +573,6 @@
   " generic ':' command
     nnoremap m :
     vnoremap m :
-    nnoremap <leader>; :
-    vnoremap <leader>; :
 
   " substitute line, global
     vnoremap <leader>s :s/
@@ -612,18 +583,6 @@
   " repeat last colon command
     nnoremap <leader>. q:k<cr>
     vnoremap <leader>. q:k<cr>
-
-  " go to tab by number
-    noremap <leader>1 1gt
-    noremap <leader>2 2gt
-    noremap <leader>3 3gt
-    noremap <leader>4 4gt
-    noremap <leader>5 5gt
-    noremap <leader>6 6gt
-    noremap <leader>7 7gt
-    noremap <leader>8 8gt
-    noremap <leader>9 9gt
-    noremap <leader>0 :tablast<cr>
 
   " running programs in Vim!
     function! Compile(compile_command)
@@ -649,19 +608,6 @@
           \ :silent call Compile("clang")  <cr> <bar>:!clear;./a.out <cr>
     autocmd FileType cpp     nmap <leader>r
           \ :silent call Compile("clang++ -std=c++11")  <cr> <bar>:!clear;./a.out <cr>
-
-  " Run program in pane to the right
-    autocmd FileType python
-          \ nnoremap <leader>y :!tmux send-keys -t right
-          \ 'python %' C-m <cr><cr>
-    autocmd FileType sh
-          \ nnoremap <leader>y :!tmux send-keys -t right
-          \ 'bash %' C-m<cr><cr>
-  augroup end
-
-  " Experiment
-  " nnoremap / /\v
-  " vnoremap / /\v
 
   " Search across all open buffers
     function! BuffersList()
@@ -711,22 +657,10 @@
   " Switch buffers, tabs with parens, braces
     noremap  <silent> ( :bp<cr>zz
     noremap  <silent> ) :bn<cr>zz
-    nnoremap <silent> { :tabp<cr>
-    nnoremap <silent> } :tabn<cr>
-
-  " cycle through quickfix
-    " nnoremap { :cp<cr>
-    " nnoremap } :cn<cr>
 
   " List navigation with arrows
     noremap <silent> <Left>  :lprev<cr>zz
     noremap <silent> <Right> :lnext<cr>zz
-
-  " scrolling Down, Up
-    "nnoremap <c-j> 5<C-e>5gj
-    "vnoremap <c-j> 5<C-e>5gj
-    "nnoremap <c-k> 5<C-y>5gk
-    "vnoremap <c-k> 5<C-y>5gk
 
     nnoremap <silent> <Up>   H5<C-y>5gk
     nnoremap <silent> <Down> L5<C-e>5gj
@@ -762,10 +696,6 @@
       endif
     endfunction
     nnoremap <leader>+ :call DictToggle()<CR>
-
-  " Horizontal scrolling ?
-    set scrollopt+=hor
-    nnoremap <ScrollWheelLeft> :echo HELLO
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -806,8 +736,7 @@
   iab occasionaly occasionally
   iab explainations explanations
 
-
 " work settings
-if dimension == "work"
-  source ~/scripity-scripts/etc/vimrc
+if hostname == "avoecks-wkstn"
+  source ~/scripts/etc/vimrc
 endif
