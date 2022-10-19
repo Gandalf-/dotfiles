@@ -190,20 +190,6 @@ wizard_media_diving_create() {
     "$base"/Pictures/Diving/
 }
 
-common::program-exists 'doctl' &&
-wizard_media_diving_purge_digital-ocean() {
-
-  common::optional-help "$1" "
-
-  purge the CDN for digital ocean
-  "
-  (
-    common::cd "$HOME"
-    common::do \
-      doctl compute cdn flush e8494d7e-70fa-48ba-80e1-209ef6a9fed2
-  )
-}
-
 wizard_media_diving_purge_cloudflare() {
 
   common::optional-help "$1" "
@@ -220,7 +206,7 @@ wizard_media_diving_purge_nginx() {
 
   purge the caches for nginx
   "
-  ssh alpine \
+  ssh walnut \
     docker exec diving /bin/sh -c 'rm -rf /tmp/example-cache/*'
 }
 
@@ -238,85 +224,45 @@ wizard_media_diving_purge_all() {
   wizard_media_diving_purge_nginx ''
 }
 
-common::dir-exists ~/working &&
 wizard_media_diving_upload() {
-
-  common::optional-help "$1" "[s3cmd config]
-
-  upload the generated html files for diving.anardil.net
-  "
-  common::program-exists -f 's3cmd'
-
-  local config="$HOME"/.s3cfg-sfo
-  local purge=0
-  [[ $1 ]] && {
-    config="$1"
-    purge=0
-  }
-
-  rsync -avL ~/working/object-publish/diving-web/ alpine:local/diving-web
-
-  (( purge )) && {
-    wizard_media_diving_purge_cloudflare ''
-  }
+  media::sync diving
 }
 
 
-# photos
+# photos, artwork
 
-common::dir-exists ~/working &&
-wizard_media_photos_create() {
-
-  common::optional-help "$1" "
-
-  generate the html and thumbnails for photos.anardil.net.
-  "
+media::create() {
+  local name="$1"
+  local data="$2"
   common::program-exists -f 'convert'
 
-  if common::dir-exists /mnt/zfs/Media/; then
-    base=/mnt/zfs/Media
-  elif common::dir-exists "$HOME"/media/; then
-    base="$HOME"/media
-  else
-    common::error "Can't find media directory"
-  fi
-
-  common::echo public
-  common::cd ~/working/object-publish/photos-web
-  common::do \
-    bash \
-    ~/google_drive/code/shell/photos/runner.sh \
-    "$base"/Pictures/Photography/
-
-  common::echo hidden
-  common::cd ~/working/object-publish/photos-web/zb3
-  common::do \
-    bash \
-    ~/google_drive/code/shell/photos/runner.sh \
-    "$base"/Pictures/Photography/zb3/
+  common::cd ~/working/object-publish/"$name"-web
+  common::do bash \
+    ~/google_drive/code/shell/"$name"/runner.sh \
+    /mnt/zfs/Media/Pictures/"$data"/
 }
 
-common::dir-exists ~/working &&
+media::sync() {
+  local name="$1"
+  rsync -avL --delete \
+    ~/working/object-publish/"$name"-web/ \
+    walnut:local/"$name"-web
+}
+
+wizard_media_photos_create() {
+  media::create photos Photography
+}
+
+wizard_media_artwork_create() {
+  media::create artwork Artwork
+}
+
 wizard_media_photos_upload() {
+  media::sync photos
+}
 
-  common::optional-help "$1" "[s3cmd config]
-
-  upload the generated html files for photos.anardil.net.
-
-  default config is ~/.s3cfg-sfo
-  "
-  common::program-exists -f 's3cmd'
-
-  local config="$HOME"/.s3cfg-sfo
-  [[ $1 ]] && config="$1"
-
-  common::do s3cmd sync -c "$config" \
-    --acl-public \
-    --delete-removed \
-    --guess-mime-type \
-    --no-mime-magic \
-    ~/working/object-publish/photos-web/ \
-    s3://anardil-photos/
+wizard_media_artwork_upload() {
+  media::sync artwork
 }
 
 
@@ -344,32 +290,6 @@ wizard_media_sensors_create_extremes() {
   common::do MPLBACKEND=Agg python3 \
     ~/google_drive/code/python/sensors/sensor-extremes.py \
     ~/google_drive/share/sensors/extremes/
-}
-
-
-common::dir-exists ~/google_drive &&
-wizard_media_sensors_upload() {
-
-  common::optional-help "$1" "[s3cmd config]
-
-  upload sensor data to public.anardil.net.
-
-  default config is ~/.s3cfg-sfo
-  "
-  local config="$HOME"/.s3cfg-sfo
-  [[ $1 ]] && config="$1"
-
-  common::do s3cmd sync -c "$config" \
-    --acl-public \
-    --delete-removed \
-    --exclude-from ~/working/config/s3cmd-exclude \
-    --follow-symlinks \
-    --guess-mime-type \
-    --no-mime-magic \
-    --quiet \
-    --recursive \
-    ~/google_drive/share/code/sensors/ \
-    s3://anardil-public/share/code/sensors/
 }
 
 

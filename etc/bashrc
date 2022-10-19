@@ -1,12 +1,9 @@
 #~/.bashrc: executed by bash(1) for non-login shells.
 
 export PATH=~/DotFiles/bin:$PATH
-export auto_proxy="http://proxy.west.isilon.com/proxy.pac"
 
 export DIFFDIR=~/diffs
 export SCRIPTITY=/mnt/ssd
-export ONEFSGIT=/mnt/ssd
-export DIMENSION=work
 
 # If not running interactively, don't do anything else
 case $- in *i*) ;; *) return;; esac

@@ -156,6 +156,7 @@
     \   'rust' : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace']
     \}
 
+    let g:ale_rust_cargo_use_clippy = executable('cargo-clippy')
     let g:ale_pattern_options = {'ShellCheck': {'ale_fixers': ['trim_whitespace']}}
     let g:ale_fix_on_save = 1
 
