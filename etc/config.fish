@@ -3,7 +3,15 @@
 # fish global settings
 #===========================
 
-set -gx __HOST__ (hostname       | sed 's/localhost/home/')
+# macos
+if test -d /opt/homebrew/bin
+  set -x -U C_INCLUDE_PATH (xcrun --show-sdk-path)/usr/include/ffi
+  fish_add_path /opt/homebrew/bin
+  fish_add_path /Users/leaf/.ghcup/bin
+  fish_add_path /Users/leaf/.cabal/bin
+end
+
+set -gx __HOST__ (hostname       | sed 's/\.local//')
 
 set -gx EDITOR vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
@@ -147,3 +155,8 @@ set -x LESS_TERMCAP_ue (printf "\033[0m")
 set -x LESS_TERMCAP_us (printf "\033[01;32m")
 
 test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish ; or true
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+# eval /Users/leaf/miniconda3/bin/conda "shell.fish" "hook" $argv | source
+# <<< conda initialize <<<
