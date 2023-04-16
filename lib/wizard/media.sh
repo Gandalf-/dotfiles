@@ -73,90 +73,20 @@ wizard_media_public_create() {
 }
 
 common::dir-exists ~/google_drive &&
-wizard_media_public_upload_all() {
+wizard_media_public_upload() {
 
-  common::optional-help "$1" "[s3cmd config]
+  common::optional-help "$1" "
 
   synchronize state between public.anardil.net and ~/google_drive/share.
-
-  default config is ~/.s3cfg-sfo
   "
-  common::program-exists -f 's3cmd'
-
-  local config="$HOME"/.s3cfg-sfo
-  [[ $1 ]] && config="$1"
-
-  upload() {
-    common::do s3cmd sync -c "$config" \
-        --no-mime-magic \
-        --guess-mime-type \
-        --delete-removed \
-        --follow-symlinks \
-        --recursive \
-        --exclude-from ~/working/config/s3cmd-exclude \
-        --acl-public \
-        "$1" \
-        s3://anardil-public/share/
-  }
-
-  upload ~/google_drive/share/.indexes &
-  upload ~/google_drive/share/.thumbnails &
-
-  for folder in ~/google_drive/share/* ; do
-    common::dir-exists "$folder" || {
-      echo "ignoring $folder"
-      continue
-    }
-    upload "$folder" &
-  done
-
-  wait
+  rclone sync \
+    --exclude-from ~/working/config/rclone-exclude.conf \
+    --copy-links \
+    --fast-list \
+    --progress \
+    ~/google_drive/share \
+    sfo3:public-anardil/share
 }
-
-common::dir-exists ~/working &&
-wizard::upload() {
-  [[ $config ]] || common::error "programming error"
-
-  common::do s3cmd sync -c "$config" \
-    --acl-public \
-    --delete-removed \
-    --exclude-from ~/working/config/s3cmd-exclude \
-    --follow-symlinks \
-    --guess-mime-type \
-    --no-mime-magic \
-    --recursive \
-    "$1" \
-    s3://anardil-public/share/
-}
-
-# dynamic commands for each directory in share
-
-common::dir-exists ~/google_drive/share/ && {
-
-  cd ~/google_drive/share/ ||
-    common::error "does it exist or not?"
-
-  for directory in * .*; do
-
-    [[ "$directory" == . ]] && continue
-    [[ "$directory" == .. ]] && continue
-    common::dir-exists "$directory" || continue
-
-    eval '
-wizard_media_public_upload_'"$directory"'() {
-
-  common::optional-help "$1" "[s3cmd config]
-
-  synchronize '"$directory"' to public.anardil.net
-  "
-  local config="$HOME"/.s3cfg-sfo
-
-  wizard::upload ~/google_drive/share/'"$directory"'
-}
-    '
-  done
-}
-
 
 # diving
 
@@ -236,7 +166,7 @@ media::create() {
   local data="$2"
   common::program-exists -f 'convert'
 
-  common::cd ~/working/object-publish/"$name"-web
+  common::cd /mnt/ssd/hosts/web/"$name"
   common::do bash \
     ~/google_drive/code/shell/"$name"/runner.sh \
     /mnt/zfs/Media/Pictures/"$data"/
@@ -323,7 +253,7 @@ wizard_media_blog_upload() {
   common::file-exists robots.txt ||
     common::error "Not in directory with html output"
 
-  common::do s3cmd sync -c ~/.s3cfg-sfo \
+  common::do s3cmd sync \
     --no-mime-magic \
     --guess-mime-type \
     --delete-removed \

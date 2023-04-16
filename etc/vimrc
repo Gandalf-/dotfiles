@@ -60,7 +60,7 @@
         Plugin 'christoomey/vim-tmux-navigator'
         Plugin 'junegunn/fzf'
         Plugin 'junegunn/fzf.vim'
-        Plugin 'zxqfl/tabnine-vim'
+        " Plugin 'zxqfl/tabnine-vim'
         Plugin 'vimwiki/vimwiki'
         Plugin 'w0rp/ale'
         " Plugin 'dag/vim2hs'
@@ -198,11 +198,20 @@
       command! Black call RunBlack()
     endif
 
+    if executable('astyle')
+      function! RunAstyle()
+        silent !clear
+        execute "!astyle -n --style=mozilla " . bufname("%")
+      endfunction
+
+      command! Astyle call RunAstyle()
+    endif
+
     augroup format_commands
       autocmd!
       autocmd FileType python command! Format :Black
-      autocmd FileType c      command! Format :ClangFormat
-      autocmd FileType cpp    command! Format :ClangFormat
+      autocmd FileType c      command! Format :Astyle
+      autocmd FileType cpp    command! Format :Astyle
     augroup end
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

@@ -30,7 +30,7 @@ renamer() {
       echo "leaving $line"
 
     else
-      mv --no-clobber --verbose -- "$1" "$line" ||
+      mv -n -v "$1" "$line" ||
         bail "mv --verbose $1 $line failed"
     fi
 
