@@ -100,9 +100,11 @@ wizard_media_diving_create() {
   common::program-exists -f 'convert'
 
   if common::dir-exists /mnt/zfs/Media/; then
-    base=/mnt/zfs/Media
-  elif common::dir-exists "$HOME"/media/; then
-    base="$HOME"/media
+    base=/mnt/zfs/Media/Pictures/Diving/
+
+  elif common::dir-exists "$HOME"/Pictures/; then
+    base="$HOME"/Pictures/diving/
+
   else
     common::error "Can't find media directory"
   fi
@@ -112,12 +114,12 @@ wizard_media_diving_create() {
   common::do \
     bash \
     ~/google_drive/code/shell/diving/runner.sh \
-    "$base"/Pictures/Diving/
+    "$base"
 
   common::do \
     python3 \
     ~/google_drive/code/shell/diving/gallery.py \
-    "$base"/Pictures/Diving/
+    "$base"
 }
 
 wizard_media_diving_purge_cloudflare() {

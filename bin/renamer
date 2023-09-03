@@ -20,7 +20,7 @@ renamer() {
 
   vim "$tmp"
 
-  (( $# != $( wc -l "$tmp" | awk '{print $1}' ) )) && {
+  (( $# != $( awk 'END { print NR }' "$tmp" ) )) && {
     bail "file lines do not match number of arguments"
   }
 

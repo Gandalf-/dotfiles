@@ -9,6 +9,7 @@ if test -d /opt/homebrew/bin
   fish_add_path /opt/homebrew/bin
   fish_add_path /Users/leaf/.ghcup/bin
   fish_add_path /Users/leaf/.cabal/bin
+  fish_add_path /Users/leaf/Documents/dotfiles/bin
 end
 
 set -gx __HOST__ (hostname       | sed 's/\.local//')
