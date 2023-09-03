@@ -201,7 +201,9 @@
     if executable('astyle')
       function! RunAstyle()
         silent !clear
-        execute "!astyle -n --style=mozilla " . bufname("%")
+        let astyle = "astyle -n --style=kr --indent-after-parens --add-brackets "
+        let astyle .= "--break-return-type --max-code-length=80 "
+        execute "!" . astyle . bufname("%")
       endfunction
 
       command! Astyle call RunAstyle()

@@ -69,7 +69,10 @@ wizard_media_public_create() {
   common::program-exists -f 'indexer'
 
   common::cd ~/google_drive/share/
-  indexer ~/google_drive/code/haskell/indexer/thumbnail.py || exit 0
+  indexer \
+    /mnt/ssd/hosts/web/public \
+    ~/google_drive/code/haskell/indexer/thumbnail.py \
+    || exit 0
 }
 
 common::dir-exists ~/google_drive &&
