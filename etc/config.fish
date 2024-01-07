@@ -62,6 +62,9 @@ test -d ~/.cargo/bin/
 test -d ~/.cabal/bin/
   and fish_add_path ~/.cabal/bin
 
+test -d ~/.ghcup/bin/
+  and fish_add_path ~/.ghcup/bin
+
 # go
 if test -d /usr/local/go/bin; and test -d $HOME/working/go/bin
   fish_add_path $HOME/working/go/bin /usr/local/go/bin

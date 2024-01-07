@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+die() {
+  echo "$@" >&2
+  exit 1
+}
+
+usage() {
+  die "$0 <root> <command> [args...]"
+}
+
+main() {
+  (( $# < 2 )) && usage
+
+  local root="$1"
+  [[ -d "$root" ]] ||
+    die "not a directory: $root"
+  root="$( readlink -f "$root" )"
+
+  mkdir -p /tmp/when
+  local epoch=/tmp/when/"${root//\//_}".epoch
+  find "$root" -newer "$epoch" -print 2>&1 | grep -q . || {
+    exit 0
+  }
+
+  shift
+  "$@"
+  touch "$epoch"
+}
+
+main "$@"

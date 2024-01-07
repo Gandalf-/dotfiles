@@ -151,7 +151,7 @@
     let g:ale_fixers = {
     \   '*': ['remove_trailing_lines', 'trim_whitespace'],
     \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'python' : ['ruff', 'remove_trailing_lines', 'trim_whitespace'],
     \   'go' : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
     \   'rust' : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace']
     \}
@@ -167,7 +167,7 @@
 
     let g:ale_lint_delay = 500
     let g:ale_linters = {
-      \ 'python': ['pylint', 'flake8'],
+      \ 'python': ['ruff'],
       \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
       \ }
 
