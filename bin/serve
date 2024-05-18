@@ -1,0 +1,89 @@
+#!/bin/bash
+
+die() { echo "$@" >&2; exit 1; }
+
+addresses() {
+  ifconfig \
+    | awk '(/inet / && /broadcast/) || (/secured/ && !/scopeid/) { print $2 }'
+}
+
+host() {
+  while read -r addr; do
+    timeout 0.25 dig +short -x "$addr" 2>/dev/null | sed 's/\.$//'
+  done < <( addresses ) | head -n 1
+}
+
+config() {
+  local root="$1"
+  local port="$2"
+
+  cat << EOF
+worker_processes 1;
+master_process   off;
+daemon           off;
+pid              /tmp/nginx-$port.pid;
+error_log        /dev/stdout warn;
+
+events {
+    worker_connections 128;
+}
+
+http {
+    log_format   logfmt '\$remote_addr [\$time_local] "\$request" \$status';
+    include      /opt/homebrew/etc/nginx/mime.types;
+    sendfile     on;
+    http2        on;
+
+    add_header Pragma public;
+    add_header Cache-Control "public";
+
+    server {
+        listen       $port;
+        listen       [::]:$port;
+        root         $root;
+        index        index.html;
+        access_log   /dev/stdout logfmt;
+
+        location / {
+            try_files \$uri \$uri/ @htmlext;
+        }
+        location ~ \.html$ {
+            try_files \$uri =404;
+        }
+        location @htmlext {
+            rewrite ^(.*)$ \$1.html break;
+        }
+    }
+}
+EOF
+}
+
+root-port() {
+  local root; root="$( realpath "$1" )"
+  local port; port="$(
+    md5sum <<< "$root" | tr -cd '[:digit:]' | cut -c 1-3 | sed 's/^0*//'
+  )"
+  (( port += 8000 ))
+  echo "$port"
+}
+
+main() {
+  local root="$1"; [[ $root ]] || root="$PWD"
+  [[ -d "$root" ]] || die "No such directory: $root"
+
+  local port; port="$( root-port "$root" )"
+  nc -z localhost "$port" 2>/dev/null &&
+    die "Server already running on port $port for $root"
+
+  local host; host="$( host )"
+  [[ -n "$host" ]] || host="[::]"
+  echo "Serving on http://$host:$port"
+
+  config="$( mktemp )"
+  trap 'rm -f "$config"' EXIT
+  config "$root" "$port" > "$config"
+
+  nginx -c "$config"
+}
+
+main "$@"

@@ -104,7 +104,7 @@ if not test (command -v fzf)
 end
 
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
+set -gx FZF_DEFAULT_OPTS '--height 75% --border --cycle'
 
 # https://github.com/jethrokuan/fzf
 set -U FZF_COMPLETE 3
@@ -121,6 +121,8 @@ test (command -v exa)
 
 fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 
+alias ed "ed -p '🐠 '"
+alias cs "gh copilot suggest"
 
 # git prompt and colors
 #===========================
@@ -159,8 +161,3 @@ set -x LESS_TERMCAP_ue (printf "\033[0m")
 set -x LESS_TERMCAP_us (printf "\033[01;32m")
 
 test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish ; or true
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-# eval /Users/leaf/miniconda3/bin/conda "shell.fish" "hook" $argv | source
-# <<< conda initialize <<<

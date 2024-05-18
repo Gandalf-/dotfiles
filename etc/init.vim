@@ -152,7 +152,7 @@
     if executable('black')
       function! RunBlack()
         silent !clear
-        execute "!black -l 79 -S " . bufname("%")
+        execute "!black -l 99 -S " . bufname("%")
       endfunction
 
       command! Black call RunBlack()
@@ -180,7 +180,7 @@
   " General
     colorscheme desert
     set t_Co=256
-    set number wrap textwidth=79 showcmd
+    set number wrap textwidth=99 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
   " Fonts

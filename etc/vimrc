@@ -171,7 +171,7 @@
       \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
       \ }
 
-    let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
+    let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE -I/opt/homebrew/include -I/usr/local/include"
     let g:ale_c_gcc_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
 
     let g:ale_set_quickfix = 1
@@ -192,7 +192,7 @@
     if executable('black')
       function! RunBlack()
         silent !clear
-        execute "!black -l 79 -S " . bufname("%")
+        execute "!black -l 99 -S " . bufname("%")
       endfunction
 
       command! Black call RunBlack()
@@ -222,7 +222,7 @@
   " General
     colorscheme desert
     set t_Co=256
-    set number wrap textwidth=79 showcmd
+    set number wrap textwidth=99 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
   " Fonts
