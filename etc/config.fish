@@ -5,9 +5,10 @@
 
 set -gx __HOST__ (hostname       | sed 's/localhost/home/')
 
-set -gx EDITOR vim
+set -gx EDITOR nvim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
 set -gx TMP /tmp
+set -gx RCLONE_FAST_LIST 1
 
 test $__HOST__ = 'work'; and set at_work yes
 test (whoami) = 'chronos'; and set at_cros yes
@@ -38,6 +39,8 @@ end
 # Languages
 #===========================
 
+set --erase fish_user_paths
+
 # work
 test -d /opt/qumulo/toolchain/bin
   and fish_add_path /opt/qumulo/toolchain/bin
@@ -54,10 +57,8 @@ test -d ~/.cabal/bin/
   and fish_add_path ~/.cabal/bin
 
 # go
-if test -d /usr/local/go/bin; and test -d $HOME/working/go/bin
-  fish_add_path $HOME/working/go/bin /usr/local/go/bin
-  set -x -U GOPATH $HOME/working/go
-end
+test -d /usr/local/go/bin
+  and fish_add_path /usr/local/go/bin
 
 # ubuntu snaps
 test -d /snap/bin
@@ -82,17 +83,15 @@ test -e ~/.pythonrc
 
 # FZF
 #===========================
-if not test (command -v fzf)
-  if test -e ~/.vim/bundle/fzf.vim/bin/fzf
-    fish_add_path ~/.vim/bundle/fzf.vim/bin
+if test -e ~/.vim/bundle/fzf.vim/bin/fzf
+  fish_add_path ~/.vim/bundle/fzf.vim/bin
 
-  else if test -e ~/.vim/bundle/fzf/bin/fzf
-    fish_add_path ~/.vim/bundle/fzf/bin
-  end
+else if test -e ~/.vim/bundle/fzf/bin/fzf
+  fish_add_path ~/.vim/bundle/fzf/bin
 end
 
 set -gx FZF_DEFAULT_COMMAND 'ag -g ""'
-set -gx FZF_DEFAULT_OPTS '--height 50% --border --cycle'
+set -gx FZF_DEFAULT_OPTS '--height 75% --border --cycle'
 
 # https://github.com/jethrokuan/fzf
 set -U FZF_COMPLETE 3
@@ -109,6 +108,7 @@ test (command -v exa)
 
 fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 
+alias ed 'ed -p "🐠 "'
 
 # git prompt and colors
 #===========================

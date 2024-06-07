@@ -1,94 +1,3 @@
-"" ============================================================================
-"" + File name:          vimrc
-"" + Description:        Vim startup settings
-"" + Author:             leaf@anardil.net
-"" ============================================================================
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => General
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  set title
-  set langmenu=en_US      " Sets languages
-  set shell=bash          " So vim plays nice with fish
-  set fileformat=unix     " No crazy DOS line endings please
-  set history=300         " Sets how many lines of history VIM has to remember
-  set autoread            " Pick up changes from outside this vim session
-  set fileformat=unix     " Use Unix line endings
-  set confirm             " Ask to save instead of complaining
-  set nocompatible
-  set visualbell
-
-  set splitbelow splitright
-  set encoding=utf-8 termencoding=utf-8 fileencodings=utf-8
-  set hidden nobackup nowritebackup noswapfile
-  set ttimeout ttimeoutlen=20
-  set visualbell
-
-  if has("unix")
-    let hostname = substitute(system('hostname'), '\n', '', '') " where are we?
-  else
-    let hostname = "Windows"
-  endif
-
-  let g:tex_conceal = ""  " Don't hide LaTeX symbols
-  nnoremap <SPACE> <Nop>
-  let g:mapleader = " "
-  let dimension=$DIMENSION
-
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" => Plugins
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  " Vundle
-    let has_vundle=1
-    let vundle_url='https://github.com/VundleVim/Vundle.vim'
-
-    if !filereadable(expand('~/.vim/bundle/Vundle.vim/README.md'))
-      silent !mkdir -p ~/.vim/bundle
-      silent exe "!git clone " . g:vundle_url . " ~/.vim/bundle/Vundle.vim"
-      let has_vundle=0
-    endif
-
-    filetype off
-    set runtimepath+=~/.vim/bundle/Vundle.vim
-
-    try
-      call vundle#begin()
-        Plugin 'VundleVim/Vundle.vim'
-
-        Plugin 'benmills/vimux'
-        Plugin 'christoomey/vim-tmux-navigator'
-        Plugin 'junegunn/fzf'
-        Plugin 'junegunn/fzf.vim'
-        Plugin 'zxqfl/tabnine-vim'
-        Plugin 'vimwiki/vimwiki'
-        Plugin 'w0rp/ale'
-        " Plugin 'dag/vim2hs'
-        Plugin 'ehamberg/vim-cute-python'
-        Plugin 'Gandalf-/vim-sh-syntax'
-        Plugin 'justinmk/vim-syntax-extra'
-        Plugin 'tpope/vim-fugitive'
-        " Plugin 'tpope/vim-sleuth'
-        Plugin 'simnalamburt/vim-mundo.git'
-        Plugin 'rhysd/vim-clang-format'
-
-        Plugin 'prabirshrestha/vim-lsp'
-
-        if has_vundle == 0
-          :PluginInstall
-        endif
-      call vundle#end()
-    catch
-    endtry
-    filetype plugin indent on
-
-    let g:markdown_fenced_languages = ['haskell', 'c']
-    set tags=./tags;,tags;
-
-  " vimux
-    let g:VimuxOrientation = "h"
-    let g:VimuxHeight = "33"
-
   " fzf
     " Customize fzf colors to match your color scheme
     let g:fzf_colors =
@@ -110,51 +19,15 @@
       \ 'ctrl-x': 'split',
       \ 'ctrl-v': 'vsplit' }
 
-  " vimwiki
-    let g:vimwiki_table_mappings = 0
-    let g:vimwiki_url_maxsave    = 0
-    let g:vimwiki_global_ext     = 0
-    let g:vimwiki_folding        = 'custom'
-
-    let g:vimwiki_root = '~/wiki'
-    let g:vimwiki_list = [{
-          \ 'path': '~/wiki/',
-          \ 'syntax': 'markdown',
-          \ 'ext': '.md'}]
-
-    " autocmd BufNewFile,BufRead,BufEnter *.md set filetype=vimwiki
-
-    nmap <Leader>wn <Plug>VimwikiNextLink
-    nmap <Leader>wp <Plug>VimwikiPrevLink
-
-    function! VimwikiLinkHandler(link)
-      " Use Vim to open external files with the 'vfile:' scheme.  E.g.:
-      "   1) [[vfile:~/Code/PythonProject/abc123.py]]
-      "   2) [[vfile:./|Wiki Home]]
-      let link = a:link
-      if link =~# '^vfile:'
-        let link = link[1:]
-      else
-        return 0
-      endif
-      let link_infos = vimwiki#base#resolve_link(link)
-      if link_infos.filename == ''
-        echomsg 'Vimwiki Error: Unable to resolve link!'
-        return 0
-      else
-        exe 'Vexplore ' . fnameescape(link_infos.filename)
-        return 1
-      endif
-    endfunction
-
   " ALE
     let g:ale_fixers = {
-    \   '*': ['remove_trailing_lines', 'trim_whitespace'],
+    \   '*'      : ['remove_trailing_lines', 'trim_whitespace'],
     \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace', 'ruff-format'],
-    \   'go' : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'rust' : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'c' : ['remove_trailing_lines', 'trim_whitespace', 'clang-format']
+    \   'python' : ['remove_trailing_lines', 'trim_whitespace', 'ruff_format'],
+    \   'go'     : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'rust'   : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'c'      : ['clang-format', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'cpp'    : ['clang-format', 'remove_trailing_lines', 'trim_whitespace']
     \}
 
     let g:ale_pattern_options = {'ShellCheck': {'ale_fixers': ['trim_whitespace']}}
@@ -167,8 +40,10 @@
 
     let g:ale_lint_delay = 500
     let g:ale_linters = {
-      \ 'python': ['pylint', 'flake8'],
-      \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
+      \ 'python': ['ruff'],
+      \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc'],
+      \ 'c': [],
+      \ 'cpp': []
       \ }
 
     let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
@@ -187,23 +62,6 @@
     let g:ale_sign_error = 'X' " '✘'
     let g:ale_sign_warning = '>' " '▶'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
-
-  " formatting
-    if executable('black')
-      function! RunBlack()
-        silent !clear
-        execute "!black -l 79 -S " . bufname("%")
-      endfunction
-
-      command! Black call RunBlack()
-    endif
-
-    augroup format_commands
-      autocmd!
-      autocmd FileType python command! Format :Black
-      autocmd FileType c      command! Format :ClangFormat
-      autocmd FileType cpp    command! Format :ClangFormat
-    augroup end
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => UI
@@ -242,7 +100,12 @@
     set lazyredraw ttyfast
 
   " Popup menu
-    highlight Pmenu ctermbg=white
+    highlight Pmenu      ctermbg=92 guibg=gray ctermfg=white guifg=white
+    highlight PmenuSel   ctermbg=92 guibg=gray ctermfg=white guifg=white
+    highlight PmenuSbar  ctermbg=92 guibg=gray ctermfg=white guifg=white
+    highlight PmenuThumb ctermbg=92 guibg=gray ctermfg=white guifg=white
+
+    highlight SignColumn ctermbg=0
 
   " Syntax, Column and cursor lines
     syntax on sync minlines=256
@@ -261,7 +124,7 @@
     highlight VertSplit cterm=NONE ctermbg=0 ctermfg=NONE
 
   " Status line
-    highlight StatusLine ctermfg=246
+    highlight StatusLine ctermfg=blue ctermbg=black
     set statusline=%f    " Path.
     set statusline+=%m   " Modified flag.
     set statusline+=%r   " Readonly flag.
@@ -287,23 +150,21 @@
     catch
     endtry
 
+    try
+      set statusline+=\    " Space.
+    catch
+    endtry
+
     set statusline+=\    " Space.
     set statusline+=\ %4l\ %3c\ %3p%%
-
-  " Colors
-    highlight Pmenu      ctermbg=245
-    highlight PmenuSel   ctermbg=240
-    highlight PmenuSBar  ctermbg=238
-    highlight PmenuThumb ctermbg=234
-    highlight clear SignColumn
 
   " Vimwiki colors
     highlight PreProc ctermfg=gray
     highlight Title ctermfg=darkgreen
 
   " Be less obnoxious about 'Pattern not found' warnings
-    highlight Error    None
-    highlight ErrorMsg None
+    " highlight Error    None
+    " highlight ErrorMsg None
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -336,15 +197,6 @@
     autocmd FileType c,cpp,python setlocal tabstop=4
       " autocmd BufNewFile,BufRead *.py setlocal tabstop=4
     augroup end
-
-  " silver searcher-ing
-    if executable('ag')
-        set grepprg=ag\ --nogroup\ --nocolor\ --smart-case\ --column
-        set grepformat=%f:%l:%c%m
-    endif
-
-    command! -nargs=+ -complete=file -bar Ag silent! grep! <args>|cwindow|redraw!
-    nnoremap \ :Ag<SPACE>
 
   " Searching
     set hlsearch
@@ -409,16 +261,6 @@
     set foldlevel=2
     set foldcolumn=1
 
-  " Hit enter in the file browser to open the selected
-  " file with :vsplit to the right of browser
-    let g:netrw_sort_sequence = '[\/]$,*'   " directories first
-    let g:netrw_browse_split  = 3           " open files in new tab
-    let g:netrow_altv         = 1
-    let g:netrw_winsize       = -28         " thinner width
-    let g:netrw_banner        = 0           " hide the help info
-    let g:netrw_liststyle     = 3           " tree mode
-    let g:netrw_list_hide     = '.*\.swp$,.*\.pyc'
-
   " Clear junk before running commands
     noremap :! :!clear;
     noremap :make :!clear; make
@@ -456,10 +298,6 @@
   " vimux
     nnoremap <C-b> :VimuxRunLastCommand<CR>
 
-  " ale
-    nnoremap <leader>a :ALENextWrap<CR>
-    nnoremap <C-a> :ALEDetail<CR>
-
   " clear highlighting
     nnoremap <silent> <leader><Space> :nohl<CR>
 
@@ -477,7 +315,6 @@
     nnoremap <silent> <leader>H <C-w>s
 
   " tags
-    nnoremap <leader>h :tselect<Space>
     let g:tagdirection = "forward"
     let g:tagprevious = ""
 
@@ -730,8 +567,3 @@
   iab opprotunity opportunity
   iab occasionaly occasionally
   iab explainations explanations
-
-" work settings
-if hostname == "avoecks-wkstn"
-  source ~/scripts/etc/vimrc
-endif

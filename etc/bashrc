@@ -1,12 +1,6 @@
 #~/.bashrc: executed by bash(1) for non-login shells.
 
 export PATH=~/DotFiles/bin:$PATH
-export auto_proxy="http://proxy.west.isilon.com/proxy.pac"
-
-export DIFFDIR=~/diffs
-export SCRIPTITY=/mnt/ssd
-export ONEFSGIT=/mnt/ssd
-export DIMENSION=work
 
 # If not running interactively, don't do anything else
 case $- in *i*) ;; *) return;; esac
@@ -56,12 +50,6 @@ _prompt() {
   echo -n "${dir_abbr}${ps1}"
 }
 
-c() { cd "$@" && ls --color;}
-
-parse_git_branch() {
-  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
-}
-
 # History
   HISTCONTROL=ignoreboth
   shopt -s histappend
@@ -94,7 +82,7 @@ parse_git_branch() {
   if [[ "$color_prompt" == yes ]]; then
     host=$(hostname | sed -e 's/localhost/home/')
     host=$(sed -e 's/wkstn-avoecks/work/' <<< "$host")
-    PS1='\[\033[01;32m\]\u@${host}\[\033[00m\] \[\033[01;36m\]$(_prompt)\[\033[00m\]$(parse_git_branch)> '
+    PS1='\[\033[01;32m\]\u@${host}\[\033[00m\] \[\033[01;36m\]$(_prompt)\[\033[00m\]> '
 
   else
     echo
@@ -112,8 +100,6 @@ parse_git_branch() {
 [[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
 [[ -f ~/DotFiles/lib/common.sh ]] && source ~/DotFiles/lib/common.sh
 
-# minio being messy
-complete -C /home/leaf/.local/bin/mc mc
-complete -C /usr/home/leaf/.local/bin/mc mc
-
 [[ -f "$HOME"/.cargo/env ]] && source "$HOME"/.cargo/env
+
+alias enzo='source ~/src/tools/qston/enzo/enzo.bash'
