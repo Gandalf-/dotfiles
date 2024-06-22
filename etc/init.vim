@@ -86,57 +86,37 @@
     let g:VimuxOrientation = "h"
     let g:VimuxHeight = "33"
 
-  " fzf
-    " Customize fzf colors to match your color scheme
-    let g:fzf_colors =
-    \ { 'fg':      ['fg', 'Normal'],
-      \ 'bg':      ['bg', 'Normal'],
-      \ 'hl':      ['fg', 'Comment'],
-      \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-      \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-      \ 'hl+':     ['fg', 'Statement'],
-      \ 'info':    ['fg', 'PreProc'],
-      \ 'border':  ['fg', 'Ignore'],
-      \ 'prompt':  ['fg', 'Conditional'],
-      \ 'pointer': ['fg', 'Exception'],
-      \ 'marker':  ['fg', 'Keyword'],
-      \ 'spinner': ['fg', 'Label'],
-      \ 'header':  ['fg', 'Comment'] }
-
     let g:fzf_action = {
       \ 'ctrl-x': 'split',
       \ 'ctrl-v': 'vsplit' }
 
   " ALE
     let g:ale_fixers = {
-    \   '*': ['remove_trailing_lines', 'trim_whitespace'],
-    \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'python' : ['autopep8', 'remove_trailing_lines', 'trim_whitespace'],
     \   'go' : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'rust' : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace']
+    \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'python' : ['ruff_format', 'isort', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'rust' : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace'],
+    \   '*': ['remove_trailing_lines', 'trim_whitespace']
     \}
-
-    let g:ale_rust_cargo_use_clippy = executable('cargo-clippy')
-    let g:ale_pattern_options = {'ShellCheck': {'ale_fixers': ['trim_whitespace']}}
-    let g:ale_fix_on_save = 1
-
-    let g:haskell_hlint_options = '-j'
 
     let g:ale_lint_on_text_changed = 'never'
     let g:ale_lint_on_save = 1
-
     let g:ale_lint_delay = 500
     let g:ale_linters = {
-      \ 'python': ['pylint', 'flake8'],
-      \ 'haskell': ['cabal_ghc', 'ghc', 'ghc_mod', 'hdevtools', 'hlint', 'stack_build', 'stack_ghc']
+      \ 'html': ['tidy'],
+      \ 'python': ['ruff', 'mypy'],
+      \ 'haskell': ['hlint', 'stack_build', 'stack_ghc']
       \ }
 
+    let g:ale_rust_cargo_use_clippy = executable('cargo-clippy')
+    let g:haskell_hlint_options = '-j'
+    let g:ale_sh_shfmt_options = '--indent 2 --binary-next-line --space-redirects'
     let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
     let g:ale_c_gcc_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
 
+    let g:ale_fix_on_save = 1
     let g:ale_set_quickfix = 1
     let g:ale_set_highlights = 0
-    let g:ale_type_map = {'flake8': {'ES': 'WS', 'E': 'W'}}
 
     highlight link ALEWarningSign Comment
     highlight link ALEWarning Comment
@@ -183,13 +163,6 @@
     set number wrap textwidth=99 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
-  " Fonts
-    if has("gui_running")
-      if has("gui_win32")
-        set guifont=Lucida_Console:h10:cANSI
-      endif
-    endif
-
   " ui autocommands
     augroup ui_commands
       autocmd!
@@ -216,9 +189,7 @@
   " Syntax, Column and cursor lines
     syntax on sync minlines=256
 
-    set colorcolumn=+1           " Handy bar so we know when lines are too long
     set synmaxcol=200            " Limit column highlights to 200 columns
-    highlight ColorColumn ctermbg=234
     highlight CursorLineNr ctermfg=yellow cterm=bold
 
   " Cursor line
