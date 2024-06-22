@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 die() { echo "$@" >&2; exit 1; }
 
@@ -17,6 +17,10 @@ config() {
   local root="$1"
   local port="$2"
 
+  local mime="/opt/homebrew/etc/nginx/mime.types"
+  [[ -f "$mime" ]] || mime=/usr/local/etc/nginx/mime.types
+  [[ -f "$mime" ]] || die "No mime.types configured"
+
   cat << EOF
 worker_processes 1;
 master_process   off;
@@ -30,9 +34,8 @@ events {
 
 http {
     log_format   logfmt '\$remote_addr [\$time_local] "\$request" \$status';
-    include      /opt/homebrew/etc/nginx/mime.types;
+    include      $mime;
     sendfile     on;
-    http2        on;
 
     add_header Pragma public;
     add_header Cache-Control "public";
@@ -86,7 +89,7 @@ main() {
   trap 'rm -f "$config"' EXIT
   config "$root" "$port" > "$config"
 
-  nginx -c "$config"
+  nginx -c "$config" -e stderr
 }
 
 main "$@"
