@@ -4,14 +4,14 @@
 
 # PATH
 
-maybe_add_path() {
+_maybe_add_path() {
   local target="$1"
   [[ $PATH =~ $target ]] || export PATH="$target":"$PATH"
 }
 
-maybe_add_path ~/.local/bin
-maybe_add_path ~/.cargo/bin
-maybe_add_path ~/dotfiles/bin
+_maybe_add_path ~/.local/bin
+_maybe_add_path ~/.cargo/bin
+_maybe_add_path ~/dotfiles/bin
 
 
 # ALIASES
@@ -20,8 +20,13 @@ function l() {
   ls -G "$@"
 }
 
-alias  ..='cd ..'
-alias ...='cd ../..'
+function ll() {
+  ls -lG "$@"
+}
+
+alias   ..='cd ..'
+alias  ...='cd ../..'
+alias ....='cd ../../..'
 
 alias make=gmake
 
