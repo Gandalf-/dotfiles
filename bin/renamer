@@ -20,20 +20,17 @@ renamer() {
 
   vim "$tmp"
 
-  (( $# != $( awk 'END { print NR }' "$tmp" ) )) && {
+  (( $# != $( wc -l "$tmp" | awk '{print $1}' ) )) && {
     bail "file lines do not match number of arguments"
   }
 
   while read -r line; do
 
-    local path; path="$( dirname "$line" )"
-    mkdir -p "$path" || bail "mkdir -p $path failed"
-
     if [[ $1 == "$line" ]]; then
       echo "leaving $line"
 
     else
-      mv -n -v "$1" "$line" ||
+      mv -n -v -- "$1" "$line" ||
         bail "mv --verbose $1 $line failed"
     fi
 
