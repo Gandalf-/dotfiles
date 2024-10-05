@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-while [[ $1 ]]; do
-  python3 ~/google_drive/code/python/spider/spider.py -d "$1" \
-    | head -n 40 \
-    | column -s$'\t' -t
-  shift
-done
