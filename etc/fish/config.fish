@@ -82,7 +82,7 @@ if not test (command -v fzf)
   end
 end
 
-set -gx FZF_DEFAULT_COMMAND 'rg -g ""'
+set -gx FZF_DEFAULT_COMMAND 'rg --files'
 set -gx FZF_DEFAULT_OPTS '--height 75% --border --cycle'
 
 # https://github.com/jethrokuan/fzf
