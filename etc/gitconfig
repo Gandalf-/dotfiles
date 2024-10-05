@@ -1,5 +1,5 @@
 [user]
-	email = austin.voecks@gmail.com
+	email = austin@anardil.net
 	name = Gandalf-
 
 [credential]
@@ -9,10 +9,13 @@
 	default = simple
 
 [core]
-	editor = vim
-	excludesFile = ~/.gitignore
+	editor = nvim
 
 [diff]
 	tool = vimdiff
 [color]
 	ui = auto
+[pull]
+	rebase = true
+[init]
+	defaultBranch = master
