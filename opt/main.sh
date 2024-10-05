@@ -6,6 +6,7 @@ replace() {
   local src="$1"
   local tgt="$2"
   rm -f "$tgt"
+  mkdir -p "$( dirname "$tgt" )"
   ln -s "$src" "$tgt"
 }
 

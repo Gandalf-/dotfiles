@@ -49,13 +49,12 @@ bind 'set mark-symlinked-directories on'
 
 _terse_pwd() {
   # /home/leaf/google_drive/python -> ~/g/c/python
-
-  sed \
-    -e 's/\([^\/]\)[^\/]*\//\1\//g' \
-    <<< "${PWD/$HOME/\~}"
+  printf \
+    '%s>' \
+    "$( sed -e 's/\([^\/]\)[^\/]*\//\1\//g' <<< "${PWD/$HOME/\~}" )"
 }
 
-export PS1='\u@\h $( _terse_pwd )> '
+export PS1='\u@\h \[\033[38;5;6m\]$( _terse_pwd )\[\e[0m\] '
 
 # colored man pages
 export LESS_TERMCAP_mb=$'\E[01;31m'
