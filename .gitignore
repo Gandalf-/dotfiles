@@ -1,9 +1,6 @@
-bin/d
-bin/wizard
 etc/fish/fish_variables
 *.nfs*
 *.pyc
 .coverage
 *.o
-devbot
 .DS_Store
