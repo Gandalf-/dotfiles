@@ -1,9 +1,0 @@
-# vim: set syntax=bash
-
-if test "$wiki_loc"
-  cd (dirname "$wiki_loc")
-  vim "$wiki_loc"; end
-
-else
-  echo "Vim Wiki not configured for this system!"
-end

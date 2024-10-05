@@ -1,12 +1,13 @@
 # dotfiles
 
-```
-sudo apt install build-essential libncurses5 libevent-dev silversearcher-ag
+Hello there! This is my personal collection of configuration files and scripts. Feel free to use
+them as you see fit. They're cross-platform for MacOS, FreeBSD, and Linux.
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-cargo install fd-find
-cargo install --locked bat
+## Installation
 
-w install fish
-w install fish-dep
+To install etc/ configuration files:
 ```
+make
+```
+
+To use bin/ executables, add bin/ to your PATH.
