@@ -95,8 +95,17 @@ end
 set -gx FZF_PREVIEW_DIR_CMD 'ls -h --color=always'
 
 # https://github.com/PatrickF1/fzf.fish
-test (command -v exa)
-  and set -gx fzf_preview_dir_cmd exa --all --long
+if test (command -v exa)
+  set -gx fzf_preview_dir_cmd exa --all --long
+end
+
+function l
+  command l $argv
+end
+
+function ll
+  command ll $argv
+end
 
 fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 

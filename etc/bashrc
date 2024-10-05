@@ -16,14 +16,6 @@ _maybe_add_path ~/dotfiles/bin
 
 # ALIASES
 
-function l() {
-  ls -G "$@"
-}
-
-function ll() {
-  ls -lG "$@"
-}
-
 alias   ..='cd ..'
 alias  ...='cd ../..'
 alias ....='cd ../../..'

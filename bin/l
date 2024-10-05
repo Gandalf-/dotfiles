@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if command -v exa >/dev/null; then
+  exa --group-directories-first "$@"
+else
+  ls --color=always "$@"
+fi
