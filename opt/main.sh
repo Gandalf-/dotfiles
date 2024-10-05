@@ -16,6 +16,7 @@ install() {
   replace "$PWD"/etc/tmux.conf    ~/.tmux.conf
   replace "$PWD"/etc/init.vim     ~/.config/nvim/init.vim
   replace "$PWD"/etc/init.vim     ~/.vimrc
+  replace "$PWD"/etc/fish         ~/.config/fish
 }
 
 "$@"
