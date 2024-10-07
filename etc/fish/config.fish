@@ -22,8 +22,6 @@ test -d ~/Documents/dotfiles
 test -d ~/.local/bin/
   and fish_add_path ~/.local/bin
 
-set --erase fish_user_paths
-
 # work
 test -d /opt/qumulo/toolchain/bin
   and fish_add_path /opt/qumulo/toolchain/bin
@@ -76,13 +74,11 @@ test -e ~/.pythonrc
 
 # FZF
 
-if not test (command -v fzf)
-  if test -e ~/.vim/bundle/fzf.vim/bin/fzf
-    fish_add_path ~/.vim/bundle/fzf.vim/bin
+if test -e ~/.vim/bundle/fzf.vim/bin/fzf
+  fish_add_path ~/.vim/bundle/fzf.vim/bin
 
-  else if test -e ~/.vim/bundle/fzf/bin/fzf
-    fish_add_path ~/.vim/bundle/fzf/bin
-  end
+else if test -e ~/.vim/bundle/fzf/bin/fzf
+  fish_add_path ~/.vim/bundle/fzf/bin
 end
 
 set -gx FZF_DEFAULT_COMMAND 'rg --files'

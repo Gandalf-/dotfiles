@@ -87,7 +87,7 @@
     let g:ale_fixers = {
     \   '*'      : ['remove_trailing_lines', 'trim_whitespace'],
     \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'python' : ['remove_trailing_lines', 'trim_whitespace', 'ruff'],
+    \   'python' : ['ruff', 'ruff_format', 'remove_trailing_lines', 'trim_whitespace'],
     \   'go'     : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
     \   'rust'   : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace'],
     \   'c'      : ['clang-format', 'remove_trailing_lines', 'trim_whitespace'],
@@ -98,9 +98,11 @@
     let g:ale_lint_on_save = 1
     let g:ale_lint_delay = 500
     let g:ale_linters = {
-      \ 'html': ['tidy'],
-      \ 'python': ['ruff', 'mypy'],
-      \ 'haskell': ['hlint', 'stack_build', 'stack_ghc']
+      \ 'html'   : ['tidy'],
+      \ 'python' : ['ruff', 'mypy'],
+      \ 'haskell': ['hlint', 'stack_build', 'stack_ghc'],
+      \ 'c'      : [],
+      \ 'cpp'    : []
       \ }
 
     let g:ale_rust_cargo_use_clippy = executable('cargo-clippy')
@@ -125,7 +127,7 @@
 
   " Search
     nnoremap \ :Rg<SPACE>
-    vnoremap \ :<C-u>Rg <C-r><C-w> <CR>
+    vnoremap \ :<C-u>Rg <C-r><C-w><CR>
 
     set grepprg=rg\ --column
     set grepformat=%f:%l:%c%m
