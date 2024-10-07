@@ -23,7 +23,7 @@
     let g:ale_fixers = {
     \   '*'      : ['remove_trailing_lines', 'trim_whitespace'],
     \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'python' : ['remove_trailing_lines', 'trim_whitespace', 'ruff_format'],
+    \   'python' : ['remove_trailing_lines', 'trim_whitespace', 'ruff'],
     \   'go'     : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
     \   'rust'   : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace'],
     \   'c'      : ['clang-format', 'remove_trailing_lines', 'trim_whitespace'],
@@ -62,6 +62,10 @@
     let g:ale_sign_error = 'X' " '✘'
     let g:ale_sign_warning = '>' " '▶'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+
+  " Search
+    nnoremap \ :Rg<SPACE>
+    vnoremap \ :<C-u>Rg <C-r><C-w> <CR>
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => UI
