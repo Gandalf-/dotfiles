@@ -6,26 +6,12 @@
 #   commonly useful functions across all scripts
 
 
-# globals used by this libary
-BROWSER=''
 DEBUG=${DEBUG:-0}
 PLATFORM="$(uname)"
 export PLATFORM
 
 green="\033[01;32m"
 normal="\033[00m"
-
-
-# database functions
-db::get() {
-  # variable name -> [keys] -> ()
-  #
-  # db::get 'value' some keys that produce value
-
-  local variable="$1"
-  shift
-  mapfile -t "${variable?}" < <(d "$@")
-}
 
 
 # git functions
@@ -123,28 +109,6 @@ common::sleep() {
 }
 
 
-common::pip() {
-
-  common::do python3 -m pip "$*"
-}
-
-
-common::verify-global() {
-
-  # string -> () || exit
-  #
-  # check if a variable is defined
-
-  local global="$1"
-
-  [[ ${!global} ]] ||
-    common::error "$global not defined in ~/.wizardrc.
-
-  run \"wizard help ${global//_/-}\" for more information
-  "
-}
-
-
 common::is-integer() {
 
   # string -> exit code
@@ -179,48 +143,6 @@ common::dir-exists() {
   # check if a directory exists
 
   [[ -d "$1" ]]
-}
-
-
-common::inplace-file-op() {
-
-  # file name -> command string -> exit code
-  #
-  # common::inplace-file-op words.txt "grep -o . | sort | uniq -c"
-
-  local file="$1"; shift
-  local copy="$file".copy
-  local ops="$*"
-
-  mv "$file" "$copy"
-  eval "cat $copy | $ops > $file"
-  local code=$?
-  rm "$copy"
-  return $code
-}
-
-
-common::check-network() {
-
-  # exit code
-
-  common::verify-global "DNSSERVER"
-  nc -w 1 -z "$DNSSERVER" 53 >/dev/null 2>&1
-}
-
-
-common::open-link() {
-
-  # url -> ()
-
-  common::verify-global "BROWSER"
-  "$BROWSER" "$1" 2>/dev/null >/dev/null &
-}
-
-
-common::open-file() {
-
-  "${EDITOR:-vim}" "$@"
 }
 
 
@@ -372,74 +294,6 @@ common::mmap() {
 }
 
 
-common::rucmap() {
-
-  # restricted unordered concurrent map
-
-  local size="$1"
-  local running=0
-  shift
-
-  local __items=()
-  local __item
-  while read -r __item; do
-    __items+=( "$__item" )
-  done
-
-  [[ ${__items[*]} ]] || exit 1
-
-  for __item in "${__items[@]}"; do
-    "$@" "$__item" &
-
-    (( running++ ))
-    while (( running > size )); do
-      sleep 0.1
-      running="$( jobs -p | wc -l )"
-    done
-  done
-
-  wait
-}
-
-
-common::rocmap() {
-
-  # restricted ordered concurrent map
-
-  local size="$1"
-  local running=0
-  shift
-
-  local __items=()
-  local __item
-  while read -r __item; do
-    __items+=( "$__item" )
-  done
-
-  local __tmpdir=/dev/shm; [[ -e "$__tmpdir" ]] || __tmpdir=/tmp
-  local __tmps=()
-  for __item in "${__items[@]}"; do
-    __tmp="$( mktemp "$__tmpdir"/mmap.XXXXXXXXXXXXXXXXXXXXXX )"
-    __tmps+=( "$__tmp" )
-
-    "$@" "$__item" > "$__tmp" 2>&1 &
-
-    (( running++ ))
-    while (( running > size )); do
-      sleep 0.1
-      running="$( jobs -p | wc -l )"
-    done
-  done
-
-  wait
-
-  for __tmp in "${__tmps[@]}"; do
-    cat "$__tmp"
-    rm -f "$__tmp"
-  done
-}
-
-
 common::multi-menu() {
 
   fzf --reverse --cycle --multi "$@"
@@ -471,18 +325,6 @@ common::debug() {
   # common::debug echo this is debug mode
 
   (( "$DEBUG" )) && eval "$*"
-}
-
-
-common::clone() {
-  # clone a repository to a location
-
-  local target="${1?target required}"
-  local location="${2?location required}"
-
-  [[ -d "$location" ]] || common::error "location doesn't exist!"
-
-  common::do git clone --depth 1 "$target" "$location"
 }
 
 
@@ -574,7 +416,7 @@ common::wait-until() {
   #
   # common::wait-until '[[ $RANDOM == 42 ]]'
 
-  while eval "$@" >/dev/null 2>/dev/null; do
+  while "$@" >/dev/null 2>/dev/null; do
     sleep 1
     echo -n "."
   done
@@ -612,21 +454,21 @@ common::do() {
 
   elif (( "$QUIET" )); then
     # don't print command, run, check for errors
-    eval "${@/ \"\"/}" \
+    eval "${*/ \"\"/}" \
       || common::color-error "error running \"$*\""
 
   elif (( "$SILENT" )); then
     # don't print command or output, check for error
-    eval "${@/ \"\"/}" >/dev/null 2>/dev/null \
+    eval "${*/ \"\"/}" >/dev/null 2>/dev/null \
       || common::color-error "error running \"$*\""
 
   elif (( "$IGNORE" )); then
     # don't print command, don't check for error
-    eval "${@/ \"\"/}"
+    eval "${*/ \"\"/}"
 
   else
     common::echo "$*"
-    eval "${@/ \"\"/}" \
+    eval "${*/ \"\"/}" \
       || common::color-error "error running \"$*\""
   fi
 }
@@ -675,229 +517,4 @@ common::choice() {
 
   items=( "$@" )
   echo "${items[$RANDOM % ${#items[@]} ]}"
-}
-
-
-common::try-json-parse() {
-  # try to parse the stdin stream as json, otherwise just print it
-
-  if common::dir-exists /dev/shm; then
-    local tmp=/dev/shm/
-  else
-    local tmp=/tmp/
-  fi
-
-  tmp+=json-parse-$RANDOM$RANDOM$RANDOM
-  cat - > "$tmp"
-
-  python -m json.tool < "$tmp" 2>/dev/null || cat "$tmp"
-
-  rm "$tmp"
-}
-
-common::quick() {
-
-  common::optional-help "$1" "(--global) (--add|--del|--edit) [name] [command]
-
-  manage and run dynamic commands specific to the current context. commands are
-  stored in the remote database accessed with 'd'.
-
-  --add    <name> <command ...> create a new quick command
-  --del    <name>               delete a quick command
-  --edit   <name>               edit a quick command with \$EDITOR
-  --rename <old> <new>          rename a quick command
-  --copy   <context>            copy quick commands from somewhere else
-  <name ...>                    run one or more quick commands
-  ''                            lists currently available quick commands
-
-  q --add b stack build
-  q b
-  q
-  q --del b
-  "
-  [[ $QUICK_CONTEXT ]] ||
-    common::error "programming error: \$QUICK_CONTEXT not defined"
-
-  local context; context="$( d current-context )"
-  local global=''
-  local verbose=0
-
-  while [[ $1 ]]; do
-    case "$1" in
-      -g|--global)
-        context="$QUICK_CONTEXT"
-        global='global '
-        shift
-        ;;
-      -v|--verbose)
-        verbose=1
-        shift
-        ;;
-      *)
-        break
-        ;;
-    esac
-  done
-
-  case "$1" in
-    -a|--add)
-      local action=add
-      local name="$2"
-      local cmd="${*:3}"
-      [[ $name ]] || common::error "no name provided"
-      [[ $cmd  ]] || common::error "no command provided"
-      ;;
-
-    -d|--del)
-      local action=del
-      local name="$2"
-      [[ $name ]] || common::error "no name provided"
-      ;;
-
-    -e|--edit)
-      local action=edit
-      local name="$2"
-      [[ $name ]] || common::error "no name provided"
-      ;;
-
-    -c|--copy)
-      local action=copy
-      local other="${*:2}"
-      [[ $other ]] || common::error "no other context provided"
-      ;;
-
-    -r|--rename)
-      local action=rename
-      local old="$2"
-      local new="$3"
-      [[ $old && $new ]] || common::error "<old> and <new> must be provided"
-      ;;
-
-    --clone)
-      local action=clone
-      local name="$2"
-      [[ $name ]] || common::error "no name provided"
-      ;;
-
-    *)
-      # this doesn't match an empty string
-      action=run
-      ;;
-  esac
-
-  [[ $1 ]] || action=list
-
-  case $action in
-    add)
-      d "$context" quick "$QUICK_CONTEXT" "$name" = "$cmd"
-      ;;
-
-    del)
-      d "$context" quick "$QUICK_CONTEXT" "$name" --del
-      ;;
-
-    edit)
-      local tmp; tmp="$( mktemp )"
-      d "$context" quick "$QUICK_CONTEXT" "$name" > "$tmp"
-
-      "${EDITOR:-vi}" "$tmp"
-
-      d "$context" quick "$QUICK_CONTEXT" "$name" = "$( cat "$tmp" )"
-      rm "$tmp"
-      ;;
-
-    copy)
-      copy() {
-        local name="$1"
-        d "$context" quick "$QUICK_CONTEXT" "$name" = "$(
-          d "$other" quick "$QUICK_CONTEXT" "$name"
-        )"
-      }
-
-      d "$other" quick "$QUICK_CONTEXT" --keys \
-        | common::multi-menu \
-          --preview "d '$other' quick '$QUICK_CONTEXT' {}" \
-          --preview-window up \
-        | common::map copy
-      ;;
-
-    rename)
-      local cmd=/tmp/quick-command
-      trap 'rm -f $cmd' EXIT
-
-      d "$context" quick "$QUICK_CONTEXT" "$old" --edit > "$cmd"
-      d "$context" quick "$QUICK_CONTEXT" "$new" --set "$( tr -d '\n' < "$cmd" )"
-      d "$context" quick "$QUICK_CONTEXT" "$old" --del
-      ;;
-
-    clone)
-      assign() {
-        local source="$1"
-        d "$context" quick "$QUICK_CONTEXT" "$name" = "$(
-          d "$context" quick "$QUICK_CONTEXT" "$source"
-        )"
-      }
-
-      d "$context" quick "$QUICK_CONTEXT" --keys \
-        | common::single-menu \
-          --preview "d !current-context quick '$QUICK_CONTEXT' {}" \
-          --preview-window up \
-        | common::map assign
-
-      common::quick --edit "$name"
-      ;;
-
-    list)
-      d "$context" quick "$QUICK_CONTEXT" | python -c '
-import json
-import sys
-
-verbose = sys.argv[1] == "1"
-def tidy(s):
-  if not verbose and len(s) > 90:
-    s = s[:87] + "..."
-  return s
-
-try:
-  data = json.load(sys.stdin)
-except:
-  print("no quick commands available for '"$QUICK_CONTEXT"' namespace")
-  sys.exit(0)
-
-print("")
-for k, v in sorted(data.items()):
-  if isinstance(v, list):
-    print("{k: >10}".format(k=k))
-    for e in v:
-      print("{k: >10}   {e}".format(k="", e=tidy(e)))
-    print("")
-  else:
-    print("{k: >10}   {v}".format(k=k, v=tidy(v)))
-print("")
-      ' "$verbose"
-      ;;
-
-    run)
-      # save the context ahead of time instead of dereferencing at execution
-      # time, in case we switch contexts while running a long string of commands
-      find_and_run() {
-
-        local name="$1"
-        local cmd; cmd="$(
-          d "$context" quick "$QUICK_CONTEXT" "$name" | grep . ||
-            d "$QUICK_CONTEXT" quick "$QUICK_CONTEXT" "$name"
-        )"
-        [[ $cmd ]] ||
-          common::error "couldn't find a command for $name in $global$QUICK_CONTEXT namespace"
-
-        common::echo "$cmd"
-        eval "$cmd"
-      }
-
-      common::for "$@" | common::map find_and_run
-      ;;
-
-    *)
-      common::error "programming error"
-  esac
 }

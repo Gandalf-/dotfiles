@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-#shellcheck disable=SC2009
-ps aux | grep -i "$1" | grep -v "grep $1";

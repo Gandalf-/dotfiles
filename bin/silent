@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-if [[ "$*" ]]; then
-  "$@" >/dev/null 2>&1
-
-else
-  cat - >/dev/null 2>&1
-fi

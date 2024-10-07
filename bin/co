@@ -1,9 +1,0 @@
-#!/bin/bash
-
-root="$(dirname "${BASH_SOURCE[0]}")"/..
-# shellcheck disable=SC1090
-source "${root}/lib/common.sh"
-
-cmd="common::$1"
-shift
-eval "$cmd" "$@"
