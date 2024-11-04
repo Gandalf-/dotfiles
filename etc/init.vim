@@ -10,7 +10,6 @@
   set title
   set langmenu=en_US      " Sets languages
   set shell=bash          " So vim plays nice with fish
-  set fileformat=unix     " No crazy DOS line endings please
   set history=300         " Sets how many lines of history VIM has to remember
   set autoread            " Pick up changes from outside this vim session
   set fileformat=unix     " Use Unix line endings
@@ -22,7 +21,7 @@
   set encoding=utf-8 termencoding=utf-8 fileencodings=utf-8
   set hidden nobackup nowritebackup noswapfile
   set ttimeout ttimeoutlen=20
-  set visualbell
+  set tags=./tags;,tags;
 
   nnoremap <SPACE> <Nop>
   let g:mapleader = " "
@@ -71,9 +70,6 @@
     catch
     endtry
     filetype plugin indent on
-
-    let g:markdown_fenced_languages = ['haskell', 'c']
-    set tags=./tags;,tags;
 
   " vimux
     let g:VimuxOrientation = "h"
@@ -165,26 +161,23 @@
     syntax on sync minlines=256
     set colorcolumn=+1           " Handy bar so we know when lines are too long
     set synmaxcol=200            " Limit column highlights to 200 columns
-    highlight ColorColumn  guibg=#666666 ctermbg=lightgrey
-    highlight CursorLineNr guibg=#666666 ctermbg=lightgrey cterm=bold
+    highlight ColorColumn  guibg=#666666
 
   " Cursor line
     set cursorline              " Handy line so we know where we are
-    highlight CursorLine   guibg=#666666 ctermbg=lightgrey cterm=NONE
+    highlight CursorLine   guibg=#666666
+
+  " Line numbers
+    highlight       LineNr guifg=yellow
+    highlight CursorLineNr guifg=yellow guibg=#666666 gui=bold
 
   " Window split
     set fillchars+=vert:│
-    highlight VertSplit    guibg=black guifg=black ctermbg=black ctermfg=black
-
-  " Colors
-    highlight Pmenu      ctermbg=245
-    highlight PmenuSel   ctermbg=240
-    highlight PmenuSBar  ctermbg=238
-    highlight PmenuThumb ctermbg=234
-    highlight clear SignColumn
+    highlight VertSplit    guifg=black guibg=#333333 gui=bold
 
   " Status line
-    highlight StatusLine ctermfg=blue ctermbg=black
+    highlight StatusLine   guifg=black guibg=white     gui=bold
+    highlight StatusLineNC guifg=black guibg=lightgrey
     set statusline=%f    " Path.
     set statusline+=%m   " Modified flag.
     set statusline+=%r   " Readonly flag.
@@ -194,18 +187,11 @@
 
     try
       function! LinterStatus() abort
-          let l:counts = ale#statusline#Count(bufnr(''))
-
-          let l:all_errors = l:counts.error + l:counts.style_error
+          let l:counts         = ale#statusline#Count(bufnr(''))
+          let l:all_errors     = l:counts.error + l:counts.style_error
           let l:all_non_errors = l:counts.total - l:all_errors
-
-          return l:counts.total == 0 ? '' : printf(
-          \   '%2dw %2de',
-          \   all_non_errors,
-          \   all_errors
-          \)
+          return l:counts.total == 0 ? '' : printf('%2dw %2de', all_non_errors, all_errors)
       endfunction
-
       set statusline+=%{LinterStatus()}
     catch
     endtry
@@ -288,7 +274,6 @@
     set foldnestmax=10
     set nofoldenable
     set foldlevel=2
-    set foldcolumn=1
 
   " Hit enter in the file browser to open the selected
   " file with :vsplit to the right of browser
@@ -388,12 +373,6 @@
     vnoremap < <gv
     vnoremap > >gv
 
-  " shell + tmux pane commands
-    function! Run_Command(command)
-      execute "silent !tmux send-keys -t right '" . a:command . "' C-m"
-      execute "redraw!"
-    endfunction
-
   " toggling
     nnoremap <silent> <leader>L :set list!<CR>
     nnoremap <silent> <leader>z :set spell!<CR>
@@ -402,11 +381,9 @@
       setlocal nu!
       if &paste
         setlocal nopaste
-        setlocal foldcolumn=1
         :ALEEnableBuffer
       else
         setlocal paste
-        setlocal foldcolumn=0
         :ALEDisableBuffer
       endif
     endfunction
