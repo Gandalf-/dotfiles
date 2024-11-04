@@ -134,6 +134,7 @@
   " General
     colorscheme desert
     set t_Co=256
+    set termguicolors
     set number wrap textwidth=99 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
 
