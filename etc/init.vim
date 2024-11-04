@@ -105,9 +105,7 @@
       \ 'cpp'    : []
       \ }
 
-    let g:ale_rust_cargo_use_clippy = executable('cargo-clippy')
     let g:haskell_hlint_options = '-j'
-    let g:ale_sh_shfmt_options = '--indent 2 --binary-next-line --space-redirects'
     let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
     let g:ale_c_gcc_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
 
@@ -163,29 +161,27 @@
   " Performance!?
     set lazyredraw ttyfast
 
-  " Popup menu
-    highlight Pmenu      ctermbg=92 guibg=gray ctermfg=white guifg=white
-    highlight PmenuSel   ctermbg=92 guibg=gray ctermfg=white guifg=white
-    highlight PmenuSbar  ctermbg=92 guibg=gray ctermfg=white guifg=white
-    highlight PmenuThumb ctermbg=92 guibg=gray ctermfg=white guifg=white
-
-    highlight SignColumn ctermbg=0
-
   " Syntax, Column and cursor lines
     syntax on sync minlines=256
-
     set colorcolumn=+1           " Handy bar so we know when lines are too long
     set synmaxcol=200            " Limit column highlights to 200 columns
-    highlight ColorColumn ctermbg=234
-    highlight CursorLineNr ctermfg=yellow cterm=bold
+    highlight ColorColumn  guibg=#666666 ctermbg=lightgrey
+    highlight CursorLineNr guibg=#666666 ctermbg=lightgrey cterm=bold
 
   " Cursor line
     set cursorline              " Handy line so we know where we are
-    highlight CursorLine cterm=NONE ctermbg=234 ctermfg=NONE
+    highlight CursorLine   guibg=#666666 ctermbg=lightgrey cterm=NONE
 
   " Window split
     set fillchars+=vert:│
-    highlight VertSplit cterm=NONE ctermbg=0 ctermfg=NONE
+    highlight VertSplit    guibg=black guifg=black ctermbg=black ctermfg=black
+
+  " Colors
+    highlight Pmenu      ctermbg=245
+    highlight PmenuSel   ctermbg=240
+    highlight PmenuSBar  ctermbg=238
+    highlight PmenuThumb ctermbg=234
+    highlight clear SignColumn
 
   " Status line
     highlight StatusLine ctermfg=blue ctermbg=black
@@ -216,13 +212,6 @@
 
     set statusline+=\    " Space.
     set statusline+=\ %4l\ %3c\ %3p%%
-
-  " Colors
-    highlight Pmenu      ctermbg=245
-    highlight PmenuSel   ctermbg=240
-    highlight PmenuSBar  ctermbg=238
-    highlight PmenuThumb ctermbg=234
-    highlight clear SignColumn
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
