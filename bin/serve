@@ -4,7 +4,8 @@ die() { echo "$@" >&2; exit 1; }
 
 addresses() {
   ifconfig \
-    | awk '(/inet / && /broadcast/) || (/secured/ && !/scopeid/) { print $2 }'
+    | awk '(/inet / && /broadcast/) || (/secured/ && !/scopeid/) { print $2 }' \
+    | tac
 }
 
 host() {

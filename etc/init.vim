@@ -82,6 +82,7 @@
   " ALE
     let g:ale_fixers = {
     \   '*'      : ['remove_trailing_lines', 'trim_whitespace'],
+    \   'html'   : ['tidy'],
     \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
     \   'python' : ['ruff', 'ruff_format', 'remove_trailing_lines', 'trim_whitespace'],
     \   'go'     : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],

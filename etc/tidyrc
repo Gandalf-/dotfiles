@@ -1,0 +1,5 @@
+indent: auto
+indent-spaces: 4
+wrap: 100
+bare: yes
+tidy-mark: no
