@@ -67,10 +67,9 @@ EOF
 }
 
 root-port() {
-  local root; root="$( realpath "$1" )"
-  local port; port="$(
-    md5sum <<< "$root" | tr -cd '[:digit:]' | cut -c 1-3 | sed 's/^0*//'
-  )"
+  local root port
+  read -r root < <( realpath "$1" )
+  read -r port < <( md5sum <<< "$root" | tr -cd '[:digit:]' | cut -c 1-3 | sed 's/^0*//' )
   (( port += 8000 ))
   echo "$port"
 }
@@ -79,18 +78,21 @@ main() {
   local root="${1:-$PWD}"
   [[ -d "$root" ]] || die "No such directory: $root"
 
-  local host; host="$( host )"
+  local host port config
+  read -r host < <( host )
   [[ -n "$host" ]] || host="[::]"
+  read -r port < <( root-port "$root" )
 
-  local port; port="$( root-port "$root" )"
+  local uri="http://$host:$port"
+  command -v open >/dev/null && { sleep 0.5; open -u "$uri"; } &
+
   nc -z localhost "$port" 2>/dev/null && {
-    echo "Already serving on http://$host:$port"
+    echo "Already serving on $uri"
     return
   }
 
-  echo "Serving on http://$host:$port"
-
-  config="$( mktemp )"
+  echo "Serving on $uri"
+  read -r config < <( mktemp )
   trap 'rm -f "$config"' EXIT
   config "$root" "$port" > "$config"
 
