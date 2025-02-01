@@ -24,4 +24,12 @@ install() {
   replace "$PWD"/etc/bashrc       ~/.bashrc
 }
 
+lint() {
+  mapfile -t scripts < <(
+    find ./* -type f -exec file {} \; \
+      | awk -F: '/shell script/ { print $1 }' \
+  )
+  shellcheck "${scripts[@]}"
+}
+
 "$@"
