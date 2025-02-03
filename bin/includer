@@ -4,14 +4,22 @@
 
 set -e
 
+die() {
+  echo "$1" >&2
+  exit 1
+}
+
 main() {
   local where="$1"
   local sink="$2"
+  [[ -d "$where" ]] || die "Directory not found: $where"
+  [[ -f "$sink" ]] || die "File not found: $sink"
   shift 2
 
   local replacements=()
   while [[ $1 ]]; do
     local src="$1"
+    [[ -f "$src" ]] || die "File not found: $src"
 
     local sum; sum="$( md5sum "$src" | cut -c 1-10 )"
     local name="${src%.*}"
