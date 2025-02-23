@@ -2,78 +2,64 @@
 
 set -e
 
-root="$(dirname "${BASH_SOURCE[0]}")"/..
-# shellcheck disable=SC1091
-source "${root}/lib/common.sh"
-
-[[ -z $1 ]] && { g --help; exit 1; }
-
-export CONFIRM=0
-export QUIET=1
-export AUTO=1
+[[ $1 ]] || { g --help; exit 1; }
 
 while [[ $1 ]]; do
   case "$1" in
     # status
-    s)  common::do "git status" ;;
-    sf) common::do "git status -uno" ;;
-    bv) common::do "git branch -vv" ;;
-    rv) common::do "git remote -vv" ;;
+    s)  git status      ;;
+    sf) git status -uno ;;
+    bv) git branch -vv  ;;
+    rv) git remote -vv  ;;
+
+    # diffing
+    d)  git diff --ws-error-highlight=all ;;
+    dc) git diff --ws-error-highlight=all --cached ;;
+    dh) git diff --ws-error-highlight=all HEAD~"${2:-1}" ;;
 
     # log
-    l)  common::do git log --color=always \| head -n 20 ;;
-    lo) common::do git log --oneline \| cut -c 1-120 \| head -n 10 ;;
+    l)  git log --color=always | awk '/commit/ { n++ } n > 4 { exit } /.*/ { print }' ;;
+    lo) git log --oneline | cut -c 1-120 | head -n 10 ;;
     ll)
       fmt="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
-      common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit
+      git log --graph --pretty=format:"'$fmt'" --abbrev-commit
       ;;
 
     # committing
-    c)  common::do "git commit" ;;
-    ca) common::do "git commit --amend" ;;
-    cn) common::do "git commit --amend --no-edit" ;;
+    c)  git commit                   ;;
+    ca) git commit --amend           ;;
+    cn) git commit --amend --no-edit ;;
+    cm) git commit -m "${2:?g cm [message]}"; shift ;;
 
     # checkout
-    co) common::do "git checkout \"$2\""; shift ;;
-    cb) common::do "git checkout -b \"${2:?g cb [branch]}\""; shift ;;
+    a)  git add -A :/                                ;;
+    rc) git rebase --continue                        ;;
+    co) git checkout    "${2:?g co [object]}"; shift ;;
+    cb) git checkout -b "${2:?g cb [branch]}"; shift ;;
 
-    # branching
-    a)  common::do "git add -A :/" ;;
-    f)  common::do "git fetch --all" ;;
-    rc) common::do "git rebase --continue" ;;
-    cm) common::do "git commit -m \"${2:?g cm [message]}\""; shift ;;
-
-    # pulling
-    pm) common::do "git pull \"${2%-}\""          ; shift ;;
-    pl) common::do "git pull --no-edit \"${2%-}\""; shift ;;
-
-    # pushing
-    ph)  common::do "git push \"${2%.}\""; shift ;;
-    pf)  common::do "git push --force \"${2%.}\""; shift ;;
+    # updating
+    f)  git fetch --all    ;;
+    pl) git pull --no-edit ;;
+    ph) git push           ;;
+    pf) git push --force   ;;
     pu)
       branch="$( git rev-parse --abbrev-ref HEAD )"
-      common::do "git push --set-upstream \"${2:?g pu [remote]}\" $branch"
+      git push --set-upstream "${2:?g pu [remote]}" "$branch"
       shift
       ;;
 
     # other
-    cc) common::do "git clean -nfd"
-        common::confirm "Continue?"
-        common::do "git clean -fd"
+    cc) git clean -nfd
+        read -r -p "Continue? [y/N] " response
+        [[ $response != "y" ]] && exit 0
+        git clean -fd
         ;;
 
-    # diffing
-    d)  common::do git diff --ws-error-highlight=all ;;
-    dc) common::do git diff --ws-error-highlight=all --cached ;;
-    dh) common::do git diff --ws-error-highlight=all HEAD~"${2:-1}" ;;
-
-    '')
-      exit 0
-      ;;
+    '') exit 0 ;;
 
     *)
-      echo "g --help
-    # status
+      echo "\
+Status
     s  : status
     sf : status -uno
     bv : branch -vv
@@ -82,36 +68,31 @@ while [[ $1 ]]; do
     dc : diff --cached
     dh : diff HEAD~[number of commits]
 
-    # logging
+Logging
     l  : log
-    lo : log -oneline
+    lo : log --oneline
     ll : log graph
 
-    # committing
+Committing
     c  : commit
     ca : commit --amend
     cn : commit --amend --no-edit
+    cm : commit -m [message]
 
-    # checkout
+Branching
+    a  : add
+    rc : rebase --continue
     co : checkout [branch]
     cb : checkout -b [branch]
 
-    # branching
-    a  : add
+Updating
     f  : fetch
-    rc : rebase --continue
-    cm : commit -m [message]
-
-    # pulling
-    pm : pull [remote]
-    pl : pull --no-edit [remote]
-
-    # pushing
-    ph : push [remote]
-    pf : push --force [remote]
+    pl : pull --no-edit
+    ph : push
+    pf : push --force
     pu : push --set-upstream [remote]
 
-    # other
+Other
     cc : clean -nfd, confirm, clean -fd
     "
   esac
