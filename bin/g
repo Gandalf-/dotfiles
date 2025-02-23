@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-# g
-#   super git wrapper
+set -e
 
 root="$(dirname "${BASH_SOURCE[0]}")"/..
-# shellcheck disable=SC1090
+# shellcheck disable=SC1091
 source "${root}/lib/common.sh"
 
 [[ -z $1 ]] && { g --help; exit 1; }
@@ -12,20 +11,22 @@ source "${root}/lib/common.sh"
 export CONFIRM=0
 export QUIET=1
 export AUTO=1
-fmt="\
-%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
 
 while [[ $1 ]]; do
   case "$1" in
-    !)  CONFIRM=1; AUTO=0 ;;
-
     # status
     s)  common::do "git status" ;;
     sf) common::do "git status -uno" ;;
+    bv) common::do "git branch -vv" ;;
+    rv) common::do "git remote -vv" ;;
 
+    # log
     l)  common::do git log --color=always \| head -n 20 ;;
     lo) common::do git log --oneline \| cut -c 1-120 \| head -n 10 ;;
-    ll) common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit ;;
+    ll)
+      fmt="%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset"
+      common::do git log --graph --pretty=format:"'$fmt'" --abbrev-commit
+      ;;
 
     # committing
     c)  common::do "git commit" ;;
@@ -35,57 +36,23 @@ while [[ $1 ]]; do
     # checkout
     co) common::do "git checkout \"$2\""; shift ;;
     cb) common::do "git checkout -b \"${2:?g cb [branch]}\""; shift ;;
-    cl) common::do \
-      "git checkout ${2:?g cn [remote] [local]} -b ${3:?g cn [remote] [local]}"
-      shift; shift ;;
-    cf)
-      branch="$(
-        git branch -q \
-          | fzf)"
-      common::required-help "$branch" "g cf [branch]"
-      common::do git checkout "$branch"; shift
-      ;;
-    cs)
-      branch="$(
-        git branch -q \
-          | grep -i "$2" \
-          | xargs \
-          | cut -f1 -d' ')"
-      common::required-help "$branch" "g cs [branch]"
-      common::do git checkout "$branch"; shift
-      ;;
 
     # branching
     a)  common::do "git add -A :/" ;;
-    bv) common::do "git branch -vv" ;;
-    rv) common::do "git remote -vv" ;;
     f)  common::do "git fetch --all" ;;
-    rh) common::do "git reset --hard HEAD" ;;
-    ri) common::do "git rebase -i \"$2\""; shift ;;
     rc) common::do "git rebase --continue" ;;
-    hc) common::do "git cherry-pick --continue" ;;
     cm) common::do "git commit -m \"${2:?g cm [message]}\""; shift ;;
-    m)  common::do "git merge \"${2%-}\""    ; shift ;;
 
     # pulling
     pm) common::do "git pull \"${2%-}\""          ; shift ;;
     pl) common::do "git pull --no-edit \"${2%-}\""; shift ;;
 
     # pushing
-    ph) common::do "git push \"${2%.}\""; shift ;;
+    ph)  common::do "git push \"${2%.}\""; shift ;;
     pf)  common::do "git push --force \"${2%.}\""; shift ;;
-    pfr) common::do "git push --force \"$2\" \"$3\""; shift 2;;
-    phr) common::do "git push \"$2\" \"$3\""; shift 2;;
     pu)
-      branch="$(git rev-parse --abbrev-ref HEAD)"
-      common::do \
-          "git push --set-upstream \"${2:?g pu [remote]}\" $branch"
-      shift
-      ;;
-    puf)
-      branch="$(git rev-parse --abbrev-ref HEAD)"
-      common::do \
-          "git push --force --set-upstream \"${2:?g pu [remote]}\" $branch"
+      branch="$( git rev-parse --abbrev-ref HEAD )"
+      common::do "git push --set-upstream \"${2:?g pu [remote]}\" $branch"
       shift
       ;;
 
@@ -94,86 +61,60 @@ while [[ $1 ]]; do
         common::confirm "Continue?"
         common::do "git clean -fd"
         ;;
-    su)
-      common::do git branch --set-upstream-to="${2:?g su [remote/branch]}"
-      shift
-      ;;
 
     # diffing
-    sc) common::do git diff --name-only --diff-filter=U;;
-    oc)
-      # shellcheck disable=SC2046
-      vim $(git diff --name-only --diff-filter=U)
-      ;;
     d)  common::do git diff --ws-error-highlight=all ;;
     dc) common::do git diff --ws-error-highlight=all --cached ;;
-    dw) common::do git diff --ignore-space-at-eol ;;
     dh) common::do git diff --ws-error-highlight=all HEAD~"${2:-1}" ;;
-    ds) [[ -z "$DIFFDIR" ]] && {
-            echo "error: smart diff not available"
-            exit 1
-        }
-        branch="$(git rev-parse --abbrev-ref HEAD)"
-        diff="$DIFFDIR/${branch//\//-}.diff"
-
-        if [ "$2" -eq "$2" ] 2>/dev/null ; then # checks if $2 is a number
-          common::do "git diff --minimal --full-index HEAD~$2 > $diff"
-          shift
-
-        else
-          common::do "git diff --minimal --full-index HEAD~1 > $diff"
-        fi
-        true
-      ;;
 
     '')
       exit 0
       ;;
 
-    # help, probably out of date
     *)
-      echo "
-  g - super git wrapper
-    !  : toggle confirmation
-    a  : add everything
+      echo "g --help
+    # status
+    s  : status
+    sf : status -uno
     bv : branch -vv
-    cc : clean -nfd, confirm, clean -fd
+    rv : remote -vv
+    d  : diff
+    dc : diff --cached
+    dh : diff HEAD~[number of commits]
+
+    # logging
+    l  : log
+    lo : log -oneline
+    ll : log graph
+
+    # committing
     c  : commit
     ca : commit --amend
     cn : commit --amend --no-edit
-    cb : checkout -b (branch)
-    cl : checkout (remote branch) -b (local branch)
-    cf : attempt to checkout branch by bug name using fzf
-    cs : attempt to checkout branch by bug name
-    cm : commit -m (message)
-    co : checkout (file)
-    d  : diff changes [output_file]
-    dc : diff cached changes [output_file]
-    dh : diff commits [number of commits] [output_file]
-    ds : diff commits [number of commits] - auto names diff [work only]
+
+    # checkout
+    co : checkout [branch]
+    cb : checkout -b [branch]
+
+    # branching
+    a  : add
     f  : fetch
-    l  : log
-    ll : log graph
-    m  : merge (branch)
-    s  : status
-    rv : remote -vv
-    rh : reset --hard HEAD
-    ri : interactive rebase
-    p  : pause
-    pl : pull --no-edit [branch]
-    pm : pull [branch]
-    ph : push [branch]
-    pf : push --force [branch]
-    su : branch --set-upstream-to=[remote/branch]
-    sc : show conflicting files
-    oc : open conflicts
-    hc : cherry-pick --continue
-      "
-      exit 1
-      ;;
+    rc : rebase --continue
+    cm : commit -m [message]
+
+    # pulling
+    pm : pull [remote]
+    pl : pull --no-edit [remote]
+
+    # pushing
+    ph : push [remote]
+    pf : push --force [remote]
+    pu : push --set-upstream [remote]
+
+    # other
+    cc : clean -nfd, confirm, clean -fd
+    "
   esac
 
-  #shellcheck disable=SC2181
-  (( $? )) && { confirm 0 "Detected failure, not continuing"; exit 1; }
   shift
 done

@@ -25,6 +25,8 @@ main() {
     local name="${src%.*}"
     local ext="${src##*.}"
     local out="$name-$sum.$ext"
+
+    rm -f "$where"/"$name"*."$ext"
     cp "$src" "$where"/"$out"
 
     replacements+=( -e "s/$src/$out/g" )
