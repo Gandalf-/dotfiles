@@ -2,18 +2,32 @@
 
 die() { echo "$@" >&2; exit 1; }
 
-addresses() {
-  ifconfig \
-    | awk '(/inet / && /broadcast/) || (/secured/ && !/scopeid/) { print $2 }'
+tac() {
+  awk '{ a[i++] = $0 } END { for (j = i - 1; j >= 0; j--) print a[j] }'
 }
 
-host() {
+get-addresses() {
+  ifconfig \
+    | awk '(/inet / && /broadcast/) || (/secured/ && !/scopeid/) { print $2 }' \
+    | tac
+}
+
+get-host() {
   while read -r addr; do
     timeout 0.25 dig +short -x "$addr" 2>/dev/null | sed 's/\.$//'
-  done < <( addresses ) | head -n 1
+  done < <( get-addresses ) | head -n 1
 }
 
-config() {
+get-port() {
+  realpath "$1" | md5sum | awk '
+  {
+    gsub(/[^0-9]/, "")      # strip non-digits
+    port = substr($0, 1, 3) # take first 3 digits
+    print port + 8000       # add 8000
+  }'
+}
+
+write-config() {
   local root="$1"
   local port="$2"
 
@@ -33,9 +47,9 @@ events {
 }
 
 http {
-    log_format   logfmt '\$remote_addr [\$time_local] "\$request" \$status';
-    include      $mime;
-    sendfile     on;
+    log_format logfmt '\$remote_addr [\$time_local] "\$request" \$status';
+    include    $mime;
+    sendfile   on;
 
     add_header Pragma public;
     add_header Cache-Control "public";
@@ -61,33 +75,27 @@ http {
 EOF
 }
 
-root-port() {
-  local root; root="$( realpath "$1" )"
-  local port; port="$(
-    md5sum <<< "$root" | tr -cd '[:digit:]' | cut -c 1-3 | sed 's/^0*//'
-  )"
-  (( port += 8000 ))
-  echo "$port"
-}
-
 main() {
   local root="${1:-$PWD}"
   [[ -d "$root" ]] || die "No such directory: $root"
 
-  local host; host="$( host )"
+  local host port config
+  read -r host < <( get-host )
   [[ -n "$host" ]] || host="[::]"
+  read -r port < <( get-port "$root" )
 
-  local port; port="$( root-port "$root" )"
+  local uri="http://$host:$port"
+  command -v open >/dev/null && { sleep 0.5; open -u "$uri"; } &
+
   nc -z localhost "$port" 2>/dev/null && {
-    echo "Already serving on http://$host:$port"
+    echo "Already serving on $uri"
     return
   }
 
-  echo "Serving on http://$host:$port"
-
-  config="$( mktemp )"
+  echo "Serving on $uri"
+  read -r config < <( mktemp )
   trap 'rm -f "$config"' EXIT
-  config "$root" "$port" > "$config"
+  write-config "$root" "$port" > "$config"
 
   nginx -c "$config" -e stderr
 }

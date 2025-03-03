@@ -11,13 +11,25 @@ replace() {
 }
 
 install() {
-  replace "$PWD"/etc/bashrc       ~/.bashrc
   replace "$PWD"/etc/clang-format ~/.clang-format
+  replace "$PWD"/etc/tidyrc       ~/.tidyrc
+
   replace "$PWD"/etc/gitconfig    ~/.gitconfig
   replace "$PWD"/etc/tmux.conf    ~/.tmux.conf
+
   replace "$PWD"/etc/init.vim     ~/.config/nvim/init.vim
   replace "$PWD"/etc/init.vim     ~/.vimrc
+
   replace "$PWD"/etc/fish         ~/.config/fish
+  replace "$PWD"/etc/bashrc       ~/.bashrc
+}
+
+lint() {
+  mapfile -t scripts < <(
+    find ./* -type f -exec file {} \; \
+      | awk -F: '/shell script/ { print $1 }' \
+  )
+  shellcheck "${scripts[@]}"
 }
 
 "$@"

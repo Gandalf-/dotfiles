@@ -81,13 +81,15 @@
 
   " ALE
     let g:ale_fixers = {
-    \   '*'      : ['remove_trailing_lines', 'trim_whitespace'],
-    \   'haskell': ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'python' : ['ruff', 'ruff_format', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'go'     : ['gofmt', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'rust'   : ['rustfmt', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'c'      : ['clang-format', 'remove_trailing_lines', 'trim_whitespace'],
-    \   'cpp'    : ['clang-format', 'remove_trailing_lines', 'trim_whitespace']
+    \   '*'         : ['remove_trailing_lines', 'trim_whitespace'],
+    \   'haskell'   : ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
+    \   'python'    : ['ruff', 'ruff_format'],
+    \   'go'        : ['gofmt'],
+    \   'rust'      : ['rustfmt'],
+    \   'c'         : ['clang-format'],
+    \   'cpp'       : ['clang-format'],
+    \   'html'      : ['prettier'],
+    \   'javascript': ['prettier']
     \}
 
     let g:ale_lint_on_text_changed = 'never'
@@ -100,6 +102,9 @@
       \ 'c'      : [],
       \ 'cpp'    : []
       \ }
+
+    let g:ale_javascript_prettier_options = '--single-quote --tab-width 2 --print-width 100'
+    let g:ale_javascript_prettier_use_global = 1
 
     let g:haskell_hlint_options = '-j'
     let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
@@ -213,6 +218,7 @@
 
   " make uses tabs
     autocmd FileType make setlocal noexpandtab
+    autocmd Filetype html syntax sync fromstart
 
   " Searching
     set hlsearch
