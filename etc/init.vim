@@ -160,9 +160,9 @@
 
   " Syntax, Column and cursor lines
     syntax on sync minlines=256
-    set colorcolumn=+1           " Handy bar so we know when lines are too long
     set synmaxcol=200            " Limit column highlights to 200 columns
-    highlight ColorColumn  guibg=#666666
+    " set colorcolumn=+1           " Handy bar so we know when lines are too long
+    " highlight ColorColumn  guibg=#666666
 
   " Cursor line
     set cursorline              " Handy line so we know where we are
