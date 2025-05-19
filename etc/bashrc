@@ -12,6 +12,7 @@ _maybe_add_path() {
 _maybe_add_path ~/.local/bin
 _maybe_add_path ~/.cargo/bin
 _maybe_add_path ~/dotfiles/bin
+_maybe_add_path ~/scripts/bin
 
 
 # ALIASES
@@ -42,7 +43,10 @@ HISTFILESIZE=10000
 
 # PRESENTATION
 
-bind 'set mark-symlinked-directories on'
+[[ $- = *i* ]] && {
+  # interactive shell
+  bind 'set mark-symlinked-directories on'
+}
 
 _terse_pwd() {
   # /home/leaf/google_drive/python -> ~/g/c/python

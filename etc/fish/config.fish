@@ -13,21 +13,23 @@ function  ....; builtin cd ../../../;l ; end
 
 # LOCATIONS
 
+set --erase fish_user_paths
+
 test -d ~/dotfiles
-  and fish_add_path ~/dotfiles/bin
+  and fish_add_path --global ~/dotfiles/bin
 
 test -d ~/Documents/dotfiles
-  fish_add_path ~/Documents/dotfiles/bin
+  fish_add_path --global ~/Documents/dotfiles/bin
 
 test -d ~/.local/bin/
-  and fish_add_path ~/.local/bin
+  and fish_add_path --global ~/.local/bin
 
 # work
-test -d /opt/qumulo/toolchain/bin
-  and fish_add_path /opt/qumulo/toolchain/bin
-
 test -d ~/scripts/bin
-  and fish_add_path ~/scripts/bin
+  and fish_add_path --global ~/scripts/bin
+
+test -d /opt/qumulo/toolchain/bin
+  and fish_add_path --global --append --path /opt/qumulo/toolchain/bin
 
 test -f ~/scripts/etc/work.fish
   and source ~/scripts/etc/work.fish
@@ -38,34 +40,34 @@ test -f ~/scripts/etc/work.fish
 # macos
 if test -d /opt/homebrew/bin
   set -x -U C_INCLUDE_PATH ( xcrun --show-sdk-path )/usr/include/ffi
-  fish_add_path /opt/homebrew/bin
+  fish_add_path --global /opt/homebrew/bin
 end
 
 # ubuntu
 test -d /snap/bin
-  and fish_add_path /snap/bin/
+  and fish_add_path --global /snap/bin/
 
 
 # LANGUAGES
 
 # rust
 test -d ~/.cargo/bin/
-  and fish_add_path ~/.cargo/bin/
+  and fish_add_path --global ~/.cargo/bin/
 
 # haskell
 test -d ~/.cabal/bin/
-  and fish_add_path ~/.cabal/bin
+  and fish_add_path --global ~/.cabal/bin
 
 test -d ~/.ghcup/bin/
-  and fish_add_path ~/.ghcup/bin
+  and fish_add_path --global ~/.ghcup/bin
 
 # go
 test -d /usr/local/go/bin
-  and fish_add_path /usr/local/go/bin
+  and fish_add_path --global /usr/local/go/bin
 
 # npm
 test -d ~/.local/bin/node/
-  and fish_add_path ~/.local/bin/node/
+  and fish_add_path --global ~/.local/bin/node/
 
 # python
 test -e ~/.pythonrc
@@ -75,10 +77,10 @@ test -e ~/.pythonrc
 # FZF
 
 if test -e ~/.vim/bundle/fzf.vim/bin/fzf
-  fish_add_path ~/.vim/bundle/fzf.vim/bin
+  fish_add_path --global ~/.vim/bundle/fzf.vim/bin
 
 else if test -e ~/.vim/bundle/fzf/bin/fzf
-  fish_add_path ~/.vim/bundle/fzf/bin
+  fish_add_path --global ~/.vim/bundle/fzf/bin
 end
 
 set -gx FZF_DEFAULT_COMMAND 'rg --files'

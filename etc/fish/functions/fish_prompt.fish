@@ -14,9 +14,6 @@ function fish_prompt
   echo -n ' '(prompt_pwd)
 
   set_color normal
-  printf '%s' (__fish_git_prompt)
-
-  set_color normal
   echo '> '
 
 end
