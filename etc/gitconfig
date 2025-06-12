@@ -1,21 +1,44 @@
 [user]
 	email = austin@anardil.net
 	name = Gandalf-
-
 [credential]
 	helper = cache --timeout=3600
 
+[diff]
+	algorithm = histogram
+	colorMoved = plain
+	mnemonicPrefix = true
+	renames = true
+	tool = vimdiff
+
 [push]
 	default = simple
+	autoSetupRemote = true
+	followTags = true
+[pull]
+	rebase = true
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+[rebase]
+	autoSquash = true
+	autoStash = true
+	updateRefs = true
+
+[color]
+	ui = auto
+[column]
+	ui = auto
+[branch]
+	sort = -committerdate
+[tag]
+	sort = version:refname
+[commit]
+	verbose = true
 
 [core]
 	editor = nvim
 
-[diff]
-	tool = vimdiff
-[color]
-	ui = auto
-[pull]
-	rebase = true
 [init]
 	defaultBranch = master
