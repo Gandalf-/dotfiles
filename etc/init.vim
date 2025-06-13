@@ -18,7 +18,7 @@
   set visualbell
 
   set splitbelow splitright
-  set encoding=utf-8 termencoding=utf-8 fileencodings=utf-8
+  set encoding=utf-8 fileencodings=utf-8
   set hidden nobackup nowritebackup noswapfile
   set ttimeout ttimeoutlen=20
   set tags=./tags;,tags;
