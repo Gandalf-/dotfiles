@@ -5,6 +5,8 @@ set -gx EDITOR          vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
 set -gx TMP             /tmp
 
+set -gx PYTHONPYCACHEPREFIX /tmp/pycache
+
 function sfish; source ~/.config/fish/config.fish; end
 function    ..; builtin cd ../;      l ; end
 function   ...; builtin cd ../../;   l ; end

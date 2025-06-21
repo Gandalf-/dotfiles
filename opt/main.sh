@@ -13,6 +13,7 @@ replace() {
 install() {
   replace "$PWD"/etc/clang-format ~/.clang-format
   replace "$PWD"/etc/tidyrc       ~/.tidyrc
+  replace "$PWD"/etc/prettierrc   ~/.prettierrc
 
   replace "$PWD"/etc/gitconfig    ~/.gitconfig
   replace "$PWD"/etc/tmux.conf    ~/.tmux.conf
