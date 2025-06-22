@@ -60,7 +60,7 @@
         Plugin 'simnalamburt/vim-mundo.git'
         Plugin 'rhysd/vim-clang-format'
 
-        Plugin 'w0rp/ale'
+        Plugin 'dense-analysis/ale'
         Plugin 'github/copilot.vim'
 
         if has_vundle == 0
@@ -107,8 +107,10 @@
     let g:ale_javascript_prettier_use_global = 1
 
     let g:haskell_hlint_options = '-j'
-    let g:ale_c_clang_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
-    let g:ale_c_gcc_options = "-std=c++11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
+    let g:ale_c_clang_options = "-std=c11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
+    let g:ale_c_gcc_options = "-std=c11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
+    let g:ale_cpp_clang_options = "-std=c++11 -Wall -Wextra"
+    let g:ale_cpp_gcc_options = "-std=c++11 -Wall -Wextra"
 
     let g:ale_fix_on_save = 1
     let g:ale_set_quickfix = 1
@@ -138,7 +140,6 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   " General
     colorscheme desert
-    set t_Co=256
     set termguicolors
     set number wrap textwidth=99 showcmd
     set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
@@ -166,8 +167,6 @@
   " Syntax, Column and cursor lines
     syntax on sync minlines=256
     set synmaxcol=200            " Limit column highlights to 200 columns
-    " set colorcolumn=+1           " Handy bar so we know when lines are too long
-    " highlight ColorColumn  guibg=#666666
 
   " Cursor line
     set cursorline              " Handy line so we know where we are
@@ -182,28 +181,31 @@
     highlight VertSplit    guifg=black guibg=#333333 gui=bold
 
   " Status line
-    highlight StatusLine   guifg=black guibg=white     gui=bold
-    highlight StatusLineNC guifg=black guibg=lightgrey
-    set statusline=%f    " Path.
-    set statusline+=%m   " Modified flag.
-    set statusline+=%r   " Readonly flag.
-    set statusline+=%w   " Preview window flag.
-    set statusline+=\    " Space.
-    set statusline+=%=   " Right align.
+    function! SetupStatusLine()
+      highlight StatusLine   guifg=black guibg=white     gui=bold
+      highlight StatusLineNC guifg=black guibg=lightgrey
+      set statusline=%f    " Path.
+      set statusline+=%m   " Modified flag.
+      set statusline+=%r   " Readonly flag.
+      set statusline+=%w   " Preview window flag.
+      set statusline+=\    " Space.
+      set statusline+=%=   " Right align.
 
-    try
-      function! LinterStatus() abort
-          let l:counts         = ale#statusline#Count(bufnr(''))
-          let l:all_errors     = l:counts.error + l:counts.style_error
-          let l:all_non_errors = l:counts.total - l:all_errors
-          return l:counts.total == 0 ? '' : printf('%2dw %2de', all_non_errors, all_errors)
-      endfunction
-      set statusline+=%{LinterStatus()}
-    catch
-    endtry
+      try
+        function! LinterStatus() abort
+            let l:counts         = ale#statusline#Count(bufnr(''))
+            let l:all_errors     = l:counts.error + l:counts.style_error
+            let l:all_non_errors = l:counts.total - l:all_errors
+            return l:counts.total == 0 ? '' : printf('%2dw %2de', all_non_errors, all_errors)
+        endfunction
+        set statusline+=%{LinterStatus()}
+      catch
+      endtry
 
-    set statusline+=\    " Space.
-    set statusline+=\ %4l\ %3c\ %3p%%
+      set statusline+=\    " Space.
+      set statusline+=\ %4l\ %3c\ %3p%%
+    endfunction
+    call SetupStatusLine()
 
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -216,16 +218,14 @@
   augroup misc_commands
     autocmd!
 
-  " make uses tabs
+    " make uses tabs
     autocmd FileType make setlocal noexpandtab
     autocmd Filetype html syntax sync fromstart
+  augroup end
 
   " Searching
     set hlsearch
     set incsearch
-    " set ignorecase
-    " set smartcase
-    " set infercase
     set showmatch
     set ruler
 
@@ -272,7 +272,6 @@
         let prefix = " >>> " . string(v:foldlevel) . ","
       endif
       let fdnfo = prefix . printf("%3s ", foldlinecount)
-      " let line = strpart(getline(v:foldstart), 0 , winwd - len(fdnfo))
       let line =  "  ..."
       let fillcharcount = winwd - len(line) - len(fdnfo)
       return line . repeat(" ",fillcharcount) . fdnfo
@@ -286,7 +285,7 @@
   " file with :vsplit to the right of browser
     let g:netrw_sort_sequence = '[\/]$,*'   " directories first
     let g:netrw_browse_split  = 3           " open files in new tab
-    let g:netrow_altv         = 1
+    let g:netrw_altv          = 1
     let g:netrw_winsize       = -28         " thinner width
     let g:netrw_banner        = 0           " hide the help info
     let g:netrw_liststyle     = 3           " tree mode
@@ -337,36 +336,59 @@
 
   " tags
     nnoremap <leader>h :tselect<Space>
-    let g:tagdirection = "forward"
-    let g:tagprevious = ""
+
+    " Script-local variables for tag navigation
+    let s:tag_current = ""
+    let s:tag_index = 0
 
     function! TagTraverse()
-      let l:tagcurrent = expand('<cword>')
-      if g:tagprevious != l:tagcurrent
-          " reset
-          exe 'tag ' . l:tagcurrent
-          let g:tagdirection = "forward"
-          let g:tagprevious = l:tagcurrent
-      else
-        if g:tagdirection == "forward"
-          try
-            :silent tnext
-          catch
-            try | :silent tprevious | catch | :echo "No other entries for this tag" | endtry
-            let g:tagdirection = "backwards"
-          endtry
-        else
-          try
-            :silent tprevious
-          catch
-            try | :silent tnext | catch | :echo "No other entries for this tag" | endtry
-            let g:tagdirection = "forward"
-          endtry
-        endif
+      let l:word = expand('<cword>')
+
+      " If no word under cursor, do nothing
+      if empty(l:word)
+        echo "No word under cursor"
+        return
       endif
-      :norm zz
+
+      " If new word, start fresh tag search
+      if s:tag_current != l:word
+        let s:tag_current = l:word
+        let s:tag_index = 0
+
+        try
+          execute 'tag ' . l:word
+          echo "Tag: " . l:word . " [1]"
+        catch /^Vim\%((\a\+)\)\=:E426/
+          echo "Tag not found: " . l:word
+          return
+        catch
+          echo "Error jumping to tag: " . l:word
+          return
+        endtry
+      else
+        " Same word, cycle through tag list
+        try
+          silent tnext
+          let s:tag_index += 1
+          echo "Tag: " . l:word . " [" . (s:tag_index + 1) . "]"
+        catch /^Vim\%((\a\+)\)\=:E428/
+          " At end of tag list, wrap to beginning
+          try
+            silent tfirst
+            let s:tag_index = 0
+            echo "Tag: " . l:word . " [1] (wrapped)"
+          catch
+            echo "Only one tag for: " . l:word
+          endtry
+        catch
+          echo "Error navigating tags"
+        endtry
+      endif
+
+      " Center the line
+      normal! zz
     endfunction
-    nnoremap <silent> <C-n>  :call TagTraverse()<CR>
+    nnoremap <silent> <C-n> :call TagTraverse()<CR>
 
   " windows
     nnoremap <silent> <leader>q :q<CR>

@@ -3,7 +3,7 @@
 die() { echo "$@" >&2; exit 1; }
 
 tac() {
-  awk '{ a[i++] = $0 } END { for (j = i - 1; j >= 0; j--) print a[j] }'
+  awk '{ lines[NR] = $0 } END { for (i = NR; i >= 1; i--) print lines[i] }';
 }
 
 get-addresses() {

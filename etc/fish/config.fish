@@ -5,33 +5,28 @@ set -gx EDITOR          vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
 set -gx TMP             /tmp
 
-set -gx PYTHONPYCACHEPREFIX /tmp/pycache
-
 function sfish; source ~/.config/fish/config.fish; end
 function    ..; builtin cd ../;      l ; end
 function   ...; builtin cd ../../;   l ; end
 function  ....; builtin cd ../../../;l ; end
 
+function _add_path_if_exists
+  if test -d $argv[1]
+    fish_add_path --global $argv[2..-1] $argv[1]
+  end
+end
 
 # LOCATIONS
 
 set --erase fish_user_paths
 
-test -d ~/dotfiles
-  and fish_add_path --global ~/dotfiles/bin
-
-test -d ~/Documents/dotfiles
-  fish_add_path --global ~/Documents/dotfiles/bin
-
-test -d ~/.local/bin/
-  and fish_add_path --global ~/.local/bin
+_add_path_if_exists ~/dotfiles/bin
+_add_path_if_exists ~/Documents/dotfiles/bin
+_add_path_if_exists ~/.local/bin/
 
 # work
-test -d ~/scripts/bin
-  and fish_add_path --global ~/scripts/bin
-
-test -d /opt/qumulo/toolchain/bin
-  and fish_add_path --global --append --path /opt/qumulo/toolchain/bin
+_add_path_if_exists ~/scripts/bin
+_add_path_if_exists /opt/qumulo/toolchain/bin --append --path
 
 test -f ~/scripts/etc/work.fish
   and source ~/scripts/etc/work.fish
@@ -46,44 +41,34 @@ if test -d /opt/homebrew/bin
 end
 
 # ubuntu
-test -d /snap/bin
-  and fish_add_path --global /snap/bin/
+_add_path_if_exists /snap/bin/
 
 
 # LANGUAGES
 
 # rust
-test -d ~/.cargo/bin/
-  and fish_add_path --global ~/.cargo/bin/
+_add_path_if_exists ~/.cargo/bin/
 
 # haskell
-test -d ~/.cabal/bin/
-  and fish_add_path --global ~/.cabal/bin
-
-test -d ~/.ghcup/bin/
-  and fish_add_path --global ~/.ghcup/bin
+_add_path_if_exists ~/.cabal/bin
+_add_path_if_exists ~/.ghcup/bin
 
 # go
-test -d /usr/local/go/bin
-  and fish_add_path --global /usr/local/go/bin
+_add_path_if_exists /usr/local/go/bin
 
 # npm
-test -d ~/.local/bin/node/
-  and fish_add_path --global ~/.local/bin/node/
+_add_path_if_exists ~/.local/bin/node/
 
 # python
 test -e ~/.pythonrc
   and set -gx PYTHONSTARTUP ~/.pythonrc
 
+set -gx PYTHONPYCACHEPREFIX /tmp/pycache
 
 # FZF
 
-if test -e ~/.vim/bundle/fzf.vim/bin/fzf
-  fish_add_path --global ~/.vim/bundle/fzf.vim/bin
-
-else if test -e ~/.vim/bundle/fzf/bin/fzf
-  fish_add_path --global ~/.vim/bundle/fzf/bin
-end
+_add_path_if_exists ~/.vim/bundle/fzf.vim/bin
+_add_path_if_exists ~/.vim/bundle/fzf/bin
 
 set -gx FZF_DEFAULT_COMMAND 'rg --files'
 set -gx FZF_DEFAULT_OPTS '--height 75% --border --cycle'
@@ -96,11 +81,6 @@ else
   set -gx FZF_PREVIEW_FILE_CMD 'cat'
 end
 set -gx FZF_PREVIEW_DIR_CMD 'ls -h --color=always'
-
-# https://github.com/PatrickF1/fzf.fish
-if test (command -v exa)
-  set -gx fzf_preview_dir_cmd exa --all --long
-end
 
 function l
   command l $argv
