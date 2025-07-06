@@ -67,7 +67,6 @@ set -gx PYTHONPYCACHEPREFIX /tmp/pycache
 
 # FZF
 
-_add_path_if_exists ~/.vim/bundle/fzf.vim/bin
 _add_path_if_exists ~/.vim/bundle/fzf/bin
 
 set -gx FZF_DEFAULT_COMMAND 'rg --files'
@@ -80,7 +79,8 @@ if test (command -v bat)
 else
   set -gx FZF_PREVIEW_FILE_CMD 'cat'
 end
-set -gx FZF_PREVIEW_DIR_CMD 'ls -h --color=always'
+
+set -gx FZF_PREVIEW_DIR_CMD 'ls -lh --color=always'
 
 function l
   command l $argv
@@ -112,5 +112,3 @@ set -x LESS_TERMCAP_se (printf "\033[0m")
 set -x LESS_TERMCAP_so (printf "\033[01;44;33m")
 set -x LESS_TERMCAP_ue (printf "\033[0m")
 set -x LESS_TERMCAP_us (printf "\033[01;32m")
-
-test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish ; or true
