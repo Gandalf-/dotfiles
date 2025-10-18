@@ -5,6 +5,8 @@ set -e
 replace() {
   local src="$1"
   local tgt="$2"
+
+  [[ -f "$src" ]]
   rm -f "$tgt"
   mkdir -p "$( dirname "$tgt" )"
   ln -s "$src" "$tgt"
@@ -14,6 +16,7 @@ install() {
   replace "$PWD"/etc/clang-format ~/.clang-format
   replace "$PWD"/etc/tidyrc       ~/.tidyrc
   replace "$PWD"/etc/prettierrc   ~/.prettierrc
+  replace "$PWD"/etc/shellcheckrc ~/.shellcheckrc
 
   replace "$PWD"/etc/gitconfig    ~/.gitconfig
   replace "$PWD"/etc/tmux.conf    ~/.tmux.conf
