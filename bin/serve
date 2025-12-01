@@ -33,6 +33,7 @@ write-config() {
 
   local mime="/opt/homebrew/etc/nginx/mime.types"
   [[ -f "$mime" ]] || mime=/usr/local/etc/nginx/mime.types
+  [[ -f "$mime" ]] || mime=/etc/nginx/mime.types
   [[ -f "$mime" ]] || die "No mime.types configured"
 
   cat << EOF
@@ -97,7 +98,7 @@ main() {
   trap 'rm -f "$config"' EXIT
   write-config "$root" "$port" > "$config"
 
-  nginx -c "$config" -e stderr
+  nginx -c "$config"
 }
 
 main "$@"

@@ -9,6 +9,7 @@ _maybe_add_path() {
   [[ $PATH =~ $target ]] || export PATH="$target":"$PATH"
 }
 
+_maybe_add_path ~/.claude/local
 _maybe_add_path ~/.local/bin
 _maybe_add_path ~/.cargo/bin
 _maybe_add_path ~/dotfiles/bin

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+root="$HOME"/.local/state/tasks/
+mkdir -p "$root/todo"
+mkdir -p "$root/done"
+
+cd "$root" || exit 1
+
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+get-file-time() {
+  local epoch; epoch="$( basename "${1%.txt}" )"
+  date -d "@$epoch" '+%m-%d'
+}
+
+get-todo-by-count() {
+  local needle="$1"
+  for f in todo/* ; do
+    (( n++ ))
+
+    if (( n == needle )); then
+      echo "$f"
+      break
+    fi
+  done
+}
+
+l() {
+  for f in todo/* ; do
+    (( n++ ))
+    read -r line < "$f"
+    printf '%3d %s  %s\n' \
+      "$n" \
+      "$( get-file-time "$f" )" \
+      "$line"
+
+  done 2>/dev/null || echo "No tasks"
+}
+
+a() {
+  echo "$*" > "todo/$( date '+%s' ).txt"
+}
+
+d(){
+  local needle="$1"
+  local f; f="$( get-todo-by-count "$needle" )"
+
+  [[ "$f" ]] || die "No such task: $needle"
+
+  read -r line < "$f"
+  mv "$f" "done/"
+  echo "done: $line"
+}
+
+e() {
+  local needle="$1"
+  local f; f="$( get-todo-by-count "$needle" )"
+
+  [[ "$f" ]] || die "No such task: $needle"
+
+  shift
+  echo "$*" > "$f"
+}
+
+"$@"

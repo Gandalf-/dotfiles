@@ -1,7 +1,9 @@
 #!/bin/sh
 
 if command -v nvim >/dev/null; then
+  printf '\033]0;nvim\007'
   nvim "$@"
 else
+  printf '\033]0;vi\007'
   vi "$@"
 fi
