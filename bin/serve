@@ -48,12 +48,14 @@ events {
 }
 
 http {
-    log_format logfmt '\$remote_addr [\$time_local] "\$request" \$status';
+    log_format logfmt '\$remote_addr [\$time_local] \$status "\$request"';
     include    $mime;
     sendfile   on;
 
     add_header Pragma public;
-    add_header Cache-Control "public";
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    add_header Pragma "no-cache";
+    expires    0;
 
     server {
         listen       $port;
