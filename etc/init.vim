@@ -390,6 +390,24 @@
     endfunction
     nnoremap <silent> <C-n> :call TagTraverse()<CR>
 
+    function! PrettyPrintPythonDictShell() range
+      let lines = getline(a:firstline, a:lastline)
+      let text = join(lines, "\n")
+
+      let py_cmd = 'import ast, json, sys; print(json.dumps(ast.literal_eval(sys.stdin.read()), indent=2, default=str))'
+      let result = systemlist('echo ' . shellescape(text) . ' | python3 -c ' . shellescape(py_cmd))
+
+      if v:shell_error
+        echo "Error parsing Python dict"
+        return
+      endif
+
+      execute a:firstline . ',' . a:lastline . 'delete'
+      call append(a:firstline - 1, result)
+    endfunction
+
+    vnoremap <leader>f :call PrettyPrintPythonDictShell()<CR>
+
   " windows
     nnoremap <silent> <leader>q :q<CR>
     nnoremap <silent> <leader>Q :qall<CR>

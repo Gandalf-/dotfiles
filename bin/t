@@ -16,20 +16,33 @@ get-file-time() {
   date -d "@$epoch" '+%m-%d'
 }
 
-get-todo-by-count() {
-  local needle="$1"
-  for f in todo/* ; do
-    (( n++ ))
+get-todos() {
+  find todo/ -type f | sort
+}
 
-    if (( n == needle )); then
-      echo "$f"
-      break
-    fi
-  done
+get-dones() {
+  find done/ -type f | sort
+}
+
+get-todo-by-index() {
+  local index="$1"
+  local n=0
+
+  while read -r f; do
+    (( ++n == index )) && { echo "$f"; break; }
+  done < <( get-todos )
+}
+
+c() {
+  printf '% 4d/% 4d\n' \
+    "$( get-todos | wc -l )" \
+    "$( get-dones | wc -l )"
 }
 
 l() {
-  for f in todo/* ; do
+  local n=0
+
+  while read -r f; do
     (( n++ ))
     read -r line < "$f"
     printf '%3d %s  %s\n' \
@@ -37,7 +50,19 @@ l() {
       "$( get-file-time "$f" )" \
       "$line"
 
-  done 2>/dev/null || echo "No tasks"
+  done < <( get-todos )
+}
+
+p() {
+  local limit="${1:-10}"
+
+  while read -r f; do
+    read -r line < "$f"
+    printf 'done: %s %s\n' \
+      "$( get-file-time "$f" )" \
+      "$line"
+
+  done < <( get-dones | tail -n "$limit" )
 }
 
 a() {
@@ -45,24 +70,29 @@ a() {
 }
 
 d(){
-  local needle="$1"
-  local f; f="$( get-todo-by-count "$needle" )"
+  local fs=()
+  while [[ $1 ]]; do
+    local f; f="$( get-todo-by-index "$1" )"
+    [[ "$f" ]] || die "No such task: $index"
+    fs+=( "$f" )
+    shift
+  done
 
-  [[ "$f" ]] || die "No such task: $needle"
-
-  read -r line < "$f"
-  mv "$f" "done/"
-  echo "done: $line"
+  for f in "${fs[@]}"; do
+    read -r line < "$f"
+    mv "$f" "done/"
+    echo "done: $line"
+  done
 }
 
 e() {
-  local needle="$1"
-  local f; f="$( get-todo-by-count "$needle" )"
-
-  [[ "$f" ]] || die "No such task: $needle"
+  local index="$1"
+  local f; f="$( get-todo-by-index "$index" )"
+  [[ "$f" ]] || die "No such task: $index"
 
   shift
+  [[ "$*" ]] || die "No new task description provided"
   echo "$*" > "$f"
 }
 
-"$@"
+"${@:-l}"
