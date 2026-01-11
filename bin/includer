@@ -21,15 +21,20 @@ main() {
     local src="$1"
     [[ -f "$src" ]] || die "File not found: $src"
 
-    local sum; sum="$( md5sum "$src" | cut -c 1-10 )"
     local name="${src%.*}"
     local ext="${src##*.}"
-    local out="$name-$sum.$ext"
+
+    local fullsum; fullsum="$( openssl dgst -sha256 -binary "$1" | openssl base64 -A )"
+    local short; short="$( tr -cd '[:alnum:]' <<< "$fullsum" | cut -c 1-10 )"
+    local out="$name-$short.$ext"
 
     rm -f "$where"/"$name"*."$ext"
     cp "$src" "$where"/"$out"
 
-    replacements+=( -e "s/$src/$out/g" )
+    fullsum="${fullsum//+/\\+}"
+    fullsum="${fullsum//\//\\/}"
+
+    replacements+=( -e "s/$src\"/$out\" integrity=\"sha256-$fullsum\"/g" )
     shift
   done
 

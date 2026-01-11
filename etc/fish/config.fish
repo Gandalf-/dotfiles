@@ -23,6 +23,7 @@ set --erase fish_user_paths
 _add_path_if_exists ~/dotfiles/bin
 _add_path_if_exists ~/Documents/dotfiles/bin
 _add_path_if_exists ~/.local/bin/
+_add_path_if_exists ~/Library/Python/3.13/bin/
 
 # work
 _add_path_if_exists ~/scripts/bin
