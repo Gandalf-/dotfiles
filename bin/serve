@@ -2,10 +2,6 @@
 
 die() { echo "$@" >&2; exit 1; }
 
-tac() {
-  awk '{ lines[NR] = $0 } END { for (i = NR; i >= 1; i--) print lines[i] }';
-}
-
 get-addresses() {
   ifconfig \
     | awk '(/inet / && /broadcast/) || (/secured/ && !/scopeid/) { print $2 }' \

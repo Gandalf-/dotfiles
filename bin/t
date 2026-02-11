@@ -33,6 +33,21 @@ get-todo-by-index() {
   done < <( get-todos )
 }
 
+h() {
+  cat << EOF
+Usage: t [command] [args...]
+Commands:
+  a [desc]         Add a new task
+  d [index ...]    Mark tasks as done by index
+  l                List all tasks
+
+  e [index] [desc] Rewrite a task by index
+  p [limit]        List recently done tasks
+  c                Show summary counts
+  h                Show this help message
+EOF
+}
+
 c() {
   printf '% 4d/% 4d\n' \
     "$( get-todos | wc -l )" \
@@ -62,10 +77,11 @@ p() {
       "$( get-file-time "$f" )" \
       "$line"
 
-  done < <( get-dones | tail -n "$limit" )
+  done < <( get-dones | tail -n "$limit" ) | tac
 }
 
 a() {
+  [[ "$*" ]] || die "No task description provided"
   echo "$*" > "todo/$( date '+%s' ).txt"
 }
 
