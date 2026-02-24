@@ -21,16 +21,31 @@ get-todos() {
 }
 
 get-dones() {
-  find done/ -type f | sort
+  find done/ -type f | sort -r
 }
 
-get-todo-by-index() {
+by-index() {
   local index="$1"
   local n=0
 
   while read -r f; do
     (( ++n == index )) && { echo "$f"; break; }
-  done < <( get-todos )
+  done
+}
+
+listing() {
+  local n=0
+  local limit="${1:-10}"
+
+  while read -r f; do
+    (( n++ ))
+    read -r line < "$f"
+    printf '%3d %s %s\n' \
+      "$n" \
+      "$( get-file-time "$f" )" \
+      "$line"
+
+  done < <( cat | head -n "$limit" )
 }
 
 h() {
@@ -38,7 +53,8 @@ h() {
 Usage: t [command] [args...]
 Commands:
   a [desc]         Add a new task
-  d [index ...]    Mark tasks as done by index
+  d [index ...]    Mark todo tasks as done by index
+  u [index ...]    Mark done tasks as todo by index
   l                List all tasks
 
   e [index] [desc] Rewrite a task by index
@@ -55,29 +71,11 @@ c() {
 }
 
 l() {
-  local n=0
-
-  while read -r f; do
-    (( n++ ))
-    read -r line < "$f"
-    printf '%3d %s  %s\n' \
-      "$n" \
-      "$( get-file-time "$f" )" \
-      "$line"
-
-  done < <( get-todos )
+  get-todos | listing 100
 }
 
 p() {
-  local limit="${1:-10}"
-
-  while read -r f; do
-    read -r line < "$f"
-    printf 'done: %s %s\n' \
-      "$( get-file-time "$f" )" \
-      "$line"
-
-  done < <( get-dones | tail -n "$limit" ) | tac
+  get-dones | listing "$@"
 }
 
 a() {
@@ -88,8 +86,8 @@ a() {
 d(){
   local fs=()
   while [[ $1 ]]; do
-    local f; f="$( get-todo-by-index "$1" )"
-    [[ "$f" ]] || die "No such task: $index"
+    local f; f="$( get-todos | by-index "$1" )"
+    [[ "$f" ]] || die "No such task: $1"
     fs+=( "$f" )
     shift
   done
@@ -101,9 +99,25 @@ d(){
   done
 }
 
+u() {
+  local fs=()
+  while [[ $1 ]]; do
+    local f; f="$( get-dones | by-index "$1" )"
+    [[ "$f" ]] || die "No such task: $1"
+    fs+=( "$f" )
+    shift
+  done
+
+  for f in "${fs[@]}"; do
+    read -r line < "$f"
+    mv "$f" "todo/"
+    echo "todo: $line"
+  done
+}
+
 e() {
   local index="$1"
-  local f; f="$( get-todo-by-index "$index" )"
+  local f; f="$( get-todos | by-index "$index" )"
   [[ "$f" ]] || die "No such task: $index"
 
   shift

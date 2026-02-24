@@ -5,8 +5,9 @@ set -e
 replace() {
   local src="$1"
   local tgt="$2"
+  echo "$src -> $tgt"
 
-  [[ -f "$src" ]]
+  [[ -e "$src" ]]
   rm -f "$tgt"
   mkdir -p "$( dirname "$tgt" )"
   ln -s "$src" "$tgt"
@@ -26,6 +27,8 @@ install() {
 
   replace "$PWD"/etc/fish         ~/.config/fish
   replace "$PWD"/etc/bashrc       ~/.bashrc
+
+  replace "$PWD"/etc/claude-settings.json ~/.claude/settings.json
 }
 
 lint() {
