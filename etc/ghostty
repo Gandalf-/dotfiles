@@ -1,4 +1,10 @@
 term = "xterm-256color"
 
 font-family = "Monaco"
+font-size = 12
+font-style-bold = false
+bold-color = bright
 theme = "iTerm2 Default"
+cursor-style-blink = false
+macos-option-as-alt = left
+confirm-close-surface = false
