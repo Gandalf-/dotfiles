@@ -26,6 +26,7 @@ _add_path_if_exists ~/.local/bin/
 _add_path_if_exists ~/Library/Python/3.13/bin/
 
 # work
+_add_path_if_exists ~/Library/Python/3.13/bin
 _add_path_if_exists ~/scripts/bin
 _add_path_if_exists /opt/qumulo/toolchain/bin --append --path
 

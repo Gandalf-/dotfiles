@@ -21,6 +21,7 @@ install() {
 
   replace "$PWD"/etc/gitconfig    ~/.gitconfig
   replace "$PWD"/etc/tmux.conf    ~/.tmux.conf
+  replace "$PWD"/etc/ghostty      ~/.config/ghostty/config
 
   replace "$PWD"/etc/init.vim     ~/.config/nvim/init.vim
   replace "$PWD"/etc/init.vim     ~/.vimrc

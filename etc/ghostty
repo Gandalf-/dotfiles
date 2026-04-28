@@ -1,0 +1,4 @@
+term = "xterm-256color"
+
+font-family = "Monaco"
+theme = "iTerm2 Default"
