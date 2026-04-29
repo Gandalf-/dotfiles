@@ -8,3 +8,5 @@ theme = "iTerm2 Default"
 cursor-style-blink = false
 macos-option-as-alt = left
 confirm-close-surface = false
+keybind = alt+arrow_left=unbind
+keybind = alt+arrow_right=unbind
