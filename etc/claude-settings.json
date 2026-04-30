@@ -1,5 +1,27 @@
 {
-  "alwaysThinkingEnabled": true,
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "WebFetch(domain:www.stackage.org)",
+      "Bash(stack build:*)",
+      "Bash(stack test:*)",
+      "Bash(bash:*)",
+      "Bash(hlint:*)",
+      "Bash(stack:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git stash:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(sghci:*)",
+      "Bash(stack test:*)",
+      "Bash(make:*)",
+      "Bash(man:*)"
+    ],
+    "defaultMode": "plan"
+  },
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
@@ -12,5 +34,9 @@
         ]
       }
     ]
-  }
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "editorMode": "vim",
+  "fileCheckpointingEnabled": false
 }

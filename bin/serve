@@ -44,6 +44,7 @@ http {
     log_format logfmt '\$remote_addr [\$time_local] \$status "\$request"';
     include    /tmp/nginx-mime.types;
     sendfile   on;
+    http2      on;
 
     add_header Pragma public;
     add_header Cache-Control "no-cache, no-store, must-revalidate";
