@@ -28,8 +28,6 @@ install() {
 
   replace "$PWD"/etc/fish         ~/.config/fish
   replace "$PWD"/etc/bashrc       ~/.bashrc
-
-  replace "$PWD"/etc/claude-settings.json ~/.claude/settings.json
 }
 
 lint() {
