@@ -2,6 +2,10 @@
 
 die() { echo "$@" >&2; exit 1; }
 
+tac() {
+  awk '{ lines[NR] = $0 } END { for (i = NR; i >= 1; i--) print lines[i] }';
+}
+
 get-addresses() {
   ifconfig \
     | awk '(/inet / && /broadcast/) || (/secured/ && !/scopeid/) { print $2 }' \
@@ -44,7 +48,6 @@ http {
     log_format logfmt '\$remote_addr [\$time_local] \$status "\$request"';
     include    /tmp/nginx-mime.types;
     sendfile   on;
-    http2      on;
 
     add_header Pragma public;
     add_header Cache-Control "no-cache, no-store, must-revalidate";
@@ -72,6 +75,17 @@ http {
 EOF
 }
 
+nginx() {
+  local config="$1"
+  local args=( -c "$config" )
+
+  case $OSTYPE in
+    freebsd*) args+=( -e stderr ) ;;
+  esac
+
+  command nginx "${args[@]}"
+}
+
 main() {
   local root="${1:-$PWD}"
   [[ -d "$root" ]] || die "No such directory: $root"
@@ -94,7 +108,7 @@ main() {
   trap 'rm -f "$config"' EXIT
   write-config "$root" "$port" > "$config"
 
-  nginx -c "$config"
+  nginx "$config"
 }
 
 mimes() {
