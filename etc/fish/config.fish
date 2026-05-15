@@ -4,6 +4,7 @@ set -gx __HOST__        (hostname | sed 's/\.local//')
 set -gx EDITOR          vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
 set -gx TMP             /tmp
+set -gx LSCOLORS        gxfxcxdxBxegedabagacad
 
 function sfish; source ~/.config/fish/config.fish; end
 function    ..; builtin cd ../;      l ; end
