@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -n "$TMUX" ]; then
+  printf '\033Ptmux;\033\033]9;%s\a\033\\' "$*"
+else
+  printf '\033]9;%s\a' "$*"
+fi >/dev/tty

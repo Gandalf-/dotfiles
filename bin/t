@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-
-root="$HOME"/.local/state/tasks/
-mkdir -p "$root/todo"
-mkdir -p "$root/done"
-
-cd "$root" || exit 1
+# shellcheck disable=SC2032,SC2033
 
 die() {
   echo "$*" >&2
@@ -48,19 +43,22 @@ listing() {
   done < <( cat | head -n "$limit" )
 }
 
+# Commands
+
 h() {
   cat << EOF
 Usage: t [command] [args...]
 Commands:
-  a [desc]         Add a new task
-  d [index ...]    Mark todo tasks as done by index
-  u [index ...]    Mark done tasks as todo by index
-  l                List all tasks
+  a [desc]      Add a new task
+  f [desc]      Add a completed task
+  d [index ...] Mark todo tasks as done by index
+  u [index ...] Mark done tasks as todo by index
+  l             List all tasks
 
-  e [index] [desc] Rewrite a task by index
-  p [limit]        List recently done tasks
-  c                Show summary counts
-  h                Show this help message
+  e [index]     Edit a task using $EDITOR
+  p [limit]     List recently done tasks
+  c             Show summary counts
+  h             Show this help message
 EOF
 }
 
@@ -81,6 +79,12 @@ p() {
 a() {
   [[ "$*" ]] || die "No task description provided"
   echo "$*" > "todo/$( date '+%s' ).txt"
+}
+
+f() {
+  [[ "$*" ]] || die "No task description provided"
+  echo "$*" > "done/$( date '+%s' ).txt"
+  echo "done: $*"
 }
 
 d(){
@@ -120,9 +124,13 @@ e() {
   local f; f="$( get-todos | by-index "$index" )"
   [[ "$f" ]] || die "No such task: $index"
 
-  shift
-  [[ "$*" ]] || die "No new task description provided"
-  echo "$*" > "$f"
+  "${EDITOR:-vi}" "$f"
 }
+
+# Main
+
+ROOT="$HOME"/.local/state/tasks/
+mkdir -p "$ROOT/"{todo,done}
+cd "$ROOT" || exit 1
 
 "${@:-l}"
