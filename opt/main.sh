@@ -28,6 +28,7 @@ install() {
 
   replace "$PWD"/etc/fish         ~/.config/fish
   replace "$PWD"/etc/bashrc       ~/.bashrc
+  replace "$PWD"/etc/bashrc       ~/.zshrc
 }
 
 lint() {

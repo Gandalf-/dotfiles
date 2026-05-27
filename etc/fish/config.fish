@@ -21,6 +21,7 @@ end
 
 set --erase fish_user_paths
 
+_add_path_if_exists ~/src/dotfiles/bin
 _add_path_if_exists ~/dotfiles/bin
 _add_path_if_exists ~/Documents/dotfiles/bin
 _add_path_if_exists ~/.local/bin/
