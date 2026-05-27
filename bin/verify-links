@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+fail() {
+  (( failures++ ))
+  echo "$@"
+}
+
+local-links() {
+  awk '
+  /href..\/.*/ {
+    gsub(/.*href="\//, "", $0)
+    gsub(/".*/, "", $0)
+    gsub(/#.*/, "", $0)
+    links[$0]++
+  }
+  END {
+    for (link in links) {
+      print link
+    }
+  }
+  ' "$@"
+}
+
+http-links() {
+  awk '
+  /href..http:.*/ {
+    gsub(/.*href="/, "", $0)
+    gsub(/".*/, "", $0)
+    gsub(/#.*/, "", $0)
+    links[$0]++
+  }
+  END {
+    for (link in links) {
+      print link
+    }
+  }
+  ' "$@"
+}
+
+remote-links() {
+  awk '
+  /href.*mailto.*/ {
+    next
+  }
+  /href...*anardil.net.*/ {
+    gsub(/.*href="/, "", $0)
+    gsub(/".*/, "", $0)
+    gsub(/#.*/, "", $0)
+    links[$0]++
+  }
+  END {
+    for (link in links) {
+      print link
+    }
+  }
+  ' "$@"
+}
+
+verify() {
+  local link="$1"
+  local host; host="$( echo "$link" | cut -d / -f 3 )"
+
+  read -r code < <(
+    curl \
+      --head \
+      --silent \
+      --insecure \
+      --connect-to "$host:443:web.anardil.net:443" \
+      "$link" \
+      | awk '{ print $2; exit }'
+  )
+
+  case $code in
+    200) ;;
+    301) fail "Redirect: $link" ;;
+    404) fail "Missing:  $link" ;;
+    '')  fail "curl:     $?" ;;
+    *)   fail "HTTP $code: $link" ;;
+  esac
+}
+
+main() {
+  failures=0
+
+  mapfile -t html < <( find . -name '*.html' )
+
+  while read -r link; do
+    (( verified++ ))
+    fail "Insecure: $link"
+  done < <( http-links "${html[@]}" )
+
+  while read -r link; do
+    (( verified++ ))
+    [[ -z "$link" || -f "$link" || -f "$link.html" || -d "$link" ]] && continue
+    fail "Broken: /$link"
+  done < <( local-links "${html[@]}" )
+
+  while read -r link; do
+    (( verified++ ))
+    verify "$link"
+  done < <( remote-links "${html[@]}" )
+
+  echo "Verified $verified links" >&2
+  return $failures
+}
+
+cd "$1" || exit
+main
