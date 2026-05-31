@@ -55,7 +55,6 @@ _add_path_if_exists ~/.cargo/bin/
 
 # haskell
 _add_path_if_exists ~/.cabal/bin
-_add_path_if_exists ~/.ghcup/bin
 
 # go
 _add_path_if_exists /usr/local/go/bin

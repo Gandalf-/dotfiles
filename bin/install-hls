@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# Install a haskell-language-server matching a project's GHC.
+#
+# HLS prebuilt binaries must match the project's GHC patch version exactly, and
+# Homebrew only ships HLS for the newest GHCs. This grabs the newest HLS release
+# that still supports the GHC in question, prunes it to just that build, installs
+# it under ~/.local/opt, and wires up ~/.local/bin (already on PATH; where
+# nvim/ALE looks): the wrapper, plus the per-GHC *launcher* generated from the
+# bindist's own template.
+#
+# That launcher matters. The server is a dynamically linked binary that does NOT
+# bundle GHC's boot libraries (text, base, rts, ...); it expects to find them at
+# runtime. The bindist ships a `haskell-language-server-<ghc>.in` template (and a
+# GNUmakefile that processes it) whose job is to locate a GHC with a matching
+# boot-lib ABI, export DYLD_LIBRARY_PATH to that GHC's lib dirs, then exec the
+# real binary. Skipping that step and symlinking the raw binary directly is what
+# broke the earlier install: dyld "Library not loaded", plus an infinite
+# wrapper->self loop when the versioned symlink was misnamed.
+#
+# Usage:
+#   cd <stack project> && install-hls          # GHC from `stack ghc`
+#   install-hls 9.10.3                          # explicit GHC version
+#   HLS_VERSION=2.13.0.0 install-hls 9.10.3     # pin a specific HLS release
+#   GITHUB_TOKEN=... install-hls                # avoid API rate limits
+
+set -euo pipefail
+
+REPO="haskell/haskell-language-server"
+OPT="$HOME/.local/opt"
+BIN="$HOME/.local/bin"
+
+die() { echo "$@" >&2; exit 1; }
+
+target_ghc() {
+  local ghc="${1:-}"
+  if [[ -z "$ghc" ]]; then
+    echo "no GHC given, asking stack..." >&2
+    ghc=$(stack ghc -- --numeric-version 2>/dev/null) \
+      || die "could not determine GHC; pass it, e.g. install-hls 9.10.3"
+  fi
+  echo "$ghc"
+}
+
+platform() {
+  local arch; arch=$(uname -m); [[ "$arch" == "arm64" ]] && arch=aarch64
+  case "$(uname -s)" in
+    Darwin) echo "$arch-apple-darwin" ;;
+    *) die "this script only handles macOS; on Linux grab the bindist by hand" ;;
+  esac
+}
+
+# newest HLS release whose notes list this exact GHC patch version
+find_version() {
+  local ghc="$1" auth=() tags tag
+  [[ -n "${GITHUB_TOKEN:-}" ]] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+
+  tags=$(curl -fsSL "${auth[@]}" "https://api.github.com/repos/$REPO/releases?per_page=20" \
+    | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+
+  for tag in $tags; do
+    if curl -fsSL "${auth[@]}" "https://api.github.com/repos/$REPO/releases/tags/$tag" \
+       | grep -qE "[^0-9.]${ghc//./\\.}[^0-9]"; then
+      echo "$tag"; return 0
+    fi
+  done
+  die "no HLS release found supporting GHC $ghc"
+}
+
+# keep only the one GHC build inside an extracted bundle
+prune() {
+  local src="$1" ghc="$2" d f
+  for d in "$src"/lib/*/; do
+    [[ "$(basename "$d")" == "$ghc" ]] || rm -rf "$d"
+  done
+  for f in "$src"/bin/haskell-language-server-*; do
+    case "$f" in *wrapper|*"$ghc") ;; *) rm -f "$f" ;; esac
+  done
+  for f in "$src"/haskell-language-server-*.in; do
+    case "$f" in *"$ghc.in") ;; *) rm -f "$f" ;; esac
+  done
+}
+
+main() {
+  local ghc plat version asset url tmp src dest old
+  ghc=$(target_ghc "${1:-}")
+  echo "target GHC: $ghc"
+  plat=$(platform)
+
+  version="${HLS_VERSION:-}"
+  if [[ -z "$version" ]]; then
+    echo "finding newest HLS that supports GHC $ghc ..."
+    version=$(find_version "$ghc")
+  fi
+  echo "using HLS $version"
+
+  asset="haskell-language-server-$version-$plat.tar.xz"
+  url="https://github.com/$REPO/releases/download/$version/$asset"
+  tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+
+  echo "downloading $asset ..."
+  curl -fSL --progress-bar -o "$tmp/$asset" "$url"
+  tar -xJf "$tmp/$asset" -C "$tmp"
+  src="$tmp/haskell-language-server-$version"
+
+  # The per-GHC launcher template (.in) is the source of truth: its
+  # `executablename=` line names the real server binary the launcher will exec.
+  # HLS uses dash naming (haskell-language-server-<ghc>); that Mach-O must never
+  # be run directly, only through the generated launcher.
+  template="$src/haskell-language-server-$ghc.in"
+  [[ -e "$template" ]] || die "HLS $version ships no launcher template for GHC $ghc"
+  exe=$(sed -n 's/^executablename="\(.*\)".*/\1/p' "$template")
+  [[ -n "$exe" && -e "$src/bin/$exe" ]] \
+    || die "HLS $version has no $ghc server binary (expected bin/$exe)"
+
+  prune "$src" "$ghc"
+
+  mkdir -p "$OPT" "$BIN"
+  dest="$OPT/haskell-language-server-$version"
+  rm -rf "$dest"; mv "$src" "$dest"
+
+  # drop other HLS bundles to stay lean
+  for old in "$OPT"/haskell-language-server-*; do
+    [[ "$old" == "$dest" ]] || { echo "removing old bundle $(basename "$old")"; rm -rf "$old"; }
+  done
+
+  ln -sf "$dest/bin/haskell-language-server-wrapper" "$BIN/haskell-language-server-wrapper"
+  ln -sf "$dest/bin/haskell-language-server-wrapper" "$BIN/haskell-language-server"
+
+  # Generate the per-GHC launcher from the bindist template, exactly as the
+  # bindist's GNUmakefile does: substitute @@EXE_DIR@@ with the real binary's
+  # dir. The result is a shell script (not a symlink) that sets up
+  # DYLD_LIBRARY_PATH and execs "$dest/bin/$exe". This is the step the old
+  # version skipped.
+  launcher="$BIN/haskell-language-server-$ghc"
+  rm -f "$launcher"   # may be a stale/broken symlink from an older install
+  sed -e "s#@@EXE_DIR@@#$dest/bin/#" "$dest/haskell-language-server-$ghc.in" > "$launcher"
+  chmod 755 "$launcher"
+
+  # sweep up any now-broken versioned symlinks from previous installs
+  find "$BIN" -maxdepth 1 -name 'haskell-language-server*' -type l ! -exec test -e {} \; -delete
+
+  echo
+  echo "installed:"
+  "$BIN/haskell-language-server-wrapper" --version | head -1
+  echo "($(du -sh "$dest" | cut -f1) in $dest)"
+}
+
+main "$@"

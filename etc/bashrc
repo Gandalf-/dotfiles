@@ -22,7 +22,9 @@ alias   ..='cd ..'
 alias  ...='cd ../..'
 alias ....='cd ../../..'
 
-alias make=gmake
+command -v gmake > /dev/null && {
+  alias make=gmake
+}
 
 
 # BEHAVIOR

@@ -62,6 +62,7 @@
 
         Plugin 'dense-analysis/ale'
         Plugin 'github/copilot.vim'
+        Plugin 'mrcjkb/haskell-tools.nvim'
 
         if has_vundle == 0
           :PluginInstall
@@ -82,7 +83,6 @@
   " ALE
     let g:ale_fixers = {
     \   '*'         : ['remove_trailing_lines', 'trim_whitespace'],
-    \   'haskell'   : ['hlint', 'stylish-haskell', 'remove_trailing_lines', 'trim_whitespace'],
     \   'python'    : ['ruff', 'ruff_format'],
     \   'go'        : ['gofmt'],
     \   'rust'      : ['rustfmt'],
@@ -98,7 +98,7 @@
     let g:ale_linters = {
       \ 'html'   : ['tidy'],
       \ 'python' : ['ruff', 'mypy'],
-      \ 'haskell': ['hlint', 'stack_build', 'stack_ghc'],
+      \ 'haskell': [],
       \ 'c'      : [],
       \ 'cpp'    : []
       \ }
@@ -106,7 +106,6 @@
     let g:ale_javascript_prettier_options = '--single-quote --tab-width 2 --print-width 100'
     let g:ale_javascript_prettier_use_global = 1
 
-    let g:haskell_hlint_options = '-j'
     let g:ale_c_clang_options = "-std=c11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
     let g:ale_c_gcc_options = "-std=c11 -Wall -Wextra -D_DEFAULT_SOURCE -D_SVID_SOURCE"
     let g:ale_cpp_clang_options = "-std=c++11 -Wall -Wextra"
@@ -125,6 +124,34 @@
     let g:ale_sign_error = 'X' " '✘'
     let g:ale_sign_warning = '>' " '▶'
     let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+
+lua << EOF
+  vim.g.haskell_tools = {
+    hls = {
+      on_attach = function(_, bufnr)
+        local opts = { noremap = true, silent = true, buffer = bufnr }
+
+        -- HLS inlay hints (explicit-import usage, fixity, ...). HLS does not emit
+        -- per-expression type signatures, so there is no ambient type display --
+        -- use K (hover) on demand for the type of an expression.
+        pcall(vim.lsp.inlay_hint.enable, true, { bufnr = bufnr })
+
+        -- LSP-backed replacements for the ALE maps, buffer-local to Haskell
+        vim.keymap.set('n', 'K',          function() vim.cmd.Haskell({ 'hover' }) end, opts)
+        vim.keymap.set('n', '<leader>gd', vim.lsp.buf.definition,  opts)
+        vim.keymap.set('n', '<leader>gr', vim.lsp.buf.references,  opts)
+        vim.keymap.set('n', '<leader>gs', vim.lsp.buf.workspace_symbol, opts)
+        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename,      opts)
+        vim.keymap.set('n', '<leader>cl', vim.lsp.codelens.run,    opts)
+        vim.keymap.set('n', '<leader>f', function()
+          vim.lsp.buf.format({ async = true,
+            filter = function(c) return c.name:match('haskell%-language%-server') ~= nil end })
+        end, opts)
+      end,
+    },
+  }
+EOF
 
   " Search
     nnoremap \ :Rg<SPACE>
