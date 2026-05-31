@@ -8,7 +8,7 @@ replace() {
   echo "$src -> $tgt"
 
   [[ -e "$src" ]]
-  rm -f "$tgt"
+  rm -rf "$tgt"   # handles files, symlinks, and (e.g. nvim/fish) directory targets
   mkdir -p "$( dirname "$tgt" )"
   ln -s "$src" "$tgt"
 }
@@ -23,8 +23,8 @@ install() {
   replace "$PWD"/etc/tmux.conf    ~/.tmux.conf
   replace "$PWD"/etc/ghostty      ~/.config/ghostty/config
 
-  replace "$PWD"/etc/init.vim     ~/.config/nvim/init.vim
-  replace "$PWD"/etc/init.vim     ~/.vimrc
+  replace "$PWD"/etc/nvim         ~/.config/nvim
+  replace "$PWD"/etc/vimrc        ~/.vimrc
 
   replace "$PWD"/etc/fish         ~/.config/fish
   replace "$PWD"/etc/bashrc       ~/.bashrc

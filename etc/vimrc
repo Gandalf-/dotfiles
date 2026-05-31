@@ -1,0 +1,84 @@
+" Plain-vim fallback. The real config is the lua setup under ~/.config/nvim;
+" this shares its custom functions and abbreviations via legacy.vim.
+
+set nocompatible
+filetype plugin indent on
+syntax on
+
+" Leader (must precede mapped keys)
+nnoremap <SPACE> <Nop>
+let g:mapleader = " "
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Options
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set title langmenu=en_US shell=bash history=300
+set autoread fileformat=unix confirm visualbell
+set splitbelow splitright
+set encoding=utf-8 fileencodings=utf-8
+set hidden nobackup nowritebackup noswapfile
+set ttimeout ttimeoutlen=20
+set tags=./tags;,tags;
+
+set number wrap textwidth=99 showcmd
+set scrolloff=4 showtabline=2 tabpagemax=30 laststatus=2 cmdheight=1
+set cursorline
+set wildmode=full wildmenu wildignorecase
+set wildignore=*.o,*~,*.pyc,/usr/include/*,*.class,*.bak,*.hi,.git*,.svn*
+set lazyredraw ttyfast synmaxcol=200
+set backspace=indent,eol,start tabstop=4 virtualedit=block
+set hlsearch incsearch showmatch ruler
+set foldmethod=indent foldnestmax=10 nofoldenable foldlevel=2
+set fillchars+=vert:│
+
+if has('termguicolors')
+  set termguicolors
+endif
+silent! colorscheme desert
+
+set grepprg=rg\ --column
+set grepformat=%f:%l:%c%m
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Core keymaps (subset; full set lives in the Neovim config)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+nnoremap <silent> <leader><Space> :nohl<CR>
+nnoremap <leader>k :w<CR>
+nnoremap <silent> <leader>q :q<CR>
+nnoremap <silent> <leader>Q :qall<CR>
+nnoremap <leader>e :e<space>
+nnoremap <leader>l :e % <cr>zz
+nnoremap <leader>n :set nu!<CR>
+nnoremap m :
+vnoremap m :
+
+" Substitute helpers
+vnoremap <leader>s :s/
+nnoremap <leader>s V:s/
+nnoremap <leader>S :%s/
+
+" Movement (recenter, wrapped-line motion, buffer switching)
+nnoremap <silent> Z zz
+nnoremap <silent> n nzz
+nnoremap <silent> N Nzz
+nnoremap <silent> j gj
+nnoremap <silent> k gk
+noremap  <silent> ( :bp<cr>zz
+noremap  <silent> ) :bn<cr>zz
+nnoremap B ^
+vnoremap B ^
+nnoremap E $
+vnoremap E $
+map Y y$
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Shared functions, statusline, abbreviations
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+if filereadable(expand('~/.config/nvim/legacy.vim'))
+  source ~/.config/nvim/legacy.vim
+endif
+
+" work settings
+if filereadable(expand('~/scripts/etc/work.vim'))
+  source ~/scripts/etc/work.vim
+endif
