@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Install the tree-sitter CLI, required by nvim-treesitter's main branch.
+
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+asset() {
+  local os arch os_tag arch_tag
+  os="$( uname -s )"
+  arch="$( uname -m )"
+
+  case "$os" in
+    Linux)  os_tag=linux ;;
+    Darwin) os_tag=macos ;;
+    *) die "unsupported OS: $os" ;;
+  esac
+
+  case "$arch" in
+    x86_64|amd64)  arch_tag=x64 ;;
+    arm64|aarch64) arch_tag=arm64 ;;
+    *) die "unsupported arch: $arch" ;;
+  esac
+
+  echo "tree-sitter-$os_tag-$arch_tag.gz"
+}
+
+latest() {
+  curl --silent https://api.github.com/repos/tree-sitter/tree-sitter/releases/latest \
+    | awk -F'"' '/"tag_name"/ { print $4; exit }'
+}
+
+main() {
+  local bin_dir="$HOME/.local/bin"
+  local file; file="$( asset )"
+  local version; version="${TS_VERSION:-$( latest )}"
+  [[ "$version" ]] || die "could not resolve tree-sitter version"
+
+  local url="https://github.com/tree-sitter/tree-sitter/releases/download/$version/$file"
+  echo "Installing tree-sitter $version ($file)"
+
+  mkdir -p "$bin_dir"
+  curl --silent --location --fail "$url" -o "$bin_dir/tree-sitter.gz" \
+    || die "download failed: $url"
+  gunzip -f "$bin_dir/tree-sitter.gz" || die "gunzip failed"
+  chmod +x "$bin_dir/tree-sitter"
+
+  [[ "$( uname -s )" == Darwin ]] \
+    && xattr -d com.apple.quarantine "$bin_dir/tree-sitter" 2>/dev/null
+
+  # Prebuilt linux binaries need a recent glibc; on older systems build from
+  # source instead: cargo install tree-sitter-cli
+  "$bin_dir/tree-sitter" --version
+}
+
+main
