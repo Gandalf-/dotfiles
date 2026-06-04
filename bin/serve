@@ -83,7 +83,8 @@ nginx() {
     freebsd*) args+=( -e stderr ) ;;
   esac
 
-  command nginx "${args[@]}"
+  command nginx "${args[@]}" 2>&1 \
+    | grep -v 'could not open error log file'
 }
 
 main() {
@@ -96,7 +97,10 @@ main() {
   read -r port < <( get-port "$root" )
 
   local uri="http://$host:$port"
-  command -v open >/dev/null && { sleep 0.5; open -u "$uri"; } &
+  command -v open >/dev/null && {
+    sleep 0.5
+    open -u "$uri" 2>/dev/null
+  } &
 
   nc -z localhost "$port" 2>/dev/null && {
     echo "Already serving on $uri"
