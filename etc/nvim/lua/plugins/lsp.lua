@@ -51,9 +51,9 @@ return {
         end,
       })
 
-      -- server name -> binary to probe before enabling
+      -- server name -> binary to probe before enabling.
+      -- python: ruff (lint + format) here, mypy via nvim-lint; no pyright.
       local servers = {
-        basedpyright = "basedpyright-langserver",
         ruff = "ruff",
         gopls = "gopls",
         rust_analyzer = "rust-analyzer",

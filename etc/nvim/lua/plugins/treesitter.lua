@@ -9,8 +9,8 @@ return {
     -- since it's the shell (master pulled it via auto_install).
     local langs = {
       "bash", "c", "cpp", "fish", "go", "haskell", "html", "javascript",
-      "json", "lua", "markdown", "markdown_inline", "python", "rust",
-      "toml", "vim", "vimdoc", "yaml",
+      "json", "lua", "make", "markdown", "markdown_inline", "python",
+      "rust", "toml", "vim", "vimdoc", "yaml",
     }
     require("nvim-treesitter").install(langs) -- async; no-op if already built
 
@@ -20,8 +20,14 @@ return {
     -- Enable highlighting + folding per buffer. main does NOT auto-enable.
     vim.api.nvim_create_autocmd("FileType", {
       callback = function(args)
-        -- vim.treesitter.start() maps filetype -> parser; pcall guards
-        -- filetypes whose parser isn't installed/available.
+        -- Require a highlights query, not just a parser. A stale parser with
+        -- no query would start treesitter, suppress `syntax on`, and apply
+        -- nothing -- blanking the buffer. Filetypes without a query fall
+        -- through to vim's built-in regex highlighting.
+        local lang = vim.treesitter.language.get_lang(args.match) or args.match
+        if not vim.treesitter.query.get(lang, "highlights") then
+          return
+        end
         if pcall(vim.treesitter.start, args.buf) then
           vim.wo[0][0].foldmethod = "expr"
           vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"

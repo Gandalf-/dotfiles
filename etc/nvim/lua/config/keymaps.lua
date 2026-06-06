@@ -62,7 +62,7 @@ map("n", "<leader>E", ":tabe<space>")
 map("n", "<leader>l", ":e % <cr>zz")
 map("n", "<leader>k", ":w<CR>")
 
-map("n", "<leader>v", "<C-S-v>", { silent = true })
+map("n", "<leader>v", "<C-v>", { silent = true }) -- visual block
 
 -- ':' on the home row
 map("n", "m", ":")
@@ -92,13 +92,13 @@ map("n", "'", function() return "'" .. vim.fn.nr2char(vim.fn.getchar()) .. " zz"
 map("n", "j", "gj", { silent = true })
 map("n", "k", "gk", { silent = true })
 
--- buffers on the parens
-map("", "(", ":bp<cr>zz", { silent = true })
-map("", ")", ":bn<cr>zz", { silent = true })
+-- buffers on the parens (normal only; keep ( ) sentence motions for operators)
+map("n", "(", ":bp<cr>zz", { silent = true })
+map("n", ")", ":bn<cr>zz", { silent = true })
 
 -- location list on the arrows
-map("", "<Left>", ":lprev<cr>zz", { silent = true })
-map("", "<Right>", ":lnext<cr>zz", { silent = true })
+map("n", "<Left>", ":lprev<cr>zz", { silent = true })
+map("n", "<Right>", ":lnext<cr>zz", { silent = true })
 map("n", "<Up>", "H5<C-y>5gk", { silent = true })
 map("n", "<Down>", "L5<C-e>5gj", { silent = true })
 

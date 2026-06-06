@@ -5,14 +5,14 @@ return {
     cmd = { "ConformInfo" },
     opts = {
       formatters_by_ft = {
-        python = { "ruff_fix", "ruff_format" },
+        python = { "ruff_fix", "ruff_organize_imports", "ruff_format" },
         go = { "gofmt" },
         rust = { "rustfmt" },
         c = { "clang_format" },
         cpp = { "clang_format" },
         html = { "prettier" },
         javascript = { "prettier" },
-        ["_"] = { "trim_whitespace" }, -- every other filetype
+        ["_"] = { "trim_whitespace", "trim_newlines" }, -- every other filetype
       },
       formatters = {
         prettier = {
