@@ -29,6 +29,11 @@ install() {
   replace "$PWD"/etc/fish         ~/.config/fish
   replace "$PWD"/etc/bashrc       ~/.bashrc
   replace "$PWD"/etc/bashrc       ~/.zshrc
+
+  for s in "$PWD"/etc/claude/skills/*; do
+    local name; name="$( basename "$s" )"
+    replace "$s" ~/.claude/skills/"$name"
+  done
 }
 
 lint() {

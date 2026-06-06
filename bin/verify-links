@@ -60,12 +60,20 @@ verify() {
   local link="$1"
   local host; host="$( echo "$link" | cut -d / -f 3 )"
 
+  local target
+  case $host in
+    code.anardil.net)
+      target=code.anardil.net ;;
+    *)
+      target=web.anardil.net ;;
+  esac
+
   read -r code < <(
     curl \
       --head \
       --silent \
       --insecure \
-      --connect-to "$host:443:web.anardil.net:443" \
+      --connect-to "$host:443:$target:443" \
       "$link" \
       | awk '{ print $2; exit }'
   )
