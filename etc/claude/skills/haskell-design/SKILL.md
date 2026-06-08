@@ -15,7 +15,7 @@ reading dep source via `stack unpack`, HLS), see the **haskell-dev** skill — t
 about *design*.
 
 The governing philosophy across all three: **pure core, thin IO edge, effects as plain
-values, lean dependencies, everything tested.**
+values, lean dependencies, illegal states unrepresentable, everything tested.**
 
 ---
 
@@ -137,7 +137,39 @@ Rules of thumb:
 This keeps the business logic pure and the effectful shell a thin, swappable layer — and
 makes testing a matter of passing different functions, not building mocks.
 
-## 4. Data & config style
+## 4. Type-driven design — make illegal states unrepresentable
+
+The flip side of "pure core": once logic is pure, push its preconditions into the types so
+the compiler enforces them and whole classes of test disappear. This is a strong house
+preference — reach for it before adding a runtime guard.
+
+- **Closed sum type over a string set.** A fixed set of identifiers (rooms, sensors, modes)
+  is an ADT, not a `[Text]` of "valid values". Keep one small module owning the type plus a
+  `tag :: T -> Text` (and `parse :: Text -> Maybe T` when something inbound needs it), and
+  convert *only* at the wire edge (DNS, CLI args, a DB tag, a frontend key). Payoff: a
+  partial lookup with a silent fallback (`f _ = default`) becomes a total `case` the
+  compiler checks, and the several duplicated "valid values" lists collapse to
+  `[minBound .. maxBound]`.
+- **Encode preconditions in the input type.** `NonEmpty a` (from `base`) instead of a `null`
+  guard in front of a partial `head`/`maximumBy`; a smart constructor or `Maybe`-returning
+  parser instead of re-validating a raw value at every use. `NE.nonEmpty :: [a] -> Maybe
+  (NonEmpty a)` is the boundary check; inside, the head is total. Only encode what the type
+  actually captures — `NonEmpty` means "≥1", so a function needing "≥2 points spanning a
+  day" still honestly returns `Maybe`.
+- **Defer an effect out of a pure builder by returning a function.** A pure
+  `build :: ... -> Maybe (X -> Result)` lets the caller supply the one effectful input
+  (`Just . mk <$> fetchX`), keeping the decision pure and the fetch conditional — cleaner
+  than threading the value in just so the builder is "complete".
+- **The tell: when a type change deletes a test, you've turned a bug into a
+  non-representable state.** "rejects an unknown host" / "errors on empty" tests vanish
+  because the input can no longer be constructed — that's the goal, not lost coverage.
+- **Know when *not* to newtype.** Per-quantity wrappers (`Fahrenheit`, `Mph`) earn their
+  keep at API boundaries with mixable units, but in arithmetic-dense pure code they add
+  constant wrap/unwrap noise for little gain. Sum types for *identity* almost always pay
+  off; newtypes for *quantities* are a judgment call — don't reflexively wrap every
+  `Double`.
+
+## 5. Data & config style
 
 - **ADTs with strict fields** (`!` on every record field, or `StrictData`). Records use
   `RecordWildCards` for construction/destructuring.
@@ -154,7 +186,7 @@ makes testing a matter of passing different functions, not building mocks.
   Grep for `TypeName (` and `TypeName [` before trusting the compiler — `Valid` and
   display code often use positional matches the type-checker won't fully catch.
 
-## 5. CLI / dispatch
+## 6. CLI / dispatch
 
 - `main.hs` stays tiny: parse args, dispatch, exit. coreutils dispatches ~40 utilities
   via a `HashMap` keyed on program name / first arg into an existential `Utility` wrapper
@@ -165,7 +197,7 @@ makes testing a matter of passing different functions, not building mocks.
 - **Errors:** `Either String` for recoverable; `System.Exit.die` for fatal. Don't throw
   for control flow.
 
-## 6. Concurrency (when needed)
+## 7. Concurrency (when needed)
 
 Most code is single-threaded. When a daemon needs concurrency (apocrypha's server):
 `-threaded`, `async` for spawning, `stm`/`TVar` or `MVar` for shared state. Prefer
@@ -173,7 +205,7 @@ thread-per-source (one loop per socket/connection) over reimplementing `select`.
 shared mutable state (throttles, caches) with an `IORef` (single-threaded) or `MVar`/STM
 (concurrent) — not a global.
 
-## 7. Testing
+## 8. Testing
 
 hspec with **`hspec-discover`** (`test/Spec.hs` is just the discover pragma). One
 `<Module>Spec.hs` per module; register each in the cabal `other-modules`.
@@ -213,7 +245,7 @@ Strict red-green-refactor, **one behavioral change per cycle**:
 3. **Refactor:** with tests green, simplify and extract helpers. `make ready` (format,
    lint, test) must pass before committing.
 
-## 8. Style & hygiene
+## 9. Style & hygiene
 
 - 4-space indentation. `where` clauses preferred over top-level helpers when the helper
   isn't reused.
@@ -223,9 +255,12 @@ Strict red-green-refactor, **one behavioral change per cycle**:
   `License`, `Maintainer`, `Stability`, `Portability`) for top-level modules.
 - Single-sentence Haddock on functions unless something subtle needs explaining.
 - **`make format` then `make lint` before committing** — `stylish-haskell --inplace` and
-  `hlint -j`. coreutils wraps both plus tests as `make ready`.
+  `hlint -j`. coreutils wraps both plus tests as `make ready`. **`make ready` fails on a
+  lint** — hlint is a gate here, not advisory; take its suggestions (`fromRight`,
+  `maximumBy`, `listToMaybe`, …) rather than working around them. stylish-haskell also
+  rewrites import groups/alignment in place, so don't hand-format imports.
 
-## 9. Designing a Python→Haskell port
+## 10. Designing a Python→Haskell port
 
 When porting (the reason this skill often fires):
 1. **Inventory by purity.** Split modules into pure (port mechanically: dataclasses → ADTs,

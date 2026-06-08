@@ -81,16 +81,10 @@ stack unpack <package-name> --to /tmp/haskell-src
 - Exploring what functions a module exports
 - Debugging unexpected behavior from a library
 
-### Key packages and their source layout
+### Finding the source file
 
-After unpacking, the source files with docs are at:
-
-| Package | Source path |
-|---------|------------|
-| `streaming` | `/tmp/haskell-src/streaming-<ver>/src/Streaming/Prelude.hs` |
-| `streaming-bytestring` | `/tmp/haskell-src/streaming-bytestring-<ver>/lib/Streaming/ByteString/Char8.hs` |
-
-To find the right file in an unfamiliar package:
+Module sources live under the unpacked dir (commonly `src/` or `lib/`); locate the one you
+want with `find`:
 ```sh
 stack unpack <package> --to /tmp/haskell-src
 find /tmp/haskell-src/<package>-*/ -name '*.hs' | head -20
@@ -118,6 +112,8 @@ executables:
 ```
 
 When you add an extension or dep to fix a build error, check whether you need to add it to *each* target that uses it.
+
+Cabal is the opposite: a target that says `import: shared` *does* inherit that `common` stanza's `default-extensions`/`dependencies`/`ghc-options`, so the settings live in one place (see **haskell-design §2**). Hpack has no such sharing — hence this hazard. Check which build system the project uses before copy-pasting deps between targets.
 
 ## Time-zone-safe filesystem tests
 
