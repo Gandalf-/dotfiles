@@ -3,12 +3,28 @@ return {
   event = { "BufReadPost", "BufWritePost", "InsertLeave" },
   config = function()
     local lint = require("lint")
-    -- LSP servers cover the rest; nvim-lint only adds linters they lack
-    lint.linters_by_ft = {
+    -- LSP servers cover the rest; nvim-lint only adds linters they lack.
+    -- Skip any whose binary isn't installed -- otherwise try_lint notifies a
+    -- warning on every read/write/insert-leave for that filetype. (For these
+    -- three the linter name matches its executable.)
+    local wanted = {
       python = { "mypy" },
       html = { "tidy" },
       sh = { "shellcheck" },
     }
+    local by_ft = {}
+    for ft, linters in pairs(wanted) do
+      local present = {}
+      for _, name in ipairs(linters) do
+        if vim.fn.executable(name) == 1 then
+          present[#present + 1] = name
+        end
+      end
+      if #present > 0 then
+        by_ft[ft] = present
+      end
+    end
+    lint.linters_by_ft = by_ft
 
     local group = vim.api.nvim_create_augroup("nvim_lint", { clear = true })
 
