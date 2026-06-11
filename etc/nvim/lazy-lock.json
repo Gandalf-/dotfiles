@@ -1,4 +1,5 @@
 {
+  "claudecode.nvim": { "branch": "main", "commit": "7b8b7090c16f4151401a281741a4bf37050ebd26" },
   "conform.nvim": { "branch": "master", "commit": "619363c30309d29ffa631e67c8183f2a72caa373" },
   "copilot.vim": { "branch": "release", "commit": "a12fd5672110c8aa7e3c8419e28c96943ca179be" },
   "fzf": { "branch": "master", "commit": "f5fbfd848ec0a5c9771dd103e921e7064445c9ba" },
