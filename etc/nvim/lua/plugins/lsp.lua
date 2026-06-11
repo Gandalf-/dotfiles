@@ -1,6 +1,26 @@
 -- language servers are expected on $PATH; ones that aren't installed are skipped.
 -- haskell is driven by haskell-tools.nvim, not lspconfig.
 
+-- Silence benign LSP request failures. Inlay hints (and code lenses) re-fire on
+-- every edit; on files HLS can't typecheck as a module -- the hspec-discover
+-- Spec.hs stub, .cabal files -- the request fails with -32803 (RequestFailed)
+-- every time. Neovim's generic handler notifies on each failure, flooding the
+-- message line and tripping the hit-enter prompt that swallows keystrokes (the
+-- "can't edit" symptom). Drop just that one benign code, exactly as neovim
+-- already drops ContentModified upstream; successful requests still render,
+-- real errors still surface.
+for _, method in ipairs({ "textDocument/inlayHint", "textDocument/codeLens" }) do
+  local orig = vim.lsp.handlers[method]
+  if orig then
+    vim.lsp.handlers[method] = function(err, result, ctx, config)
+      if err and err.code == -32803 then
+        return
+      end
+      return orig(err, result, ctx, config)
+    end
+  end
+end
+
 -- buffer-local maps for any attached server
 local function on_attach(_, bufnr)
   local function nmap(lhs, rhs, desc)
