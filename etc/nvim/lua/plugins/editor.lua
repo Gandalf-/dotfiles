@@ -26,16 +26,18 @@ return {
   {
     "christoomey/vim-tmux-navigator",
     lazy = false,
-  },
-  {
-    "preservim/vimux",
-    init = function()
-      vim.g.VimuxOrientation = "h"
-      vim.g.VimuxHeight = "33"
+    config = function()
+      -- the plugin maps <C-h/j/k/l> in normal mode only; mirror them in
+      -- visual mode so pane switching works without dropping to normal first
+      local nav = {
+        ["<C-h>"] = "TmuxNavigateLeft",
+        ["<C-j>"] = "TmuxNavigateDown",
+        ["<C-k>"] = "TmuxNavigateUp",
+        ["<C-l>"] = "TmuxNavigateRight",
+      }
+      for key, cmd in pairs(nav) do
+        vim.keymap.set("x", key, "<cmd>" .. cmd .. "<cr>", { silent = true })
+      end
     end,
-    keys = {
-      { "<C-b>", "<cmd>VimuxRunLastCommand<cr>", desc = "Vimux run last command" },
-    },
-    cmd = { "VimuxRunCommand", "VimuxRunLastCommand", "VimuxPromptCommand" },
   },
 }
