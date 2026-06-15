@@ -28,7 +28,12 @@ map("n", ":make", ":!clear; make")
 map("n", "<leader><Space>", ":nohl<CR>", { silent = true })
 map("n", "<leader>J", "100<c-e>5<c-y>", { silent = true }) -- scroll to bottom for notes
 map("n", "<leader>G", "ggg?G<C-o>", { silent = true }) -- rot13 the buffer
-map("n", "<leader>f", "gqip<cr>", { silent = true }) -- re-hardwrap a paragraph
+map("n", "<leader>f", function() -- re-hardwrap a paragraph (bypass conform's formatexpr)
+  local save = vim.bo.formatexpr
+  vim.bo.formatexpr = ""
+  vim.cmd("normal! gqip")
+  vim.bo.formatexpr = save
+end, { silent = true, desc = "re-hardwrap a paragraph" })
 
 -- split and move there
 map("n", "<leader>V", "<C-w>v<C-w>l", { silent = true })
