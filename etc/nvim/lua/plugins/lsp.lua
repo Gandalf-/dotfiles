@@ -72,7 +72,7 @@ return {
       })
 
       -- server name -> binary to probe before enabling.
-      -- python: ruff (lint + format) here, mypy via nvim-lint; no pyright.
+      -- python: ruff (lint + format) here, ty (type check) via nvim-lint; no pyright.
       local servers = {
         ruff = "ruff",
         gopls = "gopls",

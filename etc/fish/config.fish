@@ -1,6 +1,6 @@
 # vim: set syntax=bash
 
-set -gx __HOST__        (hostname | sed 's/\.local//')
+set -gx __HOST__        (hostname | sed -e 's/\.local//' -e 's/.*-//')
 set -gx EDITOR          vim
 set -gx XDG_CONFIG_HOME "$HOME"/.config/
 set -gx TMP             /tmp

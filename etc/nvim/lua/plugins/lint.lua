@@ -3,12 +3,28 @@ return {
   event = { "BufReadPost", "BufWritePost", "InsertLeave" },
   config = function()
     local lint = require("lint")
-    -- LSP servers cover the rest; nvim-lint only adds linters they lack.
-    -- Skip any whose binary isn't installed -- otherwise try_lint notifies a
-    -- warning on every read/write/insert-leave for that filetype. (For these
-    -- three the linter name matches its executable.)
-    local wanted = {
-      python = { "mypy" },
+
+    lint.linters.ty = {
+      cmd = "ty",
+      args = { "check", "--output-format", "concise" },
+      stdin = false,
+      append_fname = true,
+      ignore_exitcode = true,
+      stream = "stdout",
+      parser = require("lint.parser").from_pattern(
+        "([^:]+):(%d+):(%d+): (%a+)%[([%a-]+)%] (.*)",
+        { "file", "lnum", "col", "severity", "code", "message" },
+        {
+          error = vim.diagnostic.severity.ERROR,
+          warning = vim.diagnostic.severity.WARN,
+        },
+        { source = "ty" }
+      ),
+    }
+
+    -- LSP servers cover the rest; nvim-lint only adds linters they lack
+    lint.linters_by_ft = {
+      python = { "ty" },
       html = { "tidy" },
       sh = { "shellcheck" },
     }
@@ -36,12 +52,13 @@ return {
       end,
     })
 
-    -- on insert-leave, skip mypy: it's slow and checks the on-disk file, so
-    -- running it on every unsaved edit just lags. fast linters still run.
+    -- on insert-leave, skip ty: it reads the on-disk file (stdin=false), so on an
+    -- unsaved buffer it lints stale content. stdin-based linters (shellcheck,
+    -- tidy) see the buffer itself, so they still run.
     vim.api.nvim_create_autocmd("InsertLeave", {
       group = group,
       callback = function()
-        lint.try_lint(nil, { filter = function(l) return l.name ~= "mypy" end })
+        lint.try_lint(nil, { filter = function(l) return l.name ~= "ty" end })
       end,
     })
 

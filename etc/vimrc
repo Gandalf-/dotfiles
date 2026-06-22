@@ -77,8 +77,3 @@ map Y y$
 if filereadable(expand('~/.config/nvim/legacy.vim'))
   source ~/.config/nvim/legacy.vim
 endif
-
-" work settings
-if filereadable(expand('~/scripts/etc/work.vim'))
-  source ~/scripts/etc/work.vim
-endif
