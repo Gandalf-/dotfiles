@@ -38,10 +38,11 @@ test -f ~/scripts/etc/work.fish
 
 # PLATFORMS
 
-# macos
+# MacOS
 if test -d /opt/homebrew/bin
   set -x -U C_INCLUDE_PATH ( xcrun --show-sdk-path )/usr/include/ffi
   fish_add_path --global /opt/homebrew/bin
+  fish_add_path --global /opt/homebrew/sbin
 end
 
 # ubuntu
