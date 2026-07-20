@@ -1,0 +1,11 @@
+#!/usr/bin/env -S awk -f
+
+BEGIN {
+    RS=""
+    ORS="\n\n"
+}
+
+{
+    gsub(/\n/," ")
+    print
+}

@@ -1,48 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2032,SC2033
 
-die() {
-  echo "$*" >&2
-  exit 1
-}
-
-get-file-time() {
-  local epoch; epoch="$( basename "${1%.txt}" )"
-  date -d "@$epoch" '+%m-%d'
-}
-
-get-todos() {
-  find todo/ -type f | sort
-}
-
-get-dones() {
-  find done/ -type f | sort -r
-}
-
-by-index() {
-  local index="$1"
-  local n=0
-
-  while read -r f; do
-    (( ++n == index )) && { echo "$f"; break; }
-  done
-}
-
-listing() {
-  local n=0
-  local limit="${1:-10}"
-
-  while read -r f; do
-    (( n++ ))
-    read -r line < "$f"
-    printf '%3d %s %s\n' \
-      "$n" \
-      "$( get-file-time "$f" )" \
-      "$line"
-
-  done < <( cat | head -n "$limit" )
-}
-
 # Commands
 
 h() {
@@ -50,12 +8,12 @@ h() {
 Usage: t [command] [args...]
 Commands:
   a [desc]      Add a new task
-  f [desc]      Add a completed task
   d [index ...] Mark todo tasks as done by index
   u [index ...] Mark done tasks as todo by index
+ ad [desc]      Add a completed task
   l             List all tasks
 
-  e [index]     Edit a task using $EDITOR
+  e [index]     Edit a task using \$EDITOR (${EDITOR:-vi})
   p [limit]     List recently done tasks
   c             Show summary counts
   h             Show this help message
@@ -131,10 +89,53 @@ e() {
   "${EDITOR:-vi}" "$f"
 }
 
+# Utility
+
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+get-file-time() {
+  local epoch; epoch="$( basename "${1%.txt}" )"
+  date -d "@$epoch" '+%m-%d'
+}
+
+get-todos() {
+  find todo/ -type f | sort
+}
+
+get-dones() {
+  find done/ -type f | sort -r
+}
+
+by-index() {
+  local n=0
+  local index="$1"
+
+  while read -r f; do
+    (( ++n == index )) && { echo "$f"; break; }
+  done
+}
+
+listing() {
+  local n=0
+  local limit="${1:-10}"
+
+  while read -r f; do
+    (( n++ ))
+    read -r line < "$f"
+    printf '%3d %s %s\n' \
+      "$n" \
+      "$( get-file-time "$f" )" \
+      "$line"
+
+  done < <( cat | head -n "$limit" )
+}
+
 # Main
 
-ROOT="$HOME"/.local/state/tasks/
-mkdir -p "$ROOT/"{todo,done}
-cd "$ROOT" || exit 1
+cd "$HOME"/.local/state/tasks/ || exit 1
+mkdir -p 'todo' 'done'
 
 "${@:-l}"
