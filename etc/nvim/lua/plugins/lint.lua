@@ -23,7 +23,7 @@ return {
     }
 
     -- LSP servers cover the rest; nvim-lint only adds linters they lack
-    lint.linters_by_ft = {
+    local wanted = {
       python = { "ty" },
       html = { "tidy" },
       sh = { "shellcheck" },
