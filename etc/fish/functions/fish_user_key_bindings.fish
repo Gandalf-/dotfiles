@@ -29,5 +29,13 @@ function fish_user_key_bindings
     bind --preset -e -M $mode \ev
   end
 
+  # Every CSI escape sequence starts \e[. When one leaks in chopped (focus
+  # report, DA1 reply, cursor-position report), vi-mode eats the ESC and the
+  # bare [ runs history-token-search-backward — pasting the last token of the
+  # newest history entry (often another pane's command) onto the prompt as a
+  # phantom. \e. covers token search; drop the landmines.
+  bind --preset -e -M default '['
+  bind --preset -e -M default ']'
+
   fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 end

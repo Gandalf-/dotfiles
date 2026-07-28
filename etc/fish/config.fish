@@ -40,7 +40,7 @@ test -f ~/scripts/etc/work.fish
 
 # MacOS
 if test -d /opt/homebrew/bin
-  set -x -U C_INCLUDE_PATH ( xcrun --show-sdk-path )/usr/include/ffi
+  set -gx C_INCLUDE_PATH ( xcrun --show-sdk-path )/usr/include/ffi
   fish_add_path --global /opt/homebrew/bin
   fish_add_path --global /opt/homebrew/sbin
 end
@@ -93,8 +93,6 @@ end
 function ll
   command ll $argv
 end
-
-fzf_configure_bindings --directory=\ei --history=\cr --git_status=\eg
 
 
 # PROMPT
