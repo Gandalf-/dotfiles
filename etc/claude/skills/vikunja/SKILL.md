@@ -75,6 +75,9 @@ The wrapper absorbs these; they matter if you reach for `api` directly.
 - **`POST /tasks/{id}` is a whole-object update.** A bare `{"done":true}` blanks
   every field you omit. Read-modify-write.
 - **`bucket_id` from `GET /tasks/{id}` is always `0`** — it's view-scoped.
+- **A missing token scope 401s as "invalid token"**, identical to a garbage
+  token. If some routes work and one doesn't, it's the scope. Don't conclude the
+  token is broken and don't ask for a new one — name the route that failed.
 
 Full API spec: `https://todo.anardil.net/api/v1/docs.json`. Jail, token, and user
 setup: `~/src/infrastructure/todo/README.md`.
