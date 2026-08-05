@@ -26,6 +26,8 @@ fails from any cloud-side agent.
 | `capture <label> <title...>` | file a task into `Someday` for triage |
 | `start <id>` | move to Doing |
 | `done <id>` / `reopen <id>` | close / reopen |
+| `describe <id> [html...]` | set the description; reads **stdin** if no text given |
+| `retitle <id> <title...>` | rename a task |
 | `comment <id> <text...>` | add a comment |
 | `move <id> <bucket>` | any bucket; names match on prefix |
 | `api <METHOD> <path> [body]` | raw escape hatch |
@@ -44,6 +46,20 @@ vikunja.sh capture diving "thumbnail cache has no eviction path"
 
 Don't ask first. Filing is cheap and reversible, and `Someday` is a triage bucket,
 not a commitment. Do mention it in your reply so it isn't a silent write.
+
+**Descriptions are HTML, and long ones belong on stdin.** Vikunja's editor stores
+markup, so plain text renders as a single run-on line — write `<p>`, `<ul>`,
+`<code>`. Pass a heredoc rather than fighting argv quoting:
+
+```sh
+vikunja.sh describe 197 <<'EOF'
+<p>Mirror the calendars locally, and <strong>prove the restore</strong>.</p>
+<ul><li>tool: vdirsyncer</li></ul>
+EOF
+```
+
+A title is cheap to sharpen when a card's framing turns out wrong (`retitle`);
+that is editing his phrasing, so say what you changed it to.
 
 **Read the board when it's relevant, not reflexively.** Starting substantial work
 in a repo that has a label is a good moment (`vikunja.sh tasks`, look for that
